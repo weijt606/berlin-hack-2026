@@ -16,11 +16,12 @@ Product designs and preparation for [Big Berlin Hack 2026](https://lu.ma/bigberl
 | Role | Member | Focus |
 |------|--------|-------|
 | Product Manager | [@weijt606](https://github.com/weijt606) | Product design, Pitch, Dev (assist) |
-| Developer | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead) |
+| Developer | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead), Pitch |
 
 ## Quick Links
 
-- [Product Designs](product-designs.md) — All product specs, architecture, wireframes, demo scripts
+- [Product Designs](product-designs.md) — Track product specs (GrowthRadar, ContextSync, PropertyMind)
+- [Wildcard Designs](wildcard-designs.md) — 8 Wildcard project specs with full architecture + demo scripts
 - [Peec AI Guide](peec-ai-guide.md) — Peec AI API, MCP Server setup, data integration
 - [Tech Stack](product-designs.md#common-tech-stack) — Next.js + FastAPI + PostgreSQL + Claude API
 
