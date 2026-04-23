@@ -8,9 +8,9 @@
 
 | Priority | Track | Product | One-liner | Prize |
 |----------|-------|---------|-----------|-------|
-| 🥇 Primary | Qontext | **ContextSync** | Multi-source data → structured context layer for any AI agent | Gold bar + dinner |
-| 🥇 Primary | Buena | **PropertyMind** | Property data → auto-updating Context Markdown File | €2,500 |
-| 🥉 Backup | Peec AI | **GrowthRadar** | Competitive visibility → SEO & AI search growth opportunities | €2,500 |
+| 🥇 Primary | Peec AI | **GrowthRadar** | AI search visibility → growth opportunity radar for startups | €2,500 |
+| 🥈 Backup | Qontext | **ContextSync** | Multi-source data → structured context layer for any AI agent | Gold bar + dinner |
+| 🥈 Backup | Buena | **PropertyMind** | Property data → auto-updating Context Markdown File | €2,500 |
 | 🔄 Wildcard 1 | Free | **PitchCoach** | Record your pitch → AI scores and coaches you in real-time | Finals qualification |
 | 🔄 Wildcard 2 | Free | **AgentFlow** | Multi-agent task collaboration with real-time visualization | Finals qualification |
 | 🔄 Wildcard 3 | Free | **DataStory** | Upload CSV → AI generates insight narrative with charts | Finals qualification |
@@ -378,82 +378,196 @@ Same structure as ContextSync, but with Berlin property data:
 
 ---
 
-# 🥉 GrowthRadar (Peec AI Track)
+# 🥇 GrowthRadar (Peec AI Track) — PRIMARY
+
+> Full Peec AI integration guide: [peec-ai-guide.md](peec-ai-guide.md)
 
 ## Problem
 
-Early-stage startups don't know which keywords they can win — competitors already occupy positions, and there's no clear attack direction.
+Every time someone asks ChatGPT "what's the best [product]", your competitor shows up. You don't. Early-stage startups are invisible in AI search — and they don't even know it.
 
 ## Solution
 
-GrowthRadar uses Peec AI's competitive visibility data to auto-generate SEO and AI search growth opportunity reports.
+GrowthRadar scans your brand's AI search visibility using Peec AI data, identifies where competitors outrank you, and generates a week-by-week action plan to own those conversations.
 
 ## Pitch
 
-> "We built a growth radar that analyzes your competitors' search visibility and finds the exact organic and AI search opportunities you should own — from zero to first page."
+> "We built a growth radar that shows startups exactly where they're invisible in AI search — and generates a week-by-week action plan to own those conversations."
 
 ## Architecture
 
 ```
-┌──────────────────┐
-│  User Input      │
-│  - Own domain    │
-│  - Competitors   │
-│  - Industry      │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│  Peec AI API     │
-│  - Keyword ranks │
-│  - Search volume │
-│  - Competition   │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│  AI Analysis     │
-│  Claude API      │
-│  - Opportunities │
-│  - Prioritization│
-│  - Strategy gen  │
-└────────┬─────────┘
-         ▼
-    ┌────┴────┐
-    ▼         ▼
-┌────────┐ ┌────────┐
-│Dashboard│ │ Action │
-│   UI   │ │  Plan  │
-└────────┘ └────────┘
+┌─────────────────────────────────────┐
+│         User Onboarding             │
+│  - Brand name / domain              │
+│  - Up to 3 competitors              │
+│  - Industry / keywords              │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│       Peec AI MCP Server            │
+│  ┌─────────┐ ┌───────────┐         │
+│  │ Brands  │ │ Prompts   │         │
+│  │ Report  │ │ Report    │         │
+│  └────┬────┘ └─────┬─────┘         │
+│  ┌────┴────┐ ┌─────┴─────┐         │
+│  │ Domains │ │   URLs    │         │
+│  │ Report  │ │  Report   │         │
+│  └────┬────┘ └─────┬─────┘         │
+└───────┼────────────┼────────────────┘
+        ▼            ▼
+┌─────────────────────────────────────┐
+│       AI Analysis Engine            │
+│  Claude API (Opus 4.6)              │
+│  - Visibility gap analysis          │
+│  - Competitor benchmarking          │
+│  - Opportunity scoring              │
+│  - Action plan generation           │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│         Frontend (Next.js)          │
+│  ┌─────────┐ ┌─────────┐           │
+│  │Visibility│ │Competitor│           │
+│  │ Score   │ │  Map    │           │
+│  └─────────┘ └─────────┘           │
+│  ┌─────────┐ ┌─────────┐           │
+│  │Opportun-│ │ Action  │           │
+│  │  ities  │ │  Plan   │           │
+│  └─────────┘ └─────────┘           │
+└─────────────────────────────────────┘
+```
+
+## Data Model
+
+```sql
+CREATE TABLE analyses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  brand_name VARCHAR(200) NOT NULL,
+  brand_domain VARCHAR(500) NOT NULL,
+  competitors JSONB NOT NULL,
+  industry VARCHAR(100),
+  peec_project_id VARCHAR(100),
+  status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE visibility_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  analysis_id UUID REFERENCES analyses(id),
+  brand_name VARCHAR(200),
+  is_own BOOLEAN DEFAULT false,
+  visibility FLOAT,
+  sentiment FLOAT,
+  position FLOAT,
+  share_of_voice FLOAT,
+  mention_count INT,
+  model_breakdown JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE opportunities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  analysis_id UUID REFERENCES analyses(id),
+  prompt_text TEXT,
+  score FLOAT,
+  category VARCHAR(20),
+  competitor_visibility FLOAT,
+  your_visibility FLOAT,
+  content_gap TEXT,
+  suggested_content_type VARCHAR(50),
+  suggested_action TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE action_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  analysis_id UUID REFERENCES analyses(id),
+  week_number INT,
+  actions JSONB,
+  expected_visibility_gain FLOAT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## API Design
+
+```
+POST   /api/analyses              — Create new analysis
+GET    /api/analyses/:id          — Get analysis results
+GET    /api/analyses/:id/score    — Get visibility scores
+GET    /api/analyses/:id/opps     — Get opportunity list
+GET    /api/analyses/:id/plan     — Get action plan
+POST   /api/analyses/:id/export   — Export report (PDF/MD)
 ```
 
 ## Core Features (MVP: 3)
 
-1. **Competitor Gap Analysis** — Your domain vs competitors, keyword gap visualization
-2. **Opportunity Finder** — AI identifies low-competition, high-volume keywords
-3. **Action Plan Generator** — Specific content strategy per opportunity
+1. **AI Visibility Score** — Your brand vs competitors across all AI models (ChatGPT, Perplexity, Gemini, Copilot). Data: `get_brands_report` with `model_id` dimension.
+2. **Opportunity Finder** — Find queries where competitors are visible but you're not. Scoring: competitor_visibility × 0.3 + gap × 0.3 + content_gap × 0.2 + volume × 0.2. Data: `get_urls_report` + `list_prompts`.
+3. **Action Plan Generator** — Claude API generates week-by-week content strategy per opportunity, with expected visibility gains.
 
-## Pages (3)
+## Pages (4)
 
-### Page 1: Setup
-- Input: own domain, up to 3 competitor domains, industry dropdown
-- One big "Analyze" button
+### Page 1: Onboarding (30-second setup)
+- Brand name + domain input
+- 1-3 competitor domain inputs
+- Industry selector
+- Big CTA: "Scan My AI Visibility"
 
-### Page 2: Opportunity Dashboard
-- Quick Wins (green) / Growth Opportunities (yellow) / Competitive (red)
-- Bar chart: You vs Competitors keyword coverage
-- Score: overall opportunity rating
+### Page 2: Visibility Dashboard
+- Large AI Visibility Score (0-1)
+- You vs Competitors comparison chart (radar or bar)
+- Breakdown by AI model
+- Trend line (if historical data available)
 
-### Page 3: Action Plan
-- Week-by-week content strategy
-- Per-keyword: target position, content type, estimated traffic gain
+### Page 3: Opportunities
+- Three-tier list: Quick Wins (green 8-10) / Growth (yellow 5-7) / Long-term (red 1-4)
+- Per opportunity: keyword, competitor status, your gap, suggested content type
+- Click to expand: view actual AI conversation (`get_chat_content`)
+
+### Page 4: Action Plan
+- Week-by-week content calendar
+- Per action: content to create, target URL type, expected visibility gain
 - Export as PDF / Markdown
+- "Share with team" button
+
+## Demo Script (90 seconds)
+
+```
+[0:00-0:10] Hook
+"Every time someone asks ChatGPT 'what's the best project management tool',
+ your competitor shows up. You don't. Let me show you how to fix that."
+
+[0:10-0:30] Onboarding
+- Type "Acme Tools" + acmetools.com
+- Add 2 competitor domains
+- Click "Scan My AI Visibility"
+
+[0:30-0:50] Visibility Dashboard
+- Show AI Visibility Score: 0.32 vs competitor 0.78
+- "You're invisible in 68% of relevant AI conversations"
+- Switch between AI models
+
+[0:50-1:10] Opportunities
+- Show 3 Quick Wins
+- Expand one: show AI conversation where competitor cited, you're absent
+- "This is the exact conversation where you're losing customers"
+
+[1:10-1:30] Action Plan
+- Show 4-week plan
+- "Week 1: Create these two pages, estimated +15% visibility"
+- Export as PDF
+```
 
 ## Risk Assessment
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Unfamiliar Peec AI API | Dev time increase | Must pre-research API before event |
-| Data quality unknown | Poor demo | Prepare mock data as fallback |
-| Track competition | Others build SEO tools too | Emphasize AI insights over dashboards |
+| Peec AI API instability | High | Mock data fallback ready |
+| Data collection needs time | Medium | Create project 2 days before event |
+| Track competition | Medium | Differentiate with AI-powered action plans |
+| MCP Server bugs | High | Prepare direct REST API fallback |
 
 ---
 
