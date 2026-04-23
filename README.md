@@ -11,13 +11,20 @@ Product designs and preparation for [Big Berlin Hack 2026](https://lu.ma/bigberl
 | Backup | Buena | **PropertyMind** | Property data → auto-updating Context Markdown File |
 | Wildcard | Free | **8 options** | See [product-designs.md](product-designs.md) |
 
+## Team
+
+| Role | Member | Focus |
+|------|--------|-------|
+| Product Manager | [@weijt606](https://github.com/weijt606) | Product design, Pitch, Dev (assist) |
+| Developer | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead) |
+
 ## Quick Links
 
 - [Product Designs](product-designs.md) — All product specs, architecture, wireframes, demo scripts
 - [Peec AI Guide](peec-ai-guide.md) — Peec AI API, MCP Server setup, data integration
 - [Tech Stack](product-designs.md#common-tech-stack) — Next.js + FastAPI + PostgreSQL + Claude API
 
-## My Stack
+## Tech Stack
 
 - **Frontend:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend:** FastAPI, Python 3.12, PostgreSQL 16, Redis 7
