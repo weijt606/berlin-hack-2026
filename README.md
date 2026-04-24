@@ -20,8 +20,9 @@ Product designs and preparation for [Big Berlin Hack 2026](https://lu.ma/bigberl
 
 ## Quick Links
 
-- [Product Designs](product-designs.md) — Track product specs (GrowthRadar, ContextSync, PropertyMind)
-- [Wildcard Designs](wildcard-designs.md) — 8 Wildcard project specs with full architecture + demo scripts
+- [Founder Visibility Agent](founder-visibility-agent.md) — Primary product: GEO copilot for founders (Peec AI Track)
+- [Product Designs](product-designs.md) — All track product specs (FVA, ContextSync, PropertyMind)
+- [Wildcard Designs](wildcard-designs.md) — 13 Wildcard project specs with full architecture + demo scripts
 - [Peec AI Guide](peec-ai-guide.md) — Peec AI API, MCP Server setup, data integration
 - [Tech Stack](product-designs.md#common-tech-stack) — Next.js + FastAPI + PostgreSQL + Claude API
 
