@@ -1,6 +1,6 @@
 # Wildcard Project Designs — Big Berlin Hack 2026
 
-[![中文](https://img.shields.io/badge/lang-中文-red)](https://github.com/weijt606/berlin-hack-2026) [![English](https://img.shields.io/badge/lang-English-blue)](#)
+[![中文](https://img.shields.io/badge/lang-中文-gray)](#) [![English](https://img.shields.io/badge/lang-English-blue)](#)
 
 > Backup options for the Wildcard track (free theme). Pick based on venue energy, team chemistry, and competition landscape.
 
