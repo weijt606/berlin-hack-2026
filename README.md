@@ -123,3 +123,7 @@ in `infrastructure/llm/llm.module.ts` — application code doesn't change.
   not the final entry. Use it to warm up with the stack the day before.
 - Docker images used here match the ones the hackathon instructions pre-pull, so the
   first `docker compose up` is instant on hackathon day.
+
+## Product Design Docs
+
+- [Pitch to Video](docs/pitch-to-video.md) — GTM in 60s: pitch → AI-optimized marketing video (Peec AI track)
