@@ -1,5 +1,7 @@
 # Product Designs — Big Berlin Hack 2026
 
+[![中文](https://img.shields.io/badge/lang-中文-red)](product-designs.zh.md) [![English](https://img.shields.io/badge/lang-English-blue)](#)
+
 > All product specs for hackathon. Pick based on track availability, team composition, and competition density.
 
 ---

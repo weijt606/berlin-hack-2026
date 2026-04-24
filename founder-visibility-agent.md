@@ -1,6 +1,6 @@
 # Founder Visibility Agent (Peec AI Track) — PRIMARY
 
-[![中文](https://img.shields.io/badge/lang-中文-gray)](#) [![English](https://img.shields.io/badge/lang-English-blue)](#)
+[![中文](https://img.shields.io/badge/lang-中文-red)](founder-visibility-agent.zh.md) [![English](https://img.shields.io/badge/lang-English-blue)](#)
 
 > Full Peec AI integration guide: [peec-ai-guide.md](peec-ai-guide.md)
 >
