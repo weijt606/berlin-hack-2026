@@ -4,19 +4,19 @@ Product designs and preparation for [Big Berlin Hack 2026](https://lu.ma/bigberl
 
 ## Project Ideas
 
-| Priority | Track | Product | One-liner |
-|----------|-------|---------|-----------|
-| Primary | Peec AI | **Founder Visibility Agent** | GEO copilot: find & own AI-search opportunities for founders |
-| Backup | Qontext | **ContextSync** | Multi-source data → structured context layer for AI agents |
-| Backup | Buena | **PropertyMind** | Property data → auto-updating Context Markdown File |
-| Wildcard | Free | **13 options** | See [wildcard-designs.md](wildcard-designs.md) |
+| Priority | Track   | Product                      | One-liner                                                    |
+| -------- | ------- | ---------------------------- | ------------------------------------------------------------ |
+| Primary  | Peec AI | **Founder Visibility Agent** | GEO copilot: find & own AI-search opportunities for founders |
+| Backup   | Qontext | **ContextSync**              | Multi-source data → structured context layer for AI agents   |
+| Backup   | Buena   | **PropertyMind**             | Property data → auto-updating Context Markdown File          |
+| Wildcard | Free    | **13 options**               | See [wildcard-designs.md](wildcard-designs.md)               |
 
 ## Team
 
-| Role | Member | Focus |
-|------|--------|-------|
-| Product Manager | [@weijt606](https://github.com/weijt606) | Product design, Pitch, Dev (assist) |
-| Developer | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead), Pitch |
+| Role            | Member                                     | Focus                                |
+| --------------- | ------------------------------------------ | ------------------------------------ |
+| Product Manager | [@weijt606](https://github.com/weijt606)   | Product design, Pitch, Dev (assist)  |
+| Developer       | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead), Pitch |
 
 ## Quick Links
 

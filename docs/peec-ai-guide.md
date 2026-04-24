@@ -10,13 +10,13 @@ Peec AI tracks brand visibility across AI answer engines (ChatGPT, Perplexity, G
 
 **Key Metrics:**
 
-| Metric | Description | Range |
-|--------|-------------|-------|
-| `visibility` | Brand presence in AI answers | 0-1 |
-| `sentiment` | AI's tone toward the brand | 0-100 |
-| `position` | Average rank in AI responses | Lower = better |
-| `share_of_voice` | Share of mentions in relevant topics | 0-1 |
-| `mention_count` | Total AI mentions | Integer |
+| Metric           | Description                          | Range          |
+| ---------------- | ------------------------------------ | -------------- |
+| `visibility`     | Brand presence in AI answers         | 0-1            |
+| `sentiment`      | AI's tone toward the brand           | 0-100          |
+| `position`       | Average rank in AI responses         | Lower = better |
+| `share_of_voice` | Share of mentions in relevant topics | 0-1            |
+| `mention_count`  | Total AI mentions                    | Integer        |
 
 ---
 
@@ -44,37 +44,37 @@ In Claude Code, ask: "list all my Peec AI projects" — should return project li
 
 ### Read Tools (17)
 
-| Tool | Purpose | Key Params |
-|------|---------|------------|
-| `list_projects` | Get all projects | — |
-| `list_brands` | Get brands in project | `project_id` |
-| `list_prompts` | Get monitored search queries | `project_id` |
-| `list_tags` | Get tags | `project_id` |
-| `list_topics` | Get topic categories | `project_id` |
-| `list_models` | Get AI model list | `project_id` |
-| `list_model_channels` | Get model channels | `project_id` |
-| `list_chats` | Get AI conversations | `project_id` |
-| `get_chat_content` | Get conversation details | `chat_id` |
-| `list_prompt_suggestions` | AI-suggested new queries | `project_id` |
-| `list_topic_suggestions` | AI-suggested new topics | `project_id` |
-| `get_brands_report` | Brand visibility report | `project_id`, dimensions, filters |
-| `get_domains_report` | Domain citation report | `project_id`, dimensions, filters |
-| `get_urls_report` | URL-level citation report | `project_id`, dimensions, filters |
-| `get_url_content` | Get URL content | `url_id` |
-| `search_queries` | Search query analysis | `project_id` |
-| `shopping_queries` | Shopping query analysis | `project_id` |
+| Tool                      | Purpose                      | Key Params                        |
+| ------------------------- | ---------------------------- | --------------------------------- |
+| `list_projects`           | Get all projects             | —                                 |
+| `list_brands`             | Get brands in project        | `project_id`                      |
+| `list_prompts`            | Get monitored search queries | `project_id`                      |
+| `list_tags`               | Get tags                     | `project_id`                      |
+| `list_topics`             | Get topic categories         | `project_id`                      |
+| `list_models`             | Get AI model list            | `project_id`                      |
+| `list_model_channels`     | Get model channels           | `project_id`                      |
+| `list_chats`              | Get AI conversations         | `project_id`                      |
+| `get_chat_content`        | Get conversation details     | `chat_id`                         |
+| `list_prompt_suggestions` | AI-suggested new queries     | `project_id`                      |
+| `list_topic_suggestions`  | AI-suggested new topics      | `project_id`                      |
+| `get_brands_report`       | Brand visibility report      | `project_id`, dimensions, filters |
+| `get_domains_report`      | Domain citation report       | `project_id`, dimensions, filters |
+| `get_urls_report`         | URL-level citation report    | `project_id`, dimensions, filters |
+| `get_url_content`         | Get URL content              | `url_id`                          |
+| `search_queries`          | Search query analysis        | `project_id`                      |
+| `shopping_queries`        | Shopping query analysis      | `project_id`                      |
 
 ### Write Tools (16)
 
-| Tool | Purpose |
-|------|---------|
-| `create_project` | Create new project |
-| `create_brand` | Add brand to track |
-| `create_prompt` | Add search query to monitor |
-| `create_tag` / `update_tag` / `delete_tag` | Tag CRUD |
-| `create_topic` / `update_topic` / `delete_topic` | Topic CRUD |
-| `update_project` / `update_brand` / `update_prompt` | Update operations |
-| `delete_project` / `delete_brand` / `delete_prompt` | Delete operations |
+| Tool                                                | Purpose                     |
+| --------------------------------------------------- | --------------------------- |
+| `create_project`                                    | Create new project          |
+| `create_brand`                                      | Add brand to track          |
+| `create_prompt`                                     | Add search query to monitor |
+| `create_tag` / `update_tag` / `delete_tag`          | Tag CRUD                    |
+| `create_topic` / `update_topic` / `delete_topic`    | Topic CRUD                  |
+| `update_project` / `update_brand` / `update_prompt` | Update operations           |
+| `delete_project` / `delete_brand` / `delete_prompt` | Delete operations           |
 
 ---
 
@@ -84,29 +84,29 @@ In Claude Code, ask: "list all my Peec AI projects" — should return project li
 
 Available for `get_brands_report`, `get_domains_report`, `get_urls_report`:
 
-| Dimension | Groups by |
-|-----------|-----------|
-| `prompt_id` | Search query |
-| `model_id` | AI model (ChatGPT/Perplexity/Gemini etc.) |
-| `model_channel_id` | Model channel |
-| `tag_id` | Tag |
-| `topic_id` | Topic |
-| `date` | Date |
-| `country_code` | Country |
-| `chat_id` | Conversation |
+| Dimension          | Groups by                                 |
+| ------------------ | ----------------------------------------- |
+| `prompt_id`        | Search query                              |
+| `model_id`         | AI model (ChatGPT/Perplexity/Gemini etc.) |
+| `model_channel_id` | Model channel                             |
+| `tag_id`           | Tag                                       |
+| `topic_id`         | Topic                                     |
+| `date`             | Date                                      |
+| `country_code`     | Country                                   |
+| `chat_id`          | Conversation                              |
 
 ### Domain Classifications
 
-| Type | Meaning |
-|------|---------|
-| `OWN` | Your own domains |
-| `CORPORATE` | Corporate domains |
-| `COMPETITOR` | Competitor domains |
-| `EDITORIAL` | Media/editorial content |
-| `REFERENCE` | Reference material |
-| `INSTITUTIONAL` | Institutional domains |
-| `UGC` | User-generated content |
-| `OTHER` | Uncategorized |
+| Type            | Meaning                 |
+| --------------- | ----------------------- |
+| `OWN`           | Your own domains        |
+| `CORPORATE`     | Corporate domains       |
+| `COMPETITOR`    | Competitor domains      |
+| `EDITORIAL`     | Media/editorial content |
+| `REFERENCE`     | Reference material      |
+| `INSTITUTIONAL` | Institutional domains   |
+| `UGC`           | User-generated content  |
+| `OTHER`         | Uncategorized           |
 
 ### URL Classifications
 
@@ -184,11 +184,11 @@ score = (
 
 Peec AI collects data via UI scraping — new projects need time to accumulate data.
 
-| Plan | Approach |
-|------|----------|
-| **A (Ideal)** | Create project 2-3 days before event, use real data |
+| Plan              | Approach                                                      |
+| ----------------- | ------------------------------------------------------------- |
+| **A (Ideal)**     | Create project 2-3 days before event, use real data           |
 | **B (Realistic)** | Use demo/sample data from Peec AI or sponsor-provided dataset |
-| **C (Fallback)** | Mock data matching exact Peec AI API response format |
+| **C (Fallback)**  | Mock data matching exact Peec AI API response format          |
 
 ---
 

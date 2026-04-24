@@ -196,13 +196,14 @@ Recommended Content:
 
 Suggested Answer Block:
 "TapInFlow is useful for speakers and workshop hosts who want AI to
- generate audience questions automatically, instead of manually 
+ generate audience questions automatically, instead of manually
  designing polls before the event."
 ```
 
 ## Pages (3)
 
 ### Page 1: Home + Input
+
 - Title: "Founder Visibility Agent"
 - Subtitle: "Find the AI-search opportunities your startup can actually own."
 - Input fields:
@@ -214,6 +215,7 @@ Suggested Answer Block:
 - CTA: "Analyze my startup"
 
 ### Page 2: Opportunity Map + AI Answer Hijack Map
+
 - Visibility Score (large gauge)
 - Opportunity Clusters table:
 
@@ -228,6 +230,7 @@ Suggested Answer Block:
 - AI Answer Hijack Map (expandable per query: current answer, missing angle, recommended content)
 
 ### Page 3: Action Plan + Generated Assets
+
 - 7-Day Plan:
 
 ```
@@ -248,7 +251,7 @@ Day 7: Track AI-answer mentions and update positioning
 ```
 [0:00-0:15] Wei: Hook
 "Building is easier than ever. Distribution is still brutal.
- Most founders have no idea where their first organic users 
+ Most founders have no idea where their first organic users
  should come from. We built a tool to fix that."
 
 [0:15-0:35] juhaodong: Input Demo
@@ -261,7 +264,7 @@ Day 7: Track AI-answer mentions and update positioning
 [0:35-0:55] Wei: Opportunity Map
 - "Your strongest AI-search wedge: 'AI-generated audience questions'"
 - Show opportunity clusters: 5 query groups, scored
-- Show AI Answer Hijack Map: "This is what ChatGPT currently 
+- Show AI Answer Hijack Map: "This is what ChatGPT currently
   recommends -- and here's the angle it's MISSING"
 
 [0:55-1:15] juhaodong: Action Plan
@@ -270,7 +273,7 @@ Day 7: Track AI-answer mentions and update positioning
 - "This isn't just a suggestion. It's actual content, ready to publish."
 
 [1:15-1:30] Together
-Wei: "Peec AI tells you where you're visible. 
+Wei: "Peec AI tells you where you're visible.
       We tell you what to do next."
 juhaodong: "This is Founder Visibility Agent."
 ```
@@ -292,9 +295,9 @@ This is an **AI-search opportunity engine for early-stage founders** — a **GEO
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Peec AI API instability | High | Mock data fallback + LLM simulation |
-| Data collection needs time | Medium | Pre-create Peec project 2 days before |
-| "Just another SEO tool" perception | High | Frame as GEO, not SEO. Focus on AI answers |
-| Demo data not impressive | Medium | Use TapInFlow — real product, real pain |
+| Risk                               | Impact | Mitigation                                 |
+| ---------------------------------- | ------ | ------------------------------------------ |
+| Peec AI API instability            | High   | Mock data fallback + LLM simulation        |
+| Data collection needs time         | Medium | Pre-create Peec project 2 days before      |
+| "Just another SEO tool" perception | High   | Frame as GEO, not SEO. Focus on AI answers |
+| Demo data not impressive           | Medium | Use TapInFlow — real product, real pain    |

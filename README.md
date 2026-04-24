@@ -5,13 +5,13 @@ MikroORM on Postgres, Kafka, and an Anthropic adapter wired behind a domain port
 
 ## Stack
 
-| Layer       | Tech                                                               |
-| ----------- | ------------------------------------------------------------------ |
-| Monorepo    | Nx 22                                                              |
-| API         | NestJS 11, MikroORM 6, `@anthropic-ai/sdk`, Zod env schema         |
-| Web         | React 19, Vite, Tailwind v4, shadcn/ui, React Router               |
-| Data / bus  | Postgres 17.4, Kafka 7.9 (Confluent), Karapace, Kafka UI           |
-| Tooling     | ESLint (+ layer boundaries), Prettier, Jest, Vitest                |
+| Layer      | Tech                                                       |
+| ---------- | ---------------------------------------------------------- |
+| Monorepo   | Nx 22                                                      |
+| API        | NestJS 11, MikroORM 6, `@anthropic-ai/sdk`, Zod env schema |
+| Web        | React 19, Vite, Tailwind v4, shadcn/ui, React Router       |
+| Data / bus | Postgres 17.4, Kafka 7.9 (Confluent), Karapace, Kafka UI   |
+| Tooling    | ESLint (+ layer boundaries), Prettier, Jest, Vitest        |
 
 ## Layout
 
@@ -71,16 +71,16 @@ browser works out of the box.
 
 ## Useful commands
 
-| Command                           | What it does                            |
-| --------------------------------- | --------------------------------------- |
-| `npm run dev:api`                 | Nest in watch mode                      |
-| `npm run dev:web`                 | Vite dev server                         |
-| `npm run build`                   | Build every project                     |
-| `npm run lint`                    | Lint every project (incl. layer rules)  |
-| `npm run typecheck`               | `tsc --build` for every project         |
-| `npm run test`                    | Run all unit tests                      |
-| `npm run docker:up` / `down`      | Start / stop the local stack            |
-| `npx nx graph`                    | Interactive dependency graph            |
+| Command                      | What it does                           |
+| ---------------------------- | -------------------------------------- |
+| `npm run dev:api`            | Nest in watch mode                     |
+| `npm run dev:web`            | Vite dev server                        |
+| `npm run build`              | Build every project                    |
+| `npm run lint`               | Lint every project (incl. layer rules) |
+| `npm run typecheck`          | `tsc --build` for every project        |
+| `npm run test`               | Run all unit tests                     |
+| `npm run docker:up` / `down` | Start / stop the local stack           |
+| `npx nx graph`               | Interactive dependency graph           |
 
 ## Adding a shadcn component
 

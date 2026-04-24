@@ -17,9 +17,7 @@ import { AppConfigService } from '../../config/app-config.service';
           password: config.postgres.password,
           dbName: config.postgres.database,
           entities: ['dist/apps/api/infrastructure/persistence/entities/*.js'],
-          entitiesTs: [
-            'apps/api/src/infrastructure/persistence/entities/*.ts',
-          ],
+          entitiesTs: ['apps/api/src/infrastructure/persistence/entities/*.ts'],
           extensions: [Migrator],
           debug: config.nodeEnv !== 'production',
         }),

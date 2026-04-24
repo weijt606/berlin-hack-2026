@@ -8,30 +8,30 @@
 
 ## Overview
 
-| ID | Product | One-liner | Demo Impact | Difficulty | Rating |
-|----|---------|-----------|-------------|------------|--------|
-| W1 | **PitchCoach** | Record your pitch → AI scores and coaches you | Very High | Low | ⭐⭐⭐⭐⭐ |
-| W2 | **AgentFlow** | Multi-agent task collaboration with live visualization | High | High | ⭐⭐⭐⭐ |
-| W3 | **DataStory** | Upload CSV → AI narrative + interactive charts | High | Medium | ⭐⭐⭐⭐ |
-| W4 | **ContextDocs** | GitHub repo → auto-generated CLAUDE.md | Medium | Low | ⭐⭐⭐ |
-| W5 | **MeetingMind** | Live meeting → decisions, action items, context | High | Medium | ⭐⭐⭐⭐ |
-| W6 | **FounderGPT** | AI co-pilot for solo founders: standup + priorities | High | Medium | ⭐⭐⭐⭐ |
-| W7 | **BerlinLens** | Explore Berlin neighborhoods with AI insights | High | High | ⭐⭐⭐ |
-| W8 | **ShipScope** | Paste URL → full competitive teardown | High | Medium | ⭐⭐⭐⭐ |
-| W9 | **VibeCheck** | GitHub repo → AI vs human code detection + vibe score | Very High | Medium | ⭐⭐⭐⭐⭐ |
-| W10 | **CostCutter** | Paste prompt → AI rewrites shorter, shows cost savings | High | Low | ⭐⭐⭐⭐ |
-| W11 | **HalluciWatch** | Paste AI text → per-sentence fact-check + hallucination index | Very High | Medium | ⭐⭐⭐⭐⭐ |
-| W12 | **MCPForge** | Describe API → auto-generate MCP Server + one-click install | Very High | Medium | ⭐⭐⭐⭐⭐ |
-| W13 | **Agent Mirror** | Your data → personal context layer that makes AI sound like you | Very High | Medium | ⭐⭐⭐⭐⭐ |
+| ID  | Product          | One-liner                                                       | Demo Impact | Difficulty | Rating     |
+| --- | ---------------- | --------------------------------------------------------------- | ----------- | ---------- | ---------- |
+| W1  | **PitchCoach**   | Record your pitch → AI scores and coaches you                   | Very High   | Low        | ⭐⭐⭐⭐⭐ |
+| W2  | **AgentFlow**    | Multi-agent task collaboration with live visualization          | High        | High       | ⭐⭐⭐⭐   |
+| W3  | **DataStory**    | Upload CSV → AI narrative + interactive charts                  | High        | Medium     | ⭐⭐⭐⭐   |
+| W4  | **ContextDocs**  | GitHub repo → auto-generated CLAUDE.md                          | Medium      | Low        | ⭐⭐⭐     |
+| W5  | **MeetingMind**  | Live meeting → decisions, action items, context                 | High        | Medium     | ⭐⭐⭐⭐   |
+| W6  | **FounderGPT**   | AI co-pilot for solo founders: standup + priorities             | High        | Medium     | ⭐⭐⭐⭐   |
+| W7  | **BerlinLens**   | Explore Berlin neighborhoods with AI insights                   | High        | High       | ⭐⭐⭐     |
+| W8  | **ShipScope**    | Paste URL → full competitive teardown                           | High        | Medium     | ⭐⭐⭐⭐   |
+| W9  | **VibeCheck**    | GitHub repo → AI vs human code detection + vibe score           | Very High   | Medium     | ⭐⭐⭐⭐⭐ |
+| W10 | **CostCutter**   | Paste prompt → AI rewrites shorter, shows cost savings          | High        | Low        | ⭐⭐⭐⭐   |
+| W11 | **HalluciWatch** | Paste AI text → per-sentence fact-check + hallucination index   | Very High   | Medium     | ⭐⭐⭐⭐⭐ |
+| W12 | **MCPForge**     | Describe API → auto-generate MCP Server + one-click install     | Very High   | Medium     | ⭐⭐⭐⭐⭐ |
+| W13 | **Agent Mirror** | Your data → personal context layer that makes AI sound like you | Very High   | Medium     | ⭐⭐⭐⭐⭐ |
 
 ---
 
 ## Team
 
-| Role | Member | Focus |
-|------|--------|-------|
-| Product Manager | [@weijt606](https://github.com/weijt606) | Product design, Pitch |
-| Developer | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead), Pitch |
+| Role            | Member                                     | Focus                                |
+| --------------- | ------------------------------------------ | ------------------------------------ |
+| Product Manager | [@weijt606](https://github.com/weijt606)   | Product design, Pitch                |
+| Developer       | [@juhaodong](https://github.com/juhaodong) | Full-stack development (lead), Pitch |
 
 ## Common Tech Stack
 
@@ -125,18 +125,21 @@ GET    /api/pitches/compare      — Before/After comparison
 ## Pages (3)
 
 ### Page 1: Record
+
 - Big red record button with timer
 - Live waveform visualization
 - Upload option for existing audio
 - "Analyze My Pitch" CTA
 
 ### Page 2: Analysis Dashboard
+
 - Overall score (large number, color-coded)
 - 4 dimension radar chart (Structure / Pacing / Hook / Clarity)
 - Transcript with color-coded highlights (green = strong, yellow = improve, red = weak)
 - Filler word counter ("um": 7, "like": 4)
 
 ### Page 3: Coaching
+
 - Per-section improvement suggestions
 - Side-by-side: original vs AI-rewritten version
 - "Key takeaway" summary at top
@@ -159,11 +162,11 @@ Wei & juhaodong 分工:
 [0:40-1:10] Wei: Analysis Walkthrough
 - Show scores: "Structure 8/10, but your pacing dropped at the halfway point"
 - Show filler words: "You said 'basically' 3 times"
-- Show AI coaching: "Your opening is strong. Consider adding a specific 
+- Show AI coaching: "Your opening is strong. Consider adding a specific
   number to your problem statement — 'We save teams 40 hours/month'"
 
 [1:10-1:30] Together
-juhaodong: "We built this in 36 hours — using PitchCoach to practice 
+juhaodong: "We built this in 36 hours — using PitchCoach to practice
             our own pitch."
 Wei: "This is PitchCoach — your personal pitch trainer."
 ```
@@ -183,10 +186,10 @@ Buffer (10h):   Sleep + meals + unexpected issues
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Whisper API latency | Demo delay | Pre-process backup audio, show loading animation |
-| Scoring consistency | Credibility | Test with 10+ sample pitches, calibrate prompt |
+| Risk                 | Impact      | Mitigation                                              |
+| -------------------- | ----------- | ------------------------------------------------------- |
+| Whisper API latency  | Demo delay  | Pre-process backup audio, show loading animation        |
+| Scoring consistency  | Credibility | Test with 10+ sample pitches, calibrate prompt          |
 | Live recording fails | Demo broken | Pre-recorded backup + "let me show you one we prepared" |
 
 ---
@@ -264,6 +267,7 @@ CREATE TABLE agent_steps (
 ## Pages (2)
 
 ### Page 1: Task Input + Canvas
+
 ```
 ┌──────────────────────────┬──────────────────┐
 │                          │                  │
@@ -282,6 +286,7 @@ CREATE TABLE agent_steps (
 ```
 
 ### Page 2: Result
+
 - Full merged report with section attributions
 - Agent performance stats (time, tokens)
 - "Run again with different agents" option
@@ -290,11 +295,11 @@ CREATE TABLE agent_steps (
 
 ```
 [0:00-0:15] Wei: Hook
-"What if you could give one task to an AI team — and watch them 
+"What if you could give one task to an AI team — and watch them
  figure it out together?"
 
 [0:15-0:50] juhaodong: Live Demo
-- Type: "Research Berlin's AI startup ecosystem and create an 
+- Type: "Research Berlin's AI startup ecosystem and create an
   investment briefing"
 - Orchestrator splits into 3 subtasks (animated on canvas)
 - Search Agent finds 12 sources (Tavily)
@@ -391,17 +396,20 @@ CREATE TABLE followups (
 ## Pages (3)
 
 ### Page 1: Upload
+
 - Drag & drop zone (CSV/Excel)
 - Data preview table (first 10 rows)
 - Column type detection summary
 - "Generate Insights" CTA
 
 ### Page 2: Insights
+
 - Narrative text with embedded interactive charts
 - Key findings cards (insight + confidence + supporting chart)
 - Column correlation heatmap
 
 ### Page 3: Chat
+
 - Chat interface for follow-up questions
 - Each answer comes with a chart if relevant
 - Conversation history sidebar
@@ -432,6 +440,7 @@ CREATE TABLE followups (
 ## Demo Data
 
 Use public Berlin datasets for local resonance with judges:
+
 - Berlin rent prices by neighborhood (2020-2026)
 - Berlin startup funding rounds
 - Public transit station usage statistics
@@ -468,11 +477,13 @@ Backend:   FastAPI + GitHub API (repo analysis) + Claude API (generation)
 ## Pages (2)
 
 ### Page 1: Input + Generation
+
 - URL input field
 - Real-time analysis progress (scanning files... analyzing patterns...)
 - Generated context preview
 
 ### Page 2: Editor
+
 - Monaco editor (left: edit, right: preview)
 - Section toggles (include/exclude sections)
 - One-click copy / download as .md
@@ -553,22 +564,27 @@ CREATE TABLE meeting_outputs (
 
 ```markdown
 # Meeting: Q2 Planning
+
 > Date: April 25, 2026 | Duration: 12 min | Participants: 3
 
 ## Decisions
+
 1. Launch new feature by May 15 — Owner: Alice
 2. Switch CI from Jenkins to GitHub Actions — Owner: Bob
 
 ## Action Items
+
 - [ ] Alice: Draft feature spec by Monday
 - [ ] Bob: Set up GitHub Actions pipeline
 - [ ] Wei: Prepare demo data for investor meeting
 
 ## Key Discussion Points
+
 - Budget approved for cloud migration (€5,000)
 - Hiring frozen until Q3
 
 ## Unresolved
+
 - Which cloud provider? (AWS vs GCP — decide next meeting)
 ```
 
@@ -653,17 +669,20 @@ CREATE TABLE weekly_retros (
 ## Pages (3)
 
 ### Page 1: Daily Standup
+
 - Chat interface: "What did you do yesterday?"
 - AI follow-up questions based on patterns
 - Energy level slider (1-5)
 
 ### Page 2: Dashboard
+
 - Priority matrix (Urgent/Important quadrant)
 - Burnout risk indicator (based on energy + work patterns)
 - Area balance chart (Tech / Product / Marketing / Ops)
 - "Neglected areas" alert
 
 ### Page 3: Weekly Retro
+
 - Auto-generated summary
 - Pattern insights ("You've spent 70% on backend, 0% on marketing")
 - Suggested focus shifts
@@ -679,8 +698,8 @@ CREATE TABLE weekly_retros (
 [0:15-0:50] juhaodong: Live Demo
 - Open daily standup
 - Type yesterday's work and today's plan
-- AI responds: "You've been on backend for 5 days straight. 
-  Your landing page hasn't been touched. Consider: is backend 
+- AI responds: "You've been on backend for 5 days straight.
+  Your landing page hasn't been touched. Consider: is backend
   the bottleneck, or are you avoiding the hard marketing work?"
 - Show energy level trending down
 
@@ -726,12 +745,14 @@ Data:      Public Berlin open data (rent, transit, demographics)
 ## Pages (2)
 
 ### Page 1: Map Explorer
+
 - Full-screen Berlin map with neighborhood overlays
 - Click neighborhood → side panel with AI profile
 - Color mode toggle (by rent / transit score / vibe)
 - Compare mode: select two neighborhoods side-by-side
 
 ### Page 2: Quiz
+
 - 5-question preference quiz (budget, commute, lifestyle, noise, green space)
 - AI recommendation: top 3 neighborhoods with scores and rationale
 - "Surprise me" random recommendation option
@@ -818,26 +839,32 @@ CREATE TABLE teardown_reports (
 # Competitive Teardown: competitor.com
 
 ## Value Proposition
+
 "AI-powered project management for remote teams"
 Strength: Clear, specific. Weakness: Crowded category.
 
 ## Pricing Strategy
+
 - Free: 3 projects | Pro: $12/user/mo | Enterprise: Custom
-Analysis: Standard SaaS ladder. No annual discount visible.
+  Analysis: Standard SaaS ladder. No annual discount visible.
 
 ## Target Audience
+
 Primary: Remote-first startups (10-50 employees)
 Signals: "remote", "async", "distributed" appear 14 times
 
 ## Tech Stack (detected)
+
 Next.js, Vercel, Stripe, Intercom, Segment
 
 ## SEO Analysis
+
 - Top keywords: "remote project management" (pos 7)
 - Content strategy: Blog-heavy, 2 posts/week
 - Missing: No comparison pages, no alternatives page
 
 ## Differentiation Opportunities
+
 1. They lack AI features — position yourself as "AI-native"
 2. No mobile app — mobile-first could win
 3. No Slack integration — low-hanging fruit
@@ -846,11 +873,13 @@ Next.js, Vercel, Stripe, Intercom, Segment
 ## Pages (2)
 
 ### Page 1: Input + Scan
+
 - URL input field (large, centered)
 - Real-time scan progress (scraping... analyzing... generating...)
 - Screenshot preview of target site
 
 ### Page 2: Report
+
 - Full teardown report with sections
 - Differentiation opportunities highlighted (green cards)
 - "Compare with my product" mode (input your URL for side-by-side)
@@ -946,17 +975,17 @@ CREATE TABLE file_analyses (
 
 ## AI Detection Signals
 
-| Signal | Description | Weight |
-|--------|-------------|--------|
-| Uniform comment style | AI tends to over-comment with consistent format | 0.15 |
-| Variable naming patterns | AI prefers descriptive, long names consistently | 0.10 |
-| Error handling uniformity | AI adds try/catch everywhere, same pattern | 0.15 |
-| Code structure regularity | AI code has suspiciously consistent structure | 0.15 |
-| Boilerplate ratio | High boilerplate-to-logic ratio | 0.10 |
-| Import organization | AI alphabetizes, groups perfectly every time | 0.05 |
-| Commit message patterns | "Add", "Update", "Fix" with consistent format | 0.10 |
-| Documentation density | AI-generated code has higher doc-to-code ratio | 0.10 |
-| Refactoring absence | AI code rarely refactors — it writes fresh | 0.10 |
+| Signal                    | Description                                     | Weight |
+| ------------------------- | ----------------------------------------------- | ------ |
+| Uniform comment style     | AI tends to over-comment with consistent format | 0.15   |
+| Variable naming patterns  | AI prefers descriptive, long names consistently | 0.10   |
+| Error handling uniformity | AI adds try/catch everywhere, same pattern      | 0.15   |
+| Code structure regularity | AI code has suspiciously consistent structure   | 0.15   |
+| Boilerplate ratio         | High boilerplate-to-logic ratio                 | 0.10   |
+| Import organization       | AI alphabetizes, groups perfectly every time    | 0.05   |
+| Commit message patterns   | "Add", "Update", "Fix" with consistent format   | 0.10   |
+| Documentation density     | AI-generated code has higher doc-to-code ratio  | 0.10   |
+| Refactoring absence       | AI code rarely refactors — it writes fresh      | 0.10   |
 
 ## Core Features (MVP: 3)
 
@@ -967,11 +996,13 @@ CREATE TABLE file_analyses (
 ## Pages (3)
 
 ### Page 1: Scan
+
 - GitHub URL input (large, centered)
 - Scan progress: "Analyzing 47 files... 12/47"
 - Quick stats preview during scan
 
 ### Page 2: Dashboard
+
 - Large Vibe Score gauge (0-100)
 - File tree heatmap (color = AI probability)
 - Pie chart: estimated human% vs AI%
@@ -979,6 +1010,7 @@ CREATE TABLE file_analyses (
 - Language breakdown bar chart
 
 ### Page 3: File Detail
+
 - Code viewer with line-by-line highlighting
 - Side panel: detected AI signals per line
 - "This looks AI because..." explanations
@@ -988,8 +1020,8 @@ CREATE TABLE file_analyses (
 
 ```
 [0:00-0:15] Wei: Hook
-"Half the code shipped today was written by AI. Your repo, your 
- teammate's repo, maybe even this hackathon's submissions. 
+"Half the code shipped today was written by AI. Your repo, your
+ teammate's repo, maybe even this hackathon's submissions.
  But how would you know? Let us show you."
 
 [0:15-0:40] juhaodong: Live Scan
@@ -1001,9 +1033,9 @@ CREATE TABLE file_analyses (
 [0:40-1:10] Wei: Deep Dive
 - Show file heatmap: "These files are clearly AI-generated"
 - Click a purple file → line-by-line highlights
-- "See this? Uniform try/catch blocks, over-commented, 
+- "See this? Uniform try/catch blocks, over-commented,
   suspiciously perfect variable names"
-- Click a green file → "This one? Messy, inconsistent, 
+- Click a green file → "This one? Messy, inconsistent,
   clearly human. And probably the most important file."
 
 [1:10-1:30] Together
@@ -1013,11 +1045,11 @@ Wei: "This is VibeCheck. How vibe-coded is YOUR repo?"
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Detection accuracy | Credibility | Focus on patterns, not certainty — "signals" not "proof" |
-| Large repos slow | Demo timeout | Limit scan to top 50 files by recent commits |
-| Controversial topic | Backlash | Frame as fun/educational, not judgmental |
+| Risk                | Impact       | Mitigation                                               |
+| ------------------- | ------------ | -------------------------------------------------------- |
+| Detection accuracy  | Credibility  | Focus on patterns, not certainty — "signals" not "proof" |
+| Large repos slow    | Demo timeout | Limit scan to top 50 files by recent commits             |
+| Controversial topic | Backlash     | Frame as fun/educational, not judgmental                 |
 
 ---
 
@@ -1081,14 +1113,14 @@ CREATE TABLE optimizations (
 
 ## Optimization Techniques
 
-| Technique | Typical Savings | Description |
-|-----------|----------------|-------------|
-| Remove redundancy | 15-30% | "Please" / "I want you to" / repeated instructions |
-| Compress examples | 20-40% | Reduce few-shot examples to minimal form |
-| System prompt extraction | 10-20% | Move static instructions to system prompt (cached) |
-| Output format tightening | 5-15% | "Reply in JSON" vs verbose format instructions |
-| Context pruning | 10-25% | Remove irrelevant context from the prompt |
-| Instruction merging | 5-10% | Combine overlapping instructions |
+| Technique                | Typical Savings | Description                                        |
+| ------------------------ | --------------- | -------------------------------------------------- |
+| Remove redundancy        | 15-30%          | "Please" / "I want you to" / repeated instructions |
+| Compress examples        | 20-40%          | Reduce few-shot examples to minimal form           |
+| System prompt extraction | 10-20%          | Move static instructions to system prompt (cached) |
+| Output format tightening | 5-15%           | "Reply in JSON" vs verbose format instructions     |
+| Context pruning          | 10-25%          | Remove irrelevant context from the prompt          |
+| Instruction merging      | 5-10%           | Combine overlapping instructions                   |
 
 ## Core Features (MVP: 3)
 
@@ -1099,12 +1131,14 @@ CREATE TABLE optimizations (
 ## Pages (2)
 
 ### Page 1: Input + Analysis
+
 - Large text area for prompt
 - Model selector (Claude Opus / Sonnet / Haiku / GPT-4o / Gemini)
 - Calls per month input (for savings calc)
 - "Optimize" button
 
 ### Page 2: Results
+
 - Side-by-side: Original vs Optimized (diff highlighted)
 - Token count comparison bar
 - Cost comparison: per-call and monthly
@@ -1127,7 +1161,7 @@ CREATE TABLE optimizations (
 
 [0:35-1:00] Wei: Savings Walkthrough
 - "Same prompt intent, 63% fewer tokens"
-- Show techniques: "Removed 3 redundant instructions, 
+- Show techniques: "Removed 3 redundant instructions,
   compressed 2 examples, tightened output format"
 - Monthly savings: "$142/month → $1,704/year"
 - Quality score: 0.98
@@ -1235,11 +1269,13 @@ Calculate Hallucination Index
 ## Pages (2)
 
 ### Page 1: Input
+
 - Large text area ("Paste AI-generated text here")
 - "Check for hallucinations" button
 - Example texts to try (pre-loaded)
 
 ### Page 2: Report
+
 - Hallucination Index gauge (0-100)
 - Stats bar: ✅ 12 verified / ⚠️ 3 unverified / ❌ 2 false
 - Full text with inline color highlighting
@@ -1251,7 +1287,7 @@ Calculate Hallucination Index
 ```
 [0:00-0:15] Wei: Hook
 "Ask any AI to write about your company. It'll sound perfect.
- But is it TRUE? 3 out of 10 facts in AI-generated text are 
+ But is it TRUE? 3 out of 10 facts in AI-generated text are
  wrong or unverifiable. Let us show you."
 
 [0:15-0:40] juhaodong: Live Demo
@@ -1268,17 +1304,17 @@ Calculate Hallucination Index
 
 [1:10-1:30] Together
 juhaodong: "We fact-checked this text in 15 seconds."
-Wei: "This is HalluciWatch — because AI should be trusted, 
+Wei: "This is HalluciWatch — because AI should be trusted,
       but verified."
 ```
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Tavily rate limits | Slow verification | Batch searches, cache results |
-| Verification accuracy | Wrong judgments | Show confidence scores, let users override |
-| Long texts slow | Demo delay | Limit to 500 words for demo, show progress |
+| Risk                  | Impact            | Mitigation                                 |
+| --------------------- | ----------------- | ------------------------------------------ |
+| Tavily rate limits    | Slow verification | Batch searches, cache results              |
+| Verification accuracy | Wrong judgments   | Show confidence scores, let users override |
+| Long texts slow       | Demo delay        | Limit to 500 words for demo, show progress |
 
 ---
 
@@ -1381,12 +1417,14 @@ Step 4: Package
 ## Pages (3)
 
 ### Page 1: Input
+
 - Tab switch: "Paste Text" / "API URL" / "OpenAPI Spec"
 - Large input area
 - "Generate MCP Server" button
 - Example APIs to try (Stripe, GitHub, Weather)
 
 ### Page 2: Code View
+
 - File tree (left sidebar)
 - Monaco editor (main area) with syntax highlighting
 - Generated tool list with descriptions
@@ -1394,6 +1432,7 @@ Step 4: Package
 - "Download ZIP" button
 
 ### Page 3: Test
+
 - Tool selector dropdown
 - Parameter inputs (auto-generated from tool schema)
 - "Run Tool" button → show response
@@ -1403,8 +1442,8 @@ Step 4: Package
 
 ```
 [0:00-0:15] Wei: Hook
-"There are 10,000 APIs and only 200 MCP servers. Every time you 
- want AI to use a new API, someone has to build a server from 
+"There are 10,000 APIs and only 200 MCP servers. Every time you
+ want AI to use a new API, someone has to build a server from
  scratch. What if it took 60 seconds?"
 
 [0:15-0:45] juhaodong: Live Demo
@@ -1421,18 +1460,18 @@ Step 4: Package
 - "A working MCP server, from docs to install, in 60 seconds"
 
 [1:10-1:30] Together
-juhaodong: "We used MCPForge to build the Peec AI MCP server 
+juhaodong: "We used MCPForge to build the Peec AI MCP server
             integration for our other project."
 Wei: "This is MCPForge — any API, one MCP server, 60 seconds."
 ```
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Generated code has bugs | Demo failure | Pre-test with 5 APIs, have backup generated servers |
-| Complex auth (OAuth) | Can't handle | Focus on API key auth, note OAuth as "coming soon" |
-| Large API specs | Slow generation | Limit to top 20 endpoints, let user select |
+| Risk                    | Impact          | Mitigation                                          |
+| ----------------------- | --------------- | --------------------------------------------------- |
+| Generated code has bugs | Demo failure    | Pre-test with 5 APIs, have backup generated servers |
+| Complex auth (OAuth)    | Can't handle    | Focus on API key auth, note OAuth as "coming soon"  |
+| Large API specs         | Slow generation | Limit to top 20 endpoints, let user select          |
 
 ---
 
@@ -1519,11 +1558,11 @@ CREATE TABLE comparisons (
 
 User provides a mix of personal data:
 
-| Source | What it reveals |
-|--------|----------------|
-| X/Twitter posts | Public voice, opinions, humor style |
-| Emails | Professional tone, decision-making |
-| Product ideas / notes | Taste, priorities, thinking patterns |
+| Source                   | What it reveals                              |
+| ------------------------ | -------------------------------------------- |
+| X/Twitter posts          | Public voice, opinions, humor style          |
+| Emails                   | Professional tone, decision-making           |
+| Product ideas / notes    | Taste, priorities, thinking patterns         |
 | Personal notes / journal | Values, what they care about, what they hate |
 
 ## Output: Personal Agent Context
@@ -1532,6 +1571,7 @@ User provides a mix of personal data:
 # Personal Agent Context: Wei
 
 ## Writing Style
+
 - Short, direct sentences. Rarely uses filler words.
 - Prefers bullet points over paragraphs.
 - Uses "→" for causation, not "therefore".
@@ -1539,40 +1579,47 @@ User provides a mix of personal data:
 - Default language: English for technical, Chinese for personal.
 
 ## Decision Style
+
 - Bias toward action over analysis. "Ship it, then iterate."
 - Values speed over perfection in early stages.
 - Defaults to "what's the simplest thing that works?"
 - Distrusts consensus — prefers one strong opinion.
 
 ## Product Taste
+
 - Loves developer tools and infrastructure.
 - Hates feature bloat. "If it needs a tutorial, it's too complex."
 - Values sharp positioning over broad appeal.
 - Believes distribution > product in early stage.
 
 ## Risk Preference
+
 - High tolerance for technical risk, low for market risk.
 - Will bet on unproven tech but not unproven demand.
 - Prefers reversible decisions made fast.
 
 ## Communication Rules
+
 - Reply within 24 hours, keep it under 5 sentences.
 - Never start with "I hope this email finds you well."
 - Use the person's first name. No "Dear Sir/Madam."
 - If saying no, say it in the first sentence.
 
 ## Things I Care About
+
 - Founder autonomy and self-reliance.
 - Clean, fast user experiences.
 - Honest communication without corporate speak.
 
 ## Things I Hate
+
 - Unnecessary meetings.
 - "Let's circle back" language.
 - Products that require sales calls to try.
 - Vague roadmaps.
 
 ## How to Reply Like Me
+
 - Start with the answer, then explain if needed.
 - Use concrete examples, not abstract principles.
 - If you disagree, state it directly with reasoning.
@@ -1588,18 +1635,21 @@ User provides a mix of personal data:
 ## Pages (3)
 
 ### Page 1: Input
+
 - 4 text areas: X Posts / Emails / Product Ideas / Personal Notes
 - Drag & drop for files
 - "Generate My Mirror" CTA
 - Minimum: at least 2 sources with 3+ entries each
 
 ### Page 2: Personal Context
+
 - Generated context document (full Markdown preview)
 - Edit inline (adjust any section)
 - "Copy as CLAUDE.md" / "Copy as system prompt" buttons
 - Confidence indicators per section
 
 ### Page 3: Mirror Test
+
 - Task input: "Reply to this investor email" / "Write a product announcement" / etc.
 - Side-by-side comparison:
   - Left: Generic AI response
@@ -1610,8 +1660,8 @@ User provides a mix of personal data:
 
 ```
 [0:00-0:15] Wei: Hook
-"Your AI assistant writes perfect emails. But they don't sound 
- like YOU. They sound like everyone else. What if your agent 
+"Your AI assistant writes perfect emails. But they don't sound
+ like YOU. They sound like everyone else. What if your agent
  could actually think and write like you?"
 
 [0:15-0:35] juhaodong: Input Demo
@@ -1627,10 +1677,10 @@ User provides a mix of personal data:
 
 [0:55-1:20] Both: The Mirror Test
 - Task: "Reply to this investor email asking for a meeting"
-- Left (Generic): "Thank you for reaching out. I would be delighted 
+- Left (Generic): "Thank you for reaching out. I would be delighted
   to schedule a meeting at your earliest convenience..."
-- Right (Mirror): "Hey [name], interested. Tuesday 3pm works. 
-  Here's what I'm building: [one line]. If that's not your 
+- Right (Mirror): "Hey [name], interested. Tuesday 3pm works.
+  Here's what I'm building: [one line]. If that's not your
   thesis, no worries — happy to reconnect later."
 - "Same task. One sounds like a template. One sounds like me."
 
@@ -1641,11 +1691,11 @@ User provides a mix of personal data:
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Not enough input data | Weak context | Provide example templates, lower minimum to 2 sources |
-| Context feels generic | Demo falls flat | Use real founder data for demo, show specific quirks |
-| Privacy concerns | Audience pushback | Frame as local-only, no data stored, copy-paste your context |
+| Risk                  | Impact            | Mitigation                                                   |
+| --------------------- | ----------------- | ------------------------------------------------------------ |
+| Not enough input data | Weak context      | Provide example templates, lower minimum to 2 sources        |
+| Context feels generic | Demo falls flat   | Use real founder data for demo, show specific quirks         |
+| Privacy concerns      | Audience pushback | Frame as local-only, no data stored, copy-paste your context |
 
 ---
 
@@ -1681,6 +1731,7 @@ At the venue, evaluate:
 ```
 
 **Top Picks for 2-person team:**
+
 1. **W12 (MCPForge)** — rides the MCP wave, every judge uses AI coding tools
 2. **W11 (HalluciWatch)** — AI safety angle, strong visual demo
 3. **W9 (VibeCheck)** — most entertaining, viral potential

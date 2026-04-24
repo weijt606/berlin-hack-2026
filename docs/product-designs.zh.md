@@ -8,12 +8,12 @@
 
 ## 方案总览
 
-| 优先级 | 赛道 | 产品名 | 一句话 | 奖品 |
-|--------|------|--------|--------|------|
-| 🥇 首选 | Peec AI | **Founder Visibility Agent** | GEO 执行副驾：帮创始人发现并占领 AI 搜索机会 | €2,500 |
-| 🥈 备选 | Qontext | **ContextSync** | 企业多源数据 → 结构化上下文层，让任何 AI Agent 即插即用 | 金条 + 私人晚餐 |
-| 🥈 备选 | Buena | **PropertyMind** | 房产多源数据 → 自动更新的 Context Markdown File | €2,500 |
-| 🔄 Wildcard | 自由 | **13 个备选** | 见 [wildcard-designs.zh.md](wildcard-designs.zh.md) | 直接晋级决赛 |
+| 优先级      | 赛道    | 产品名                       | 一句话                                                  | 奖品            |
+| ----------- | ------- | ---------------------------- | ------------------------------------------------------- | --------------- |
+| 🥇 首选     | Peec AI | **Founder Visibility Agent** | GEO 执行副驾：帮创始人发现并占领 AI 搜索机会            | €2,500          |
+| 🥈 备选     | Qontext | **ContextSync**              | 企业多源数据 → 结构化上下文层，让任何 AI Agent 即插即用 | 金条 + 私人晚餐 |
+| 🥈 备选     | Buena   | **PropertyMind**             | 房产多源数据 → 自动更新的 Context Markdown File         | €2,500          |
+| 🔄 Wildcard | 自由    | **13 个备选**                | 见 [wildcard-designs.zh.md](wildcard-designs.zh.md)     | 直接晋级决赛    |
 
 ---
 
@@ -191,16 +191,16 @@ class TimelineEvent(Base):
 
 ## 开发计划（36h）
 
-| 时段 | 任务 | 产出 |
-|------|------|------|
-| 0-2h | 选题确认 + 模板启动 + CLAUDE.md | 项目骨架 |
-| 2-5h | 数据模型 + API + 数据接入 | 后端能接收数据 |
-| 5-9h | AI 提取逻辑 + Context Document 生成 | 核心功能跑通 |
-| 9-13h | 前端 Dashboard + Context 预览 | UI 基本成型 |
-| 13-17h | Agent Chat + 实时更新 | 全流程可演示 |
-| 17-21h | 睡眠 4h + 早餐 | — |
-| 21-25h | UI 打磨 + Demo 数据 | Demo-ready |
-| 25-27h | Feature Freeze + 排练 | 提交 |
+| 时段   | 任务                                | 产出           |
+| ------ | ----------------------------------- | -------------- |
+| 0-2h   | 选题确认 + 模板启动 + CLAUDE.md     | 项目骨架       |
+| 2-5h   | 数据模型 + API + 数据接入           | 后端能接收数据 |
+| 5-9h   | AI 提取逻辑 + Context Document 生成 | 核心功能跑通   |
+| 9-13h  | 前端 Dashboard + Context 预览       | UI 基本成型    |
+| 13-17h | Agent Chat + 实时更新               | 全流程可演示   |
+| 17-21h | 睡眠 4h + 早餐                      | —              |
+| 21-25h | UI 打磨 + Demo 数据                 | Demo-ready     |
+| 25-27h | Feature Freeze + 排练               | 提交           |
 
 ---
 
@@ -222,13 +222,13 @@ PropertyMind 为每个房产自动生成和维护一份 Context Markdown File—
 
 ## 与 ContextSync 的差异
 
-| 维度 | ContextSync（Qontext） | PropertyMind（Buena） |
-|------|----------------------|---------------------|
-| 范围 | 通用企业 | 垂直房产 |
-| 实体类型 | People, Projects, Issues | Properties, Tenants, Contracts, Repairs |
-| 数据源 | 邮件/CRM/工单/聊天 | ERP/邮件/Slack/PDF 合同 |
-| 输出 | 企业级 Context Layer | 每个房产一个 Markdown File |
-| Demo 数据 | 模拟企业数据 | 模拟柏林房产数据 |
+| 维度      | ContextSync（Qontext）   | PropertyMind（Buena）                   |
+| --------- | ------------------------ | --------------------------------------- |
+| 范围      | 通用企业                 | 垂直房产                                |
+| 实体类型  | People, Projects, Issues | Properties, Tenants, Contracts, Repairs |
+| 数据源    | 邮件/CRM/工单/聊天       | ERP/邮件/Slack/PDF 合同                 |
+| 输出      | 企业级 Context Layer     | 每个房产一个 Markdown File              |
+| Demo 数据 | 模拟企业数据             | 模拟柏林房产数据                        |
 
 ## Context File 示例
 
@@ -236,27 +236,32 @@ PropertyMind 为每个房产自动生成和维护一份 Context Markdown File—
 # Kastanienallee 42, 10435 Berlin
 
 ## Property Overview
+
 - **Type**: Residential, 3-bedroom apartment
 - **Size**: 85 m² | **Floor**: 3rd | **Built**: 1920
 - **Monthly Rent**: €1,200 (cold) + €200 (utilities)
 - **Status**: Occupied
 
 ## Current Tenant
+
 - **Name**: Maria Schmidt
 - **Since**: 2024-03-01
 - **Contract**: Unlimited, 3-month notice
 - **Payment Status**: ✅ All payments on time
 
 ## Maintenance History
+
 - 2026-04-10: Heating repair (completed, €340)
 - 2026-02-15: Window replacement (pending)
 - 2025-11-20: Kitchen renovation (completed, €2,100)
 
 ## Open Actions
+
 - [ ] Window replacement — contractor booked May 5
 - [ ] Noise complaint — pending response
 
 ## Financial Summary (2026 YTD)
+
 - Rental Income: €4,800 | Maintenance: €340 | Net: €4,460
 ```
 
@@ -269,6 +274,7 @@ PropertyMind 为每个房产自动生成和维护一份 Context Markdown File—
 ## Demo 脚本差异
 
 与 ContextSync 结构相同，但用柏林房产数据演示：
+
 - "This property at Kastanienallee 42 has data scattered across ERP, email, and Slack..."
 - 上传 PDF 租赁合同 → 自动提取租户、租金、合同期限
 - Agent: "When is the next maintenance scheduled for this property?"
