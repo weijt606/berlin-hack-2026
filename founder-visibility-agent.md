@@ -1,5 +1,7 @@
 # Founder Visibility Agent (Peec AI Track) — PRIMARY
 
+[![中文](https://img.shields.io/badge/lang-中文-red)](https://github.com/weijt606/berlin-hack-2026) [![English](https://img.shields.io/badge/lang-English-blue)](#)
+
 > Full Peec AI integration guide: [peec-ai-guide.md](peec-ai-guide.md)
 >
 > **Tagline:** From zero traffic to owned AI-search territory.
