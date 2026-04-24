@@ -6,10 +6,10 @@ Product designs and preparation for [Big Berlin Hack 2026](https://lu.ma/bigberl
 
 | Priority | Track | Product | One-liner |
 |----------|-------|---------|-----------|
-| Primary | Peec AI | **GrowthRadar** | AI search visibility → growth opportunity radar for startups |
+| Primary | Peec AI | **Founder Visibility Agent** | GEO copilot: find & own AI-search opportunities for founders |
 | Backup | Qontext | **ContextSync** | Multi-source data → structured context layer for AI agents |
 | Backup | Buena | **PropertyMind** | Property data → auto-updating Context Markdown File |
-| Wildcard | Free | **8 options** | See [product-designs.md](product-designs.md) |
+| Wildcard | Free | **13 options** | See [wildcard-designs.md](wildcard-designs.md) |
 
 ## Team
 

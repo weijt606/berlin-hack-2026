@@ -16,6 +16,11 @@
 | W6 | **FounderGPT** | AI co-pilot for solo founders: standup + priorities | High | Medium | ⭐⭐⭐⭐ |
 | W7 | **BerlinLens** | Explore Berlin neighborhoods with AI insights | High | High | ⭐⭐⭐ |
 | W8 | **ShipScope** | Paste URL → full competitive teardown | High | Medium | ⭐⭐⭐⭐ |
+| W9 | **VibeCheck** | GitHub repo → AI vs human code detection + vibe score | Very High | Medium | ⭐⭐⭐⭐⭐ |
+| W10 | **CostCutter** | Paste prompt → AI rewrites shorter, shows cost savings | High | Low | ⭐⭐⭐⭐ |
+| W11 | **HalluciWatch** | Paste AI text → per-sentence fact-check + hallucination index | Very High | Medium | ⭐⭐⭐⭐⭐ |
+| W12 | **MCPForge** | Describe API → auto-generate MCP Server + one-click install | Very High | Medium | ⭐⭐⭐⭐⭐ |
+| W13 | **Agent Mirror** | Your data → personal context layer that makes AI sound like you | Very High | Medium | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -873,27 +878,798 @@ Next.js, Vercel, Stripe, Intercom, Segment
 
 ---
 
+# W9: VibeCheck ⭐⭐⭐⭐⭐
+
+**GitHub repo → AI detects whether code is human-written or AI-generated.**
+
+## Why It Wins
+
+- **Topical**: Vibe coding is the hottest debate in dev culture right now
+- **Entertaining**: Judges will want to scan their own repos — instant engagement
+- **Provocative**: "Is your codebase more AI than human?" sparks conversation
+- **Demo gold**: Scan a famous repo live → audience reacts to the score
+
+## Pitch
+
+> "Half the code being shipped today was written by AI. But nobody talks about it. VibeCheck scans any GitHub repo and tells you exactly how much was vibe-coded — line by line."
+
+## Architecture
+
+```
+┌──────────────────────────────────────┐
+│  Frontend (Next.js)                  │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ URL Input │  │ Results View    │  │
+│  │           │  │ Vibe Score +    │  │
+│  │           │  │ File Heatmap +  │  │
+│  │           │  │ Code Highlights │  │
+│  └─────┬─────┘  └──────┬──────────┘  │
+└────────┼───────────────┼─────────────┘
+         ▼               ▲
+┌──────────────────────────────────────┐
+│  Backend (FastAPI)                    │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ GitHub   │  │ Claude API      │  │
+│  │ API      │→ │ Pattern Detect  │  │
+│  │ (clone)  │  │ + Scoring       │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+```
+
+## Data Model
+
+```sql
+CREATE TABLE scans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  repo_url TEXT NOT NULL,
+  repo_name VARCHAR(300),
+  total_files INT,
+  total_lines INT,
+  vibe_score FLOAT,  -- 0-100, higher = more AI-generated
+  language_breakdown JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE file_analyses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id UUID REFERENCES scans(id),
+  file_path TEXT,
+  language VARCHAR(50),
+  line_count INT,
+  ai_probability FLOAT,  -- 0-1
+  signals JSONB,  -- [{line, signal_type, confidence, explanation}]
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## AI Detection Signals
+
+| Signal | Description | Weight |
+|--------|-------------|--------|
+| Uniform comment style | AI tends to over-comment with consistent format | 0.15 |
+| Variable naming patterns | AI prefers descriptive, long names consistently | 0.10 |
+| Error handling uniformity | AI adds try/catch everywhere, same pattern | 0.15 |
+| Code structure regularity | AI code has suspiciously consistent structure | 0.15 |
+| Boilerplate ratio | High boilerplate-to-logic ratio | 0.10 |
+| Import organization | AI alphabetizes, groups perfectly every time | 0.05 |
+| Commit message patterns | "Add", "Update", "Fix" with consistent format | 0.10 |
+| Documentation density | AI-generated code has higher doc-to-code ratio | 0.10 |
+| Refactoring absence | AI code rarely refactors — it writes fresh | 0.10 |
+
+## Core Features (MVP: 3)
+
+1. **Repo Scanner** — Paste GitHub URL → clone, analyze file-by-file with Claude API pattern detection
+2. **Vibe Score Dashboard** — Overall score (0-100), file heatmap (green=human, purple=AI), language breakdown
+3. **Line-by-Line Evidence** — Click any file → highlighted lines with AI signal explanations
+
+## Pages (3)
+
+### Page 1: Scan
+- GitHub URL input (large, centered)
+- Scan progress: "Analyzing 47 files... 12/47"
+- Quick stats preview during scan
+
+### Page 2: Dashboard
+- Large Vibe Score gauge (0-100)
+- File tree heatmap (color = AI probability)
+- Pie chart: estimated human% vs AI%
+- Top 5 "most AI" files and "most human" files
+- Language breakdown bar chart
+
+### Page 3: File Detail
+- Code viewer with line-by-line highlighting
+- Side panel: detected AI signals per line
+- "This looks AI because..." explanations
+- Compare with repo average
+
+## Demo Script (90 seconds)
+
+```
+[0:00-0:15] Wei: Hook
+"Half the code shipped today was written by AI. Your repo, your 
+ teammate's repo, maybe even this hackathon's submissions. 
+ But how would you know? Let us show you."
+
+[0:15-0:40] juhaodong: Live Scan
+- Paste a well-known open-source repo URL
+- Scan runs: "Analyzing 47 files..."
+- Vibe Score appears: "73 — This repo is mostly vibe-coded"
+- Audience reacts
+
+[0:40-1:10] Wei: Deep Dive
+- Show file heatmap: "These files are clearly AI-generated"
+- Click a purple file → line-by-line highlights
+- "See this? Uniform try/catch blocks, over-commented, 
+  suspiciously perfect variable names"
+- Click a green file → "This one? Messy, inconsistent, 
+  clearly human. And probably the most important file."
+
+[1:10-1:30] Together
+juhaodong: "We scanned our own hackathon code — Vibe Score: 89."
+Wei: "This is VibeCheck. How vibe-coded is YOUR repo?"
+```
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Detection accuracy | Credibility | Focus on patterns, not certainty — "signals" not "proof" |
+| Large repos slow | Demo timeout | Limit scan to top 50 files by recent commits |
+| Controversial topic | Backlash | Frame as fun/educational, not judgmental |
+
+---
+
+# W10: CostCutter ⭐⭐⭐⭐
+
+**Paste your AI prompt → AI rewrites it shorter, shows real-time cost savings.**
+
+## Why It Wins
+
+- **Universal pain point**: Everyone using AI APIs worries about cost
+- **Instant gratification**: Paste → see money saved immediately
+- **Technically simple**: Text processing + token counting + AI rewrite
+- **Hackathon meta**: Judges are spending money on AI right now
+
+## Pitch
+
+> "Your last Claude call cost $0.47. CostCutter rewrites your prompt to get the same result for $0.08 — and shows you exactly how much you'll save per month."
+
+## Architecture
+
+```
+┌──────────────────────────────────────┐
+│  Frontend (Next.js)                  │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ Prompt   │  │ Results View     │  │
+│  │ Input    │  │ Original vs      │  │
+│  │ (large)  │  │ Optimized +      │  │
+│  │          │  │ Cost Comparison  │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+         ▼               ▲
+┌──────────────────────────────────────┐
+│  Backend (FastAPI)                    │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ tiktoken │  │ Claude API      │  │
+│  │ (count)  │→ │ Rewrite +       │  │
+│  │          │  │ Quality Check   │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+```
+
+## Data Model
+
+```sql
+CREATE TABLE optimizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  original_prompt TEXT NOT NULL,
+  optimized_prompt TEXT,
+  original_tokens INT,
+  optimized_tokens INT,
+  token_reduction_pct FLOAT,
+  model VARCHAR(50),  -- claude-opus-4/gpt-4o/etc
+  original_cost_usd FLOAT,
+  optimized_cost_usd FLOAT,
+  monthly_savings_usd FLOAT,  -- based on calls_per_month input
+  quality_score FLOAT,  -- 0-1 how well optimized matches original intent
+  techniques_applied JSONB,  -- [{technique, tokens_saved, description}]
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## Optimization Techniques
+
+| Technique | Typical Savings | Description |
+|-----------|----------------|-------------|
+| Remove redundancy | 15-30% | "Please" / "I want you to" / repeated instructions |
+| Compress examples | 20-40% | Reduce few-shot examples to minimal form |
+| System prompt extraction | 10-20% | Move static instructions to system prompt (cached) |
+| Output format tightening | 5-15% | "Reply in JSON" vs verbose format instructions |
+| Context pruning | 10-25% | Remove irrelevant context from the prompt |
+| Instruction merging | 5-10% | Combine overlapping instructions |
+
+## Core Features (MVP: 3)
+
+1. **Token Counter** — Paste prompt → instant token count + cost for each model (Claude/GPT/Gemini pricing table)
+2. **Smart Rewrite** — AI rewrites prompt applying all optimization techniques, shows before/after diff
+3. **Savings Calculator** — Input calls/month → show monthly & yearly savings, with breakdown by technique
+
+## Pages (2)
+
+### Page 1: Input + Analysis
+- Large text area for prompt
+- Model selector (Claude Opus / Sonnet / Haiku / GPT-4o / Gemini)
+- Calls per month input (for savings calc)
+- "Optimize" button
+
+### Page 2: Results
+- Side-by-side: Original vs Optimized (diff highlighted)
+- Token count comparison bar
+- Cost comparison: per-call and monthly
+- Techniques applied (expandable cards with explanation)
+- Quality score: "99% — meaning preserved"
+- "Copy optimized prompt" button
+
+## Demo Script (75 seconds)
+
+```
+[0:00-0:10] Wei: Hook
+"Your AI API bill last month? Probably higher than you expected.
+ What if you could cut it by 60% — without changing the output?"
+
+[0:10-0:35] juhaodong: Live Demo
+- Paste a real, verbose system prompt (200+ tokens)
+- Select "Claude Opus" + "1000 calls/month"
+- Click "Optimize"
+- Side-by-side appears: 847 tokens → 312 tokens
+
+[0:35-1:00] Wei: Savings Walkthrough
+- "Same prompt intent, 63% fewer tokens"
+- Show techniques: "Removed 3 redundant instructions, 
+  compressed 2 examples, tightened output format"
+- Monthly savings: "$142/month → $1,704/year"
+- Quality score: 0.98
+
+[1:00-1:15] Together
+"This is CostCutter — same output, 60% cheaper."
+```
+
+---
+
+# W11: HalluciWatch ⭐⭐⭐⭐⭐
+
+**Paste any AI-generated text → per-sentence fact-check with hallucination index.**
+
+## Why It Wins
+
+- **AI safety angle**: Judges reward responsibility-focused projects
+- **Universal need**: Everyone who uses AI worries about hallucination
+- **Visual demo**: Red/yellow/green highlighting is immediately understandable
+- **Timely**: AI trust is THE topic of 2026
+
+## Pitch
+
+> "AI writes beautifully. But is it true? HalluciWatch checks every sentence against real sources and tells you exactly what's verified, what's questionable, and what's made up."
+
+## Architecture
+
+```
+┌──────────────────────────────────────┐
+│  Frontend (Next.js)                  │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ Text     │  │ Results View     │  │
+│  │ Input    │  │ Highlighted Text │  │
+│  │ (paste)  │  │ + Source Cards   │  │
+│  │          │  │ + Halluci Index  │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+         ▼               ▲
+┌──────────────────────────────────────┐
+│  Backend (FastAPI)                    │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ Claude   │  │ Tavily API      │  │
+│  │ API      │← │ (fact search)   │  │
+│  │ (split + │→ │                 │  │
+│  │  judge)  │  │                 │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+```
+
+## Data Model
+
+```sql
+CREATE TABLE checks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  input_text TEXT NOT NULL,
+  hallucination_index FLOAT,  -- 0-100, higher = more hallucination
+  total_claims INT,
+  verified_count INT,
+  unverified_count INT,
+  false_count INT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE claims (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  check_id UUID REFERENCES checks(id),
+  sentence TEXT,
+  claim_text TEXT,
+  status VARCHAR(20),  -- verified / unverified / false / opinion
+  confidence FLOAT,
+  sources JSONB,  -- [{url, title, relevant_excerpt}]
+  explanation TEXT,
+  sentence_index INT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## Verification Pipeline
+
+```
+Input Text
+  ↓
+Claude API: Split into claims
+  → "Berlin has 3.7 million residents" (factual claim)
+  → "It's a great city" (opinion — skip)
+  → "The startup ecosystem grew 40% in 2025" (factual claim)
+  ↓
+Per claim: Tavily search for verification
+  → Search: "Berlin population 2026"
+  → Found: 3.85M → CLOSE BUT INACCURATE
+  ↓
+Claude API: Judge each claim
+  → Verified ✅ / Unverified ⚠️ / False ❌ / Opinion 💭
+  ↓
+Calculate Hallucination Index
+  → (false × 1.0 + unverified × 0.5) / total_claims × 100
+```
+
+## Core Features (MVP: 3)
+
+1. **Claim Extraction** — AI splits text into individual factual claims, filters out opinions
+2. **Source Verification** — Tavily searches each claim, Claude judges accuracy against found sources
+3. **Hallucination Report** — Color-coded text (green/yellow/red), per-claim sources, overall index score
+
+## Pages (2)
+
+### Page 1: Input
+- Large text area ("Paste AI-generated text here")
+- "Check for hallucinations" button
+- Example texts to try (pre-loaded)
+
+### Page 2: Report
+- Hallucination Index gauge (0-100)
+- Stats bar: ✅ 12 verified / ⚠️ 3 unverified / ❌ 2 false
+- Full text with inline color highlighting
+- Click any sentence → expand with sources + explanation
+- "Trust score" per paragraph
+
+## Demo Script (90 seconds)
+
+```
+[0:00-0:15] Wei: Hook
+"Ask any AI to write about your company. It'll sound perfect.
+ But is it TRUE? 3 out of 10 facts in AI-generated text are 
+ wrong or unverifiable. Let us show you."
+
+[0:15-0:40] juhaodong: Live Demo
+- Paste a ChatGPT-generated article about a real topic
+- Click "Check for hallucinations"
+- Processing: "Extracting claims... 14 found... Verifying..."
+- Results appear: text lights up green/yellow/red
+
+[0:40-1:10] Wei: Report Walkthrough
+- Hallucination Index: 28 — "Nearly 1 in 3 claims are problematic"
+- Click a red sentence: "This statistic doesn't exist in any source"
+- Click a green sentence: "Verified by 3 independent sources"
+- Click yellow: "Close but inaccurate — actual number is different"
+
+[1:10-1:30] Together
+juhaodong: "We fact-checked this text in 15 seconds."
+Wei: "This is HalluciWatch — because AI should be trusted, 
+      but verified."
+```
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Tavily rate limits | Slow verification | Batch searches, cache results |
+| Verification accuracy | Wrong judgments | Show confidence scores, let users override |
+| Long texts slow | Demo delay | Limit to 500 words for demo, show progress |
+
+---
+
+# W12: MCPForge ⭐⭐⭐⭐⭐
+
+**Describe any API in natural language → auto-generate a complete MCP Server.**
+
+## Why It Wins
+
+- **Perfect timing**: MCP is the infrastructure layer of 2026 AI — everyone's building MCP servers
+- **Developer audience**: Every judge and participant uses Claude Code / Cursor
+- **Technically impressive**: Code generation + working output in one step
+- **Practical value**: People will want to use this AFTER the hackathon
+
+## Pitch
+
+> "There are 10,000 APIs in the world and only 200 MCP servers. MCPForge turns any API documentation into a working MCP server — in 60 seconds. Paste the docs, get the server, install it."
+
+## Architecture
+
+```
+┌──────────────────────────────────────┐
+│  Frontend (Next.js)                  │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ API Desc │  │ Generated Code   │  │
+│  │ Input    │  │ Monaco Editor +  │  │
+│  │ (text or │  │ File Tree +      │  │
+│  │  URL)    │  │ Install Command  │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+         ▼               ▲
+┌──────────────────────────────────────┐
+│  Backend (FastAPI)                    │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ Tavily   │  │ Claude API      │  │
+│  │ (fetch   │→ │ Code Generation │  │
+│  │  docs)   │  │ + Validation    │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+```
+
+## Data Model
+
+```sql
+CREATE TABLE generations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  api_name VARCHAR(200),
+  input_type VARCHAR(20),  -- 'text' | 'url' | 'openapi'
+  input_content TEXT,
+  detected_endpoints JSONB,  -- [{method, path, description, params}]
+  generated_code TEXT,
+  tool_count INT,
+  install_command TEXT,
+  npm_package_name VARCHAR(200),
+  status VARCHAR(20),  -- generating / validating / ready / error
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE generated_tools (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  generation_id UUID REFERENCES generations(id),
+  tool_name VARCHAR(100),
+  description TEXT,
+  parameters JSONB,
+  source_endpoint TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## Generation Pipeline
+
+```
+Input (API description / URL / OpenAPI spec)
+  ↓
+Step 1: Parse API structure
+  → Claude API: Extract endpoints, params, auth, response formats
+  ↓
+Step 2: Generate MCP Server code
+  → index.ts (MCP server entry point)
+  → tools/ (one file per tool)
+  → types.ts (TypeScript types from API responses)
+  → package.json + tsconfig.json
+  ↓
+Step 3: Validate
+  → TypeScript type check
+  → MCP protocol compliance check
+  ↓
+Step 4: Package
+  → Generate install command:
+    claude mcp add --transport stdio {name} -- npx -y {package}
+  → Download as zip / publish to npm (stretch goal)
+```
+
+## Core Features (MVP: 3)
+
+1. **API Parser** — Paste docs URL, raw text, or OpenAPI spec → AI extracts all endpoints with params and auth
+2. **Code Generator** — Auto-generate complete MCP server: index.ts, tools, types, package.json — viewable in Monaco editor
+3. **One-Click Install** — Copy install command for Claude Code, download as zip, or test tools inline
+
+## Pages (3)
+
+### Page 1: Input
+- Tab switch: "Paste Text" / "API URL" / "OpenAPI Spec"
+- Large input area
+- "Generate MCP Server" button
+- Example APIs to try (Stripe, GitHub, Weather)
+
+### Page 2: Code View
+- File tree (left sidebar)
+- Monaco editor (main area) with syntax highlighting
+- Generated tool list with descriptions
+- Install command (copyable)
+- "Download ZIP" button
+
+### Page 3: Test
+- Tool selector dropdown
+- Parameter inputs (auto-generated from tool schema)
+- "Run Tool" button → show response
+- Verify the generated server actually works
+
+## Demo Script (90 seconds)
+
+```
+[0:00-0:15] Wei: Hook
+"There are 10,000 APIs and only 200 MCP servers. Every time you 
+ want AI to use a new API, someone has to build a server from 
+ scratch. What if it took 60 seconds?"
+
+[0:15-0:45] juhaodong: Live Demo
+- Paste Hacker News API docs URL
+- Click "Generate MCP Server"
+- Watch: "Parsing... 5 endpoints found... Generating tools..."
+- Code appears: index.ts, 5 tool files, types, package.json
+- Show file tree: clean, professional structure
+
+[0:45-1:10] Wei: Walkthrough + Test
+- Show generated tool: "get_top_stories" with parameters
+- Copy install command
+- Click "Test" → run get_top_stories → real data returns
+- "A working MCP server, from docs to install, in 60 seconds"
+
+[1:10-1:30] Together
+juhaodong: "We used MCPForge to build the Peec AI MCP server 
+            integration for our other project."
+Wei: "This is MCPForge — any API, one MCP server, 60 seconds."
+```
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Generated code has bugs | Demo failure | Pre-test with 5 APIs, have backup generated servers |
+| Complex auth (OAuth) | Can't handle | Focus on API key auth, note OAuth as "coming soon" |
+| Large API specs | Slow generation | Limit to top 20 endpoints, let user select |
+
+---
+
+# W13: Agent Mirror ⭐⭐⭐⭐⭐
+
+**A personal context layer that makes your AI agent sound, decide, and work like you.**
+
+## Why It Wins
+
+- **Deep insight**: Not another chatbot — it's about identity and AI personalization
+- **Emotional demo**: Side-by-side "generic AI" vs "your AI" is immediately compelling
+- **Philosophical edge**: Judges remember projects that make them think
+- **Narrative fit**: Connects to the agent-as-extension-of-self trend in 2026
+
+## Pitch
+
+> "Your AI agent should not just know you. It should become more like you. Agent Mirror learns your writing style, decision patterns, and product taste — then generates a personal context layer that makes any AI agent sound like you."
+
+## Architecture
+
+```
+┌──────────────────────────────────────┐
+│  Frontend (Next.js)                  │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ Data     │  │ Context Preview  │  │
+│  │ Upload   │  │ + Side-by-Side   │  │
+│  │ (posts,  │  │ Comparison       │  │
+│  │  emails, │  │ Generic vs You   │  │
+│  │  notes)  │  │                  │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+         ▼               ▲
+┌──────────────────────────────────────┐
+│  Backend (FastAPI)                    │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ Content  │  │ Claude API      │  │
+│  │ Parser   │→ │ Style Analysis  │  │
+│  │          │  │ + Context Gen   │  │
+│  └──────────┘  └──────────────────┘  │
+└──────────────────────────────────────┘
+```
+
+## Data Model
+
+```sql
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(200),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE input_sources (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id UUID REFERENCES profiles(id),
+  source_type VARCHAR(50),  -- x_posts / email / notes / product_idea
+  content TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE personal_contexts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id UUID REFERENCES profiles(id),
+  context_markdown TEXT,  -- the generated Personal Agent Context
+  writing_style JSONB,
+  decision_style JSONB,
+  product_taste JSONB,
+  risk_preference JSONB,
+  communication_rules JSONB,
+  version INT DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE comparisons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id UUID REFERENCES profiles(id),
+  task_prompt TEXT,
+  generic_response TEXT,
+  mirrored_response TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## Input Sources
+
+User provides a mix of personal data:
+
+| Source | What it reveals |
+|--------|----------------|
+| X/Twitter posts | Public voice, opinions, humor style |
+| Emails | Professional tone, decision-making |
+| Product ideas / notes | Taste, priorities, thinking patterns |
+| Personal notes / journal | Values, what they care about, what they hate |
+
+## Output: Personal Agent Context
+
+```markdown
+# Personal Agent Context: Wei
+
+## Writing Style
+- Short, direct sentences. Rarely uses filler words.
+- Prefers bullet points over paragraphs.
+- Uses "→" for causation, not "therefore".
+- Occasional dry humor. Never uses emojis in professional contexts.
+- Default language: English for technical, Chinese for personal.
+
+## Decision Style
+- Bias toward action over analysis. "Ship it, then iterate."
+- Values speed over perfection in early stages.
+- Defaults to "what's the simplest thing that works?"
+- Distrusts consensus — prefers one strong opinion.
+
+## Product Taste
+- Loves developer tools and infrastructure.
+- Hates feature bloat. "If it needs a tutorial, it's too complex."
+- Values sharp positioning over broad appeal.
+- Believes distribution > product in early stage.
+
+## Risk Preference
+- High tolerance for technical risk, low for market risk.
+- Will bet on unproven tech but not unproven demand.
+- Prefers reversible decisions made fast.
+
+## Communication Rules
+- Reply within 24 hours, keep it under 5 sentences.
+- Never start with "I hope this email finds you well."
+- Use the person's first name. No "Dear Sir/Madam."
+- If saying no, say it in the first sentence.
+
+## Things I Care About
+- Founder autonomy and self-reliance.
+- Clean, fast user experiences.
+- Honest communication without corporate speak.
+
+## Things I Hate
+- Unnecessary meetings.
+- "Let's circle back" language.
+- Products that require sales calls to try.
+- Vague roadmaps.
+
+## How to Reply Like Me
+- Start with the answer, then explain if needed.
+- Use concrete examples, not abstract principles.
+- If you disagree, state it directly with reasoning.
+- End with a clear next step, never "let me know your thoughts."
+```
+
+## Core Features (MVP: 3)
+
+1. **Data Ingestion** — Paste X posts, emails, notes, product ideas → AI analyzes patterns across all sources
+2. **Context Generation** — Generate structured Personal Agent Context (Markdown) with 8 dimensions
+3. **Mirror Comparison** — Same task prompt → side-by-side: generic ChatGPT vs Agent Mirror response
+
+## Pages (3)
+
+### Page 1: Input
+- 4 text areas: X Posts / Emails / Product Ideas / Personal Notes
+- Drag & drop for files
+- "Generate My Mirror" CTA
+- Minimum: at least 2 sources with 3+ entries each
+
+### Page 2: Personal Context
+- Generated context document (full Markdown preview)
+- Edit inline (adjust any section)
+- "Copy as CLAUDE.md" / "Copy as system prompt" buttons
+- Confidence indicators per section
+
+### Page 3: Mirror Test
+- Task input: "Reply to this investor email" / "Write a product announcement" / etc.
+- Side-by-side comparison:
+  - Left: Generic AI response
+  - Right: Agent Mirror response (using your context)
+- Difference highlights
+
+## Demo Script (90 seconds)
+
+```
+[0:00-0:15] Wei: Hook
+"Your AI assistant writes perfect emails. But they don't sound 
+ like YOU. They sound like everyone else. What if your agent 
+ could actually think and write like you?"
+
+[0:15-0:35] juhaodong: Input Demo
+- Paste 5 X posts, 2 emails, a product idea, personal notes
+- Click "Generate My Mirror"
+- Personal Agent Context appears
+
+[0:35-0:55] Wei: Context Walkthrough
+- "Writing style: short, direct, no filler"
+- "Decision style: ship first, iterate later"
+- "Things I hate: unnecessary meetings, vague roadmaps"
+- "It captured ME — from just a few pieces of content"
+
+[0:55-1:20] Both: The Mirror Test
+- Task: "Reply to this investor email asking for a meeting"
+- Left (Generic): "Thank you for reaching out. I would be delighted 
+  to schedule a meeting at your earliest convenience..."
+- Right (Mirror): "Hey [name], interested. Tuesday 3pm works. 
+  Here's what I'm building: [one line]. If that's not your 
+  thesis, no worries — happy to reconnect later."
+- "Same task. One sounds like a template. One sounds like me."
+
+[1:10-1:30] Together
+"This is Agent Mirror. Your agent should not just know you.
+ It should become more like you."
+```
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Not enough input data | Weak context | Provide example templates, lower minimum to 2 sources |
+| Context feels generic | Demo falls flat | Use real founder data for demo, show specific quirks |
+| Privacy concerns | Audience pushback | Frame as local-only, no data stored, copy-paste your context |
+
+---
+
 # Decision Tree
 
 ```
 At the venue, evaluate:
 
+├── Want to ride the 2026 AI infrastructure wave?
+│     └── W12 (MCPForge) — MCP is THE hot topic
+│
 ├── Want maximum demo impact with minimal risk?
-│     └── W1 (PitchCoach) — meta, simple tech, strong stage presence
+│     └── W1 (PitchCoach) — meta, simple tech
+│         or W10 (CostCutter) — instant savings, simple build
+│
+├── Want AI safety / responsibility angle?
+│     └── W11 (HalluciWatch) — judges reward responsible AI
+│
+├── Want viral / entertaining demo?
+│     └── W9 (VibeCheck) — "scan your repo" = instant engagement
 │
 ├── Want to showcase AI agent expertise?
 │     └── W2 (AgentFlow) — impressive but complex
 │
 ├── Want to leverage data science background?
-│     └── W3 (DataStory) — Berlin data, instant wow
-│         or W8 (ShipScope) — any URL, instant analysis
-│
-├── Want the fastest build (lowest risk)?
-│     └── W4 (ContextDocs) — simple pipeline, dev-friendly
-│
-├── Want strong live interaction on stage?
-│     └── W1 (PitchCoach) — record on stage
-│         or W5 (MeetingMind) — talk on stage
+│     └── W3 (DataStory) or W8 (ShipScope)
 │
 ├── Want founder/startup angle?
 │     └── W6 (FounderGPT) — personal, relatable
@@ -902,4 +1678,7 @@ At the venue, evaluate:
       └── W7 (BerlinLens) — every judge lives here
 ```
 
-**Top Pick for 2-person team: W1 (PitchCoach)** — low complexity, high demo impact, meta-hackathon angle, clear PM/Dev split.
+**Top Picks for 2-person team:**
+1. **W12 (MCPForge)** — rides the MCP wave, every judge uses AI coding tools
+2. **W11 (HalluciWatch)** — AI safety angle, strong visual demo
+3. **W9 (VibeCheck)** — most entertaining, viral potential

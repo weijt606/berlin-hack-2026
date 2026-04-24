@@ -8,7 +8,7 @@
 
 | Priority | Track | Product | One-liner | Prize |
 |----------|-------|---------|-----------|-------|
-| 🥇 Primary | Peec AI | **GrowthRadar** | AI search visibility → growth opportunity radar for startups | €2,500 |
+| 🥇 Primary | Peec AI | **Founder Visibility Agent** | GEO copilot: find & own AI-search opportunities before competitors | €2,500 |
 | 🥈 Backup | Qontext | **ContextSync** | Multi-source data → structured context layer for any AI agent | Gold bar + dinner |
 | 🥈 Backup | Buena | **PropertyMind** | Property data → auto-updating Context Markdown File | €2,500 |
 | 🔄 Wildcard 1 | Free | **PitchCoach** | Record your pitch → AI scores and coaches you in real-time | Finals qualification |
@@ -19,6 +19,10 @@
 | 🔄 Wildcard 6 | Free | **FounderGPT** | AI co-pilot for solo founders: daily standup, priorities, blockers | Finals qualification |
 | 🔄 Wildcard 7 | Free | **BerlinLens** | Explore Berlin neighborhoods with AI-powered local insights | Finals qualification |
 | 🔄 Wildcard 8 | Free | **ShipScope** | Paste a landing page URL → AI generates full competitive teardown | Finals qualification |
+| 🔄 Wildcard 9 | Free | **VibeCheck** | GitHub repo → AI vs human code detection + vibe coding score | Finals qualification |
+| 🔄 Wildcard 10 | Free | **CostCutter** | Paste prompt → AI rewrites shorter, shows cost savings | Finals qualification |
+| 🔄 Wildcard 11 | Free | **HalluciWatch** | Paste AI text → per-sentence fact-check + hallucination index | Finals qualification |
+| 🔄 Wildcard 12 | Free | **MCPForge** | Describe API → auto-generate MCP Server + one-click install | Finals qualification |
 
 ---
 
@@ -378,114 +382,141 @@ Same structure as ContextSync, but with Berlin property data:
 
 ---
 
-# 🥇 GrowthRadar (Peec AI Track) — PRIMARY
+# 🥇 Founder Visibility Agent (Peec AI Track) — PRIMARY
 
 > Full Peec AI integration guide: [peec-ai-guide.md](peec-ai-guide.md)
+>
+> **Tagline:** From zero traffic to owned AI-search territory.
 
 ## Problem
 
-Every time someone asks ChatGPT "what's the best [product]", your competitor shows up. You don't. Early-stage startups are invisible in AI search — and they don't even know it.
+Vibe coding made it easy to build products. But most solo founders still die in distribution. They don't know:
+
+1. **Who should discover me?** — Who is my ideal user searching for?
+2. **What would they ask?** — What queries do they type into ChatGPT / Perplexity / Google?
+3. **How can I become the answer?** — How do I get into those AI responses?
+
+The next SEO battlefield is not Google ranking — it's AI answers. Peec AI tracks this. We turn it into execution.
 
 ## Solution
 
-GrowthRadar scans your brand's AI search visibility using Peec AI data, identifies where competitors outrank you, and generates a week-by-week action plan to own those conversations.
+Founder Visibility Agent takes a startup URL + competitors as input, generates an AI-search opportunity map, and outputs a concrete 7-day organic growth plan with auto-generated content assets.
+
+**Peec AI provides the visibility layer. We provide the founder execution layer.**
 
 ## Pitch
 
-> "We built a growth radar that shows startups exactly where they're invisible in AI search — and generates a week-by-week action plan to own those conversations."
+> "Vibe coding made building easy. Distribution is still brutal. Founder Visibility Agent finds the AI-search opportunities your startup can actually own — and tells you exactly what to create this week."
 
 ## Architecture
 
 ```
+Startup URL + Description + Competitors
+  ↓
 ┌─────────────────────────────────────┐
-│         User Onboarding             │
-│  - Brand name / domain              │
-│  - Up to 3 competitors              │
-│  - Industry / keywords              │
+│  Step 1: Startup Profiler           │
+│  Homepage extraction → AI analysis  │
+│  → Product category, audience,      │
+│    use cases, positioning angle     │
 └──────────────┬──────────────────────┘
                ▼
 ┌─────────────────────────────────────┐
-│       Peec AI MCP Server            │
+│  Step 2: Prompt Discovery           │
+│  Generate user queries:             │
+│  - Informational prompts            │
+│  - Commercial investigation         │
+│  - Comparison / alternative prompts │
+│  - Problem-aware prompts            │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│  Step 3: Peec AI Visibility Layer   │
 │  ┌─────────┐ ┌───────────┐         │
-│  │ Brands  │ │ Prompts   │         │
+│  │ Brands  │ │ Domains   │         │
 │  │ Report  │ │ Report    │         │
 │  └────┬────┘ └─────┬─────┘         │
 │  ┌────┴────┐ ┌─────┴─────┐         │
-│  │ Domains │ │   URLs    │         │
-│  │ Report  │ │  Report   │         │
-│  └────┬────┘ └─────┬─────┘         │
-└───────┼────────────┼────────────────┘
-        ▼            ▼
-┌─────────────────────────────────────┐
-│       AI Analysis Engine            │
-│  Claude API (Opus 4.6)              │
-│  - Visibility gap analysis          │
-│  - Competitor benchmarking          │
-│  - Opportunity scoring              │
-│  - Action plan generation           │
+│  │  URLs   │ │  Chats    │         │
+│  │ Report  │ │ Content   │         │
+│  └─────────┘ └───────────┘         │
 └──────────────┬──────────────────────┘
                ▼
 ┌─────────────────────────────────────┐
-│         Frontend (Next.js)          │
-│  ┌─────────┐ ┌─────────┐           │
-│  │Visibility│ │Competitor│           │
-│  │ Score   │ │  Map    │           │
-│  └─────────┘ └─────────┘           │
-│  ┌─────────┐ ┌─────────┐           │
-│  │Opportun-│ │ Action  │           │
-│  │  ities  │ │  Plan   │           │
-│  └─────────┘ └─────────┘           │
+│  Step 4: Opportunity Scoring        │
+│  Score = Intent × Relevance ×      │
+│  Weak Competition × Content Gap ×   │
+│  Founder Fit                        │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│  Step 5: Action Generation          │
+│  - 7-day growth plan                │
+│  - Auto-generated content assets    │
+│  - Founder execution board          │
 └─────────────────────────────────────┘
 ```
 
 ## Data Model
 
 ```sql
-CREATE TABLE analyses (
+CREATE TABLE startups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  brand_name VARCHAR(200) NOT NULL,
-  brand_domain VARCHAR(500) NOT NULL,
-  competitors JSONB NOT NULL,
-  industry VARCHAR(100),
-  peec_project_id VARCHAR(100),
-  status VARCHAR(20) DEFAULT 'pending',
+  url TEXT NOT NULL,
+  name VARCHAR(200),
+  description TEXT,
+  target_users TEXT,
+  competitors JSONB,  -- [{name, url}]
+  product_category VARCHAR(200),
+  positioning_angle TEXT,
+  use_cases JSONB,
+  region VARCHAR(50) DEFAULT 'global',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE visibility_snapshots (
+CREATE TABLE opportunity_maps (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  analysis_id UUID REFERENCES analyses(id),
-  brand_name VARCHAR(200),
-  is_own BOOLEAN DEFAULT false,
-  visibility FLOAT,
-  sentiment FLOAT,
-  position FLOAT,
-  share_of_voice FLOAT,
-  mention_count INT,
-  model_breakdown JSONB,
+  startup_id UUID REFERENCES startups(id),
+  visibility_score FLOAT,  -- overall 0-100
+  total_opportunities INT,
+  high_opportunities INT,
+  medium_opportunities INT,
+  low_opportunities INT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE opportunities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  analysis_id UUID REFERENCES analyses(id),
-  prompt_text TEXT,
+  map_id UUID REFERENCES opportunity_maps(id),
+  cluster VARCHAR(200),  -- "AI audience engagement", "Mentimeter alternative"
+  example_query TEXT,
+  user_intent VARCHAR(20),  -- high / medium / low
+  difficulty VARCHAR(20),  -- high / medium / low
+  why_you_can_win TEXT,
+  current_ai_answer TEXT,  -- what AI currently recommends
+  missing_angle TEXT,  -- your opportunity
   score FLOAT,
-  category VARCHAR(20),
-  competitor_visibility FLOAT,
-  your_visibility FLOAT,
-  content_gap TEXT,
-  suggested_content_type VARCHAR(50),
-  suggested_action TEXT,
+  category VARCHAR(20),  -- high_opportunity / medium / low
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE action_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  analysis_id UUID REFERENCES analyses(id),
-  week_number INT,
-  actions JSONB,
-  expected_visibility_gain FLOAT,
+  map_id UUID REFERENCES opportunity_maps(id),
+  day_number INT,
+  action TEXT,
+  content_type VARCHAR(50),  -- landing_page / comparison / x_thread / reddit / faq
+  target_query TEXT,
+  priority VARCHAR(20),  -- now / this_week / later
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE generated_assets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  map_id UUID REFERENCES opportunity_maps(id),
+  asset_type VARCHAR(50),  -- landing_page / comparison_page / faq_block / x_thread / reddit_post
+  title TEXT,
+  content TEXT,
+  target_query TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
@@ -493,81 +524,162 @@ CREATE TABLE action_plans (
 ## API Design
 
 ```
-POST   /api/analyses              — Create new analysis
-GET    /api/analyses/:id          — Get analysis results
-GET    /api/analyses/:id/score    — Get visibility scores
-GET    /api/analyses/:id/opps     — Get opportunity list
-GET    /api/analyses/:id/plan     — Get action plan
-POST   /api/analyses/:id/export   — Export report (PDF/MD)
+POST   /api/startups              — Submit startup for analysis
+GET    /api/startups/:id          — Get startup profile
+GET    /api/startups/:id/map      — Get opportunity map
+GET    /api/startups/:id/opps     — Get opportunity list
+GET    /api/startups/:id/plan     — Get 7-day action plan
+GET    /api/startups/:id/assets   — Get generated content assets
+POST   /api/startups/:id/export   — Export full report (PDF/MD)
 ```
 
-## Core Features (MVP: 3)
-
-1. **AI Visibility Score** — Your brand vs competitors across all AI models (ChatGPT, Perplexity, Gemini, Copilot). Data: `get_brands_report` with `model_id` dimension.
-2. **Opportunity Finder** — Find queries where competitors are visible but you're not. Scoring: competitor_visibility × 0.3 + gap × 0.3 + content_gap × 0.2 + volume × 0.2. Data: `get_urls_report` + `list_prompts`.
-3. **Action Plan Generator** — Claude API generates week-by-week content strategy per opportunity, with expected visibility gains.
-
-## Pages (4)
-
-### Page 1: Onboarding (30-second setup)
-- Brand name + domain input
-- 1-3 competitor domain inputs
-- Industry selector
-- Big CTA: "Scan My AI Visibility"
-
-### Page 2: Visibility Dashboard
-- Large AI Visibility Score (0-1)
-- You vs Competitors comparison chart (radar or bar)
-- Breakdown by AI model
-- Trend line (if historical data available)
-
-### Page 3: Opportunities
-- Three-tier list: Quick Wins (green 8-10) / Growth (yellow 5-7) / Long-term (red 1-4)
-- Per opportunity: keyword, competitor status, your gap, suggested content type
-- Click to expand: view actual AI conversation (`get_chat_content`)
-
-### Page 4: Action Plan
-- Week-by-week content calendar
-- Per action: content to create, target URL type, expected visibility gain
-- Export as PDF / Markdown
-- "Share with team" button
-
-## Demo Script (90 seconds)
+## Opportunity Scoring
 
 ```
-[0:00-0:10] Hook
-"Every time someone asks ChatGPT 'what's the best project management tool',
- your competitor shows up. You don't. Let me show you how to fix that."
+Opportunity Score = User Intent × Relevance × Weak Competition × Content Gap × Founder Fit
 
-[0:10-0:30] Onboarding
-- Type "Acme Tools" + acmetools.com
-- Add 2 competitor domains
-- Click "Scan My AI Visibility"
+| Factor           | Meaning                                              |
+|------------------|------------------------------------------------------|
+| User Intent      | Is the user close to buying when asking this?        |
+| Relevance        | Is this query strongly related to your product?      |
+| Weak Competition | Have competitors NOT yet dominated this answer?      |
+| Content Gap      | Do you lack content for this query?                  |
+| Founder Fit      | Can the founder credibly create content here?        |
 
-[0:30-0:50] Visibility Dashboard
-- Show AI Visibility Score: 0.32 vs competitor 0.78
-- "You're invisible in 68% of relevant AI conversations"
-- Switch between AI models
-
-[0:50-1:10] Opportunities
-- Show 3 Quick Wins
-- Expand one: show AI conversation where competitor cited, you're absent
-- "This is the exact conversation where you're losing customers"
-
-[1:10-1:30] Action Plan
-- Show 4-week plan
-- "Week 1: Create these two pages, estimated +15% visibility"
-- Export as PDF
+Output:
+- High Opportunity → build content NOW
+- Medium Opportunity → test with social posts
+- Low Opportunity → monitor later
 ```
+
+## Core Features (MVP: 5)
+
+1. **Startup Profiler** — Input URL + description → AI extracts category, audience, use cases, positioning
+2. **Prompt Discovery** — Generate 20+ queries users would ask AI about your product space
+3. **Visibility Gap Analyzer** — Per query: do we have content? Are competitors there? Can we win?
+4. **Content Action Generator** — Not just titles — generate actual assets: landing pages, comparison pages, FAQ blocks, X threads, Reddit posts
+5. **Founder Execution Board** — Tasks split into Now / This Week / Later with content type tags
+
+## AI Answer Hijack Map (Hero Feature)
+
+The standout feature. Traditional SEO = rank on Google. GEO = get into AI answers.
+
+**For each query, show:**
+
+```
+Query: "What is the best tool to make a workshop interactive?"
+
+Current AI Answer: Mentimeter, Slido, Miro, Kahoot
+
+Missing Angle: AI-generated audience questions before and during session
+
+Recommended Content:
+"How to make workshops interactive with AI-generated live questions"
+
+Suggested Answer Block:
+"TapInFlow is useful for speakers and workshop hosts who want AI to
+ generate audience questions automatically, instead of manually 
+ designing polls before the event."
+```
+
+## Pages (3)
+
+### Page 1: Home + Input
+- Title: "Founder Visibility Agent"
+- Subtitle: "Find the AI-search opportunities your startup can actually own."
+- Input fields:
+  - Startup URL
+  - One-line description
+  - Target customer
+  - Competitors (up to 3)
+  - Region (Global / US / Europe / Germany)
+- CTA: "Analyze my startup"
+
+### Page 2: Opportunity Map + AI Answer Hijack Map
+- Visibility Score (large gauge)
+- Opportunity Clusters table:
+
+```
+| Cluster                  | Example Query                              | Intent | Difficulty | Why You Can Win                    |
+|--------------------------|--------------------------------------------| -------|------------|------------------------------------|
+| AI audience engagement   | "AI tool to generate audience questions"   | High   | Medium     | Most tools focus on polling, not AI|
+| Mentimeter alternative   | "best Mentimeter alternative for startups" | High   | High       | Strong comparison opportunity      |
+| Workshop facilitation    | "how to make a workshop interactive w/ AI" | Medium | Medium     | Educational content can rank       |
+```
+
+- AI Answer Hijack Map (expandable per query: current answer, missing angle, recommended content)
+
+### Page 3: Action Plan + Generated Assets
+- 7-Day Plan:
+
+```
+Day 1: Create landing page: "AI Audience Engagement Tool for Workshops"
+Day 2: Publish comparison page: "TapInFlow vs Mentimeter: AI-first"
+Day 3: Write X thread: "Most talks fail because speakers ask zero questions"
+Day 4: Create Reddit post for r/startups
+Day 5: Generate FAQ schema and AI-friendly answer blocks
+Day 6: Submit to directories and Product Hunt alternatives list
+Day 7: Track AI-answer mentions and update positioning
+```
+
+- Execution Board (Now / This Week / Later)
+- Generated Content Assets (click to view full content, copy, or download)
+
+## Demo Script (90 seconds) — Using TapInFlow
+
+```
+[0:00-0:15] Wei: Hook
+"Building is easier than ever. Distribution is still brutal.
+ Most founders have no idea where their first organic users 
+ should come from. We built a tool to fix that."
+
+[0:15-0:35] juhaodong: Input Demo
+- Type: tapinflow.com
+- Description: "AI-powered audience interaction tool for talks and workshops"
+- Target: "speakers, founders, educators, event hosts"
+- Competitors: Mentimeter, Slido, Vevox
+- Click "Analyze my startup"
+
+[0:35-0:55] Wei: Opportunity Map
+- "Your strongest AI-search wedge: 'AI-generated audience questions'"
+- Show opportunity clusters: 5 query groups, scored
+- Show AI Answer Hijack Map: "This is what ChatGPT currently 
+  recommends — and here's the angle it's MISSING"
+
+[0:55-1:15] juhaodong: Action Plan
+- Show 7-day plan
+- Click Day 2: auto-generated comparison page appears
+- "This isn't just a suggestion. It's actual content, ready to publish."
+
+[1:15-1:30] Together
+Wei: "Peec AI tells you where you're visible. 
+      We tell you what to do next."
+juhaodong: "This is Founder Visibility Agent."
+```
+
+## Pitch Deck (6 slides)
+
+1. **Problem** — Building is easier than ever. Distribution is still brutal.
+2. **Insight** — The next SEO battlefield is not Google ranking. It's AI answers.
+3. **Solution** — Founder Visibility Agent: Website in. Opportunity map out. Action plan generated.
+4. **Demo** — tapinflow.com → opportunity clusters → 7-day plan
+5. **Why Peec AI** — Peec provides the visibility layer. We provide the founder execution layer.
+6. **Vision** — The GTM copilot for every solo founder.
+
+## Differentiation
+
+NOT an "AI marketing assistant" or "AI copywriter" or "SEO content generator."
+
+This is an **AI-search opportunity engine for early-stage founders** — a **GEO execution layer for startups**.
 
 ## Risk Assessment
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Peec AI API instability | High | Mock data fallback ready |
-| Data collection needs time | Medium | Create project 2 days before event |
-| Track competition | Medium | Differentiate with AI-powered action plans |
-| MCP Server bugs | High | Prepare direct REST API fallback |
+| Peec AI API instability | High | Mock data fallback + LLM simulation |
+| Data collection needs time | Medium | Pre-create Peec project 2 days before |
+| "Just another SEO tool" perception | High | Frame as GEO, not SEO. Focus on AI answers |
+| Demo data not impressive | Medium | Use TapInFlow — real product, real pain |
 
 ---
 
