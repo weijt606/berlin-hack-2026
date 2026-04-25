@@ -6,6 +6,22 @@ const LLM_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LLM_URL) ||
   'http://localhost:4323';
 
+const AUTO_KEY = 'strudel:vibe:autoApply';
+const PTT_KEY = 'strudel:vibe:pttKey';
+const DEFAULT_PTT = 'Space';
+const NON_PTT_CODES = new Set([
+  'ShiftLeft',
+  'ShiftRight',
+  'ControlLeft',
+  'ControlRight',
+  'MetaLeft',
+  'MetaRight',
+  'AltLeft',
+  'AltRight',
+  'OSLeft',
+  'OSRight',
+]);
+
 function getStrudelMirror() {
   return typeof window !== 'undefined' ? window.strudelMirror : null;
 }
@@ -25,12 +41,45 @@ function getSpeechRecognition() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
-const AUTO_KEY = 'strudel:vibe:autoApply';
-
 function readAuto() {
   if (typeof window === 'undefined') return true;
   const raw = window.localStorage?.getItem(AUTO_KEY);
   return raw === null ? true : raw === 'true';
+}
+
+function readPttKey() {
+  if (typeof window === 'undefined') return DEFAULT_PTT;
+  return window.localStorage?.getItem(PTT_KEY) || DEFAULT_PTT;
+}
+
+function displayKey(code) {
+  if (!code) return '—';
+  if (code === 'Space') return 'Space';
+  if (code === 'Backquote') return '`';
+  if (code === 'Backslash') return '\\';
+  if (code === 'Tab') return 'Tab';
+  if (code === 'Enter') return 'Enter';
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  if (code.startsWith('F') && /^F\d+$/.test(code)) return code;
+  if (code.startsWith('Arrow')) return code.replace('Arrow', '↕←→↓↑'.length ? code.slice(5) : code);
+  return code;
+}
+
+function isTextInput(target) {
+  if (!target || target.nodeType !== 1) return false;
+  const tag = target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+  if (target.isContentEditable) return true;
+  // Strudel REPL uses CodeMirror — its editor surface has role="textbox"
+  if (target.getAttribute?.('role') === 'textbox') return true;
+  // Walk up a few parents to catch anything inside a CM editor
+  let n = target;
+  for (let i = 0; i < 5 && n; i++) {
+    if (n.classList?.contains('cm-content')) return true;
+    n = n.parentElement;
+  }
+  return false;
 }
 
 export function VibeTab() {
@@ -41,9 +90,17 @@ export function VibeTab() {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [auto, setAuto] = useState(readAuto);
+  const [pttKey, setPttKey] = useState(readPttKey);
+  const [capturingKey, setCapturingKey] = useState(false);
+  const [pttHint, setPttHint] = useState(false);
+
   const recRef = useRef(null);
   const listeningRef = useRef(false);
+  const pttActiveRef = useRef(false);
+  const pttKeyDownRef = useRef(false);
   const scrollRef = useRef(null);
+  const sendRef = useRef(null);
+
   const speechSupported = Boolean(getSpeechRecognition());
 
   useEffect(() => {
@@ -53,17 +110,27 @@ export function VibeTab() {
   }, [auto]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage?.setItem(PTT_KEY, pttKey);
+    }
+  }, [pttKey]);
+
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
 
-  useEffect(() => () => {
-    listeningRef.current = false;
-    try {
-      recRef.current?.stop();
-    } catch {}
-  }, []);
+  useEffect(
+    () => () => {
+      listeningRef.current = false;
+      pttActiveRef.current = false;
+      try {
+        recRef.current?.stop();
+      } catch {}
+    },
+    [],
+  );
 
   async function send() {
     const text = prompt.trim();
@@ -102,26 +169,19 @@ export function VibeTab() {
     }
   }
 
-  function stopMic() {
-    listeningRef.current = false;
-    try {
-      recRef.current?.stop();
-    } catch {}
-  }
+  // keep a ref to the latest send so global key handlers always call the
+  // current closure (with current prompt / messages state)
+  sendRef.current = send;
 
-  function toggleMic() {
-    if (listeningRef.current) {
-      stopMic();
-      return;
-    }
+  function startMic({ ptt = false } = {}) {
+    if (listeningRef.current) return;
     const SR = getSpeechRecognition();
     if (!SR) {
       setError('Voice input is not supported in this browser. Try Chrome.');
       return;
     }
+    setError('');
     const rec = new SR();
-    // continuous: keep listening across pauses; only stop when the user
-    // clicks the mic button again or the browser fires a fatal error.
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = navigator.language || 'en-US';
@@ -140,9 +200,8 @@ export function VibeTab() {
       setPrompt(buffer + (interim ? (buffer ? ' ' : '') + interim : ''));
     };
     rec.onend = () => {
-      // Browsers (Chrome especially) silently end the session after ~60s
-      // even in continuous mode. If the user still wants to listen,
-      // restart transparently.
+      // If the session is still active (user hasn't released PTT or
+      // clicked stop), the browser timed out — restart transparently.
       if (listeningRef.current) {
         try {
           rec.start();
@@ -151,27 +210,99 @@ export function VibeTab() {
           // fall through to cleanup
         }
       }
+      const wasPtt = pttActiveRef.current;
+      pttActiveRef.current = false;
       listeningRef.current = false;
       recRef.current = null;
       setListening(false);
+      if (wasPtt) {
+        // give the recogniser a tick to flush any final result into prompt
+        setTimeout(() => {
+          sendRef.current?.();
+        }, 120);
+      }
     };
     rec.onerror = (event) => {
       const code = event.error;
-      // 'no-speech' / 'aborted' are normal in continuous mode — let
-      // onend's restart handler take over silently.
       if (code === 'no-speech' || code === 'aborted') return;
       setError(`Voice input error: ${code || 'unknown'}`);
       listeningRef.current = false;
+      pttActiveRef.current = false;
     };
     try {
       rec.start();
       recRef.current = rec;
       listeningRef.current = true;
+      pttActiveRef.current = ptt;
       setListening(true);
     } catch (err) {
       setError(`Could not start voice input: ${err.message || err}`);
     }
   }
+
+  function stopMic() {
+    listeningRef.current = false;
+    try {
+      recRef.current?.stop();
+    } catch {}
+  }
+
+  function toggleMic() {
+    if (listeningRef.current) {
+      pttActiveRef.current = false; // manual click never auto-sends
+      stopMic();
+    } else {
+      startMic({ ptt: false });
+    }
+  }
+
+  // Global push-to-talk handler. Hold the configured key to record,
+  // release to stop and auto-send. Skipped while focus is in any text
+  // input (so Space still types a space) and while in capture mode.
+  useEffect(() => {
+    if (!speechSupported) return;
+
+    function onKeyDown(e) {
+      if (capturingKey) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setCapturingKey(false);
+          return;
+        }
+        if (NON_PTT_CODES.has(e.code)) return;
+        e.preventDefault();
+        setPttKey(e.code);
+        setCapturingKey(false);
+        return;
+      }
+      if (e.code !== pttKey) return;
+      if (isTextInput(e.target)) return;
+      if (e.repeat || pttKeyDownRef.current) return;
+      e.preventDefault();
+      pttKeyDownRef.current = true;
+      setPttHint(true);
+      startMic({ ptt: true });
+    }
+
+    function onKeyUp(e) {
+      if (capturingKey) return;
+      if (e.code !== pttKey) return;
+      if (!pttKeyDownRef.current) return;
+      pttKeyDownRef.current = false;
+      setPttHint(false);
+      if (listeningRef.current && pttActiveRef.current) {
+        stopMic();
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pttKey, capturingKey, speechSupported]);
 
   function reuse(code) {
     hotSwap(code);
@@ -198,6 +329,18 @@ export function VibeTab() {
             />
             auto
           </label>
+          <button
+            onClick={() => setCapturingKey((v) => !v)}
+            title="Push-to-talk key. Hold this key anywhere on the page to record, release to send. Click to change."
+            className={cx(
+              'px-2 py-0.5 rounded border text-xs',
+              capturingKey
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-muted hover:opacity-80',
+            )}
+          >
+            PTT: {capturingKey ? 'press a key…' : displayKey(pttKey)}
+          </button>
           {messages.length > 0 && (
             <button
               onClick={reset}
@@ -219,6 +362,10 @@ export function VibeTab() {
               <li>"make the bass more dubby"</li>
               <li>"swap the drums for a 909 kit and double the tempo"</li>
             </ul>
+            <div className="mt-3 opacity-80">
+              Hold <kbd className="px-1 border border-muted rounded">{displayKey(pttKey)}</kbd>{' '}
+              anywhere on the page to talk, release to send.
+            </div>
           </div>
         )}
 
@@ -241,8 +388,12 @@ export function VibeTab() {
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={
             listening
-              ? 'Listening… speak now'
-              : 'Describe the change. Enter to send, Shift+Enter for newline.'
+              ? pttHint
+                ? `Listening… release ${displayKey(pttKey)} to send`
+                : 'Listening… speak now'
+              : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(
+                  pttKey,
+                )} for push-to-talk.`
           }
           className="w-full min-h-[68px] p-2 bg-background border border-muted rounded-md text-foreground resize-y focus:outline-none focus:border-foreground"
           onKeyDown={(e) => {
@@ -258,7 +409,7 @@ export function VibeTab() {
             disabled={!speechSupported}
             title={
               speechSupported
-                ? 'Toggle voice input'
+                ? `Toggle voice input. Or hold ${displayKey(pttKey)} for push-to-talk.`
                 : 'Voice input not supported in this browser'
             }
             className={cx(
@@ -269,7 +420,11 @@ export function VibeTab() {
               !speechSupported && 'opacity-40 cursor-not-allowed',
             )}
           >
-            {listening ? '● Listening' : '🎤 Voice'}
+            {listening
+              ? pttHint
+                ? `● Hold ${displayKey(pttKey)}`
+                : '● Listening'
+              : '🎤 Voice'}
           </button>
           <button
             onClick={send}
