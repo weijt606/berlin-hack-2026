@@ -17,9 +17,9 @@ import { createServer } from './interface/http/server.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const config = loadConfig();
 
-// Composable Strudel skill: rules + reference + examples loaded in the order
-// declared in skills/strudel/SKILL.md. Re-read on every request (handled by
-// generateStrudel) so editing the skill doesn't require a server restart.
+// Composable Strudel skill: rules + reference + recipes + examples loaded in
+// the order declared in skills/strudel/SKILL.md. Re-read on every request
+// (handled by generateStrudel) so editing the skill doesn't require a restart.
 const SKILL_ROOT = resolve(__dirname, 'skills/strudel');
 const SKILL_ORDER = [
   'rules/output-format.md',
@@ -34,6 +34,10 @@ const SKILL_ORDER = [
   'reference/tempo.md',
   'reference/visualization.md',
   'reference/dual-deck.md',
+  'recipes/generate.md',
+  'recipes/explain.md',
+  'recipes/debug.md',
+  'recipes/vary.md',
   'examples/genres.md',
   'examples/techniques.md',
 ];
@@ -43,6 +47,10 @@ const loadSystemPrompt = async () => {
   );
   return parts.join('\n\n---\n\n');
 };
+
+// Fail-fast: read every skill file at boot so a missing/renamed entry surfaces
+// during startup instead of on the first /generate request.
+await loadSystemPrompt();
 
 const llmClient = createGeminiClient(config.llm);
 const audioEnhancer = createAicProcessor({
