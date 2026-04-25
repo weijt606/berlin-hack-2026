@@ -410,8 +410,8 @@ export function VibeTab() {
             )}
           >
             {listening
-              ? `● recording (release ${displayKey(pttKey)})`
-              : `🎤 voice input (${displayKey(pttKey)})`}
+              ? `● Recording (release ${displayKey(pttKey)})`
+              : `🎤 Voice input (${displayKey(pttKey)})`}
           </div>
           <button
             onClick={send}
