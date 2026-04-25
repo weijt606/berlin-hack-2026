@@ -140,24 +140,6 @@ function MainMenu({ context, isEmbedded = false, className }) {
       >
         {!isEmbedded && <span>update</span>}
       </button>
-      {!isEmbedded && (
-        <button
-          title="share"
-          className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1 px-2')}
-          onClick={handleShare}
-        >
-          <span>share</span>
-        </button>
-      )}
-      {!isEmbedded && (
-        <a
-          title="learn"
-          href={`${baseNoTrailing}/workshop/getting-started/`}
-          className={cx('hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
-        >
-          <span>learn</span>
-        </a>
-      )}
     </div>
   );
 }
