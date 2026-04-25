@@ -73,6 +73,10 @@ async function loadStrudelSkill(skillRoot) {
     'reference/tempo.md',
     'reference/visualization.md',
     'reference/dual-deck.md',
+    'recipes/generate.md',
+    'recipes/explain.md',
+    'recipes/debug.md',
+    'recipes/vary.md',
     'examples/genres.md',
     'examples/techniques.md',
   ];
@@ -104,20 +108,11 @@ recipes/generate.md
 (~5.5 KB; covers ~80% of REPL prompts. `visualization.md` is now in the
 minimum set because the output rule mandates a visualizer on every response.)
 
-## Relationship to `services/llm/src/prompts/strudel-system.md`
+## History
 
-`strudel-system.md` is a flat, condensed system prompt that predates this
-skill. It still works and is what `services/llm/src/index.mjs` currently
-loads. The skill in this folder is the **canonical, expandable source**;
-`strudel-system.md` is a snapshot that was hand-tuned against an earlier
-Strudel version.
-
-Migration plan (when ready):
-
-1. Update `services/llm/src/index.mjs` to load this skill instead of the flat
-   prompt — see "How to load" above.
-2. Delete `prompts/strudel-system.md` once the new prompt is verified to work
-   on at least the user-tested intents (lo-fi / house / acid / explain).
+This skill replaced a flat `services/api/src/prompts/strudel-system.md` system
+prompt. The api service now composes the prompt from this folder; the legacy
+file has been removed.
 
 ## Verification & maintenance
 
