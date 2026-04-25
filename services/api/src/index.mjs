@@ -17,8 +17,32 @@ import { createServer } from './interface/http/server.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const config = loadConfig();
 
-const SYSTEM_PROMPT_PATH = resolve(__dirname, 'prompts/strudel-system.md');
-const loadSystemPrompt = () => readFile(SYSTEM_PROMPT_PATH, 'utf8');
+// Composable Strudel skill: rules + reference + examples loaded in the order
+// declared in skills/strudel/SKILL.md. Re-read on every request (handled by
+// generateStrudel) so editing the skill doesn't require a server restart.
+const SKILL_ROOT = resolve(__dirname, 'skills/strudel');
+const SKILL_ORDER = [
+  'rules/output-format.md',
+  'rules/iteration.md',
+  'rules/host-controls.md',
+  'rules/uncertainty.md',
+  'reference/sounds.md',
+  'reference/mini-notation.md',
+  'reference/pattern-transforms.md',
+  'reference/effects.md',
+  'reference/modulation.md',
+  'reference/tempo.md',
+  'reference/visualization.md',
+  'reference/dual-deck.md',
+  'examples/genres.md',
+  'examples/techniques.md',
+];
+const loadSystemPrompt = async () => {
+  const parts = await Promise.all(
+    SKILL_ORDER.map((rel) => readFile(resolve(SKILL_ROOT, rel), 'utf8')),
+  );
+  return parts.join('\n\n---\n\n');
+};
 
 const llmClient = createGeminiClient(config.llm);
 const audioEnhancer = createAicProcessor({
