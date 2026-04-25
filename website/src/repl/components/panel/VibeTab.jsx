@@ -409,7 +409,9 @@ export function VibeTab() {
               !speechSupported && 'opacity-40',
             )}
           >
-            {listening ? `● release ${displayKey(pttKey)}` : `🎤 hold ${displayKey(pttKey)}`}
+            {listening
+              ? `● recording (release ${displayKey(pttKey)})`
+              : `🎤 voice input (${displayKey(pttKey)})`}
           </div>
           <button
             onClick={send}
