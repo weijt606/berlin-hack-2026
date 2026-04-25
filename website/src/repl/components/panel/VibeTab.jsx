@@ -247,15 +247,6 @@ export function VibeTab() {
     } catch {}
   }
 
-  function toggleMic() {
-    if (listeningRef.current) {
-      pttActiveRef.current = false; // manual click never auto-sends
-      stopMic();
-    } else {
-      startMic({ ptt: false });
-    }
-  }
-
   // Global push-to-talk handler. Hold the configured key to record,
   // release to stop and auto-send. Skipped while focus is in any text
   // input (so Space still types a space) and while in capture mode.
@@ -404,28 +395,22 @@ export function VibeTab() {
           }}
         />
         <div className="flex items-center justify-between gap-2">
-          <button
-            onClick={toggleMic}
-            disabled={!speechSupported}
+          <div
             title={
               speechSupported
-                ? `Toggle voice input. Or hold ${displayKey(pttKey)} for push-to-talk.`
+                ? `Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Click "PTT" in the header to rebind.`
                 : 'Voice input not supported in this browser'
             }
             className={cx(
-              'px-3 py-1 rounded-md border text-sm flex items-center gap-1',
+              'px-3 py-1 rounded-md border text-sm flex items-center gap-1 select-none',
               listening
                 ? 'border-foreground bg-foreground text-background animate-pulse'
-                : 'border-muted text-foreground hover:opacity-80',
-              !speechSupported && 'opacity-40 cursor-not-allowed',
+                : 'border-muted text-foreground',
+              !speechSupported && 'opacity-40',
             )}
           >
-            {listening
-              ? pttHint
-                ? `● Hold ${displayKey(pttKey)}`
-                : '● Listening'
-              : '🎤 Voice'}
-          </button>
+            {listening ? `● release ${displayKey(pttKey)}` : `🎤 hold ${displayKey(pttKey)}`}
+          </div>
           <button
             onClick={send}
             disabled={loading || !prompt.trim()}
