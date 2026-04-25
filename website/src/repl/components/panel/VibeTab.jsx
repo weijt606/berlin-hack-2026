@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import cx from '@src/cx.mjs';
 import { useSettings } from '../../../settings.mjs';
+import { createVoiceRecorder } from './voice-recorder.mjs';
 
 const API_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) ||
@@ -36,11 +37,6 @@ function hotSwap(code) {
   if (!editor || !code) return;
   editor.setCode(code);
   editor.evaluate(true);
-}
-
-function getSpeechRecognition() {
-  if (typeof window === 'undefined') return null;
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
 function readFlush() {
@@ -112,23 +108,28 @@ export function VibeTab() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [flush, setFlush] = useState(readFlush);
   const [silenceMs, setSilenceMs] = useState(readSilenceMs);
   const [pttHint, setPttHint] = useState(false);
   const [sessionId] = useState(readOrCreateSessionId);
 
-  const recRef = useRef(null);
-  const listeningRef = useRef(false);
+  const recorderRef = useRef(null);
   const pttActiveRef = useRef(false);
   const pttKeyDownRef = useRef(false);
   const scrollRef = useRef(null);
   const sendRef = useRef(null);
-  // mirror flush + silenceMs into refs so the active recogniser closure
+  // mirror flush + silenceMs into refs so the active recorder closure
   // always reads the current toggle values
   const flushRef = useRef(flush);
   const silenceMsRef = useRef(silenceMs);
-
-  const speechSupported = Boolean(getSpeechRecognition());
+  // Rolling buffer of recent input RMS values used to draw the live
+  // waveform. The recorder fires onLevel ~85 times/sec; we mutate this
+  // ref directly (cheap) and a requestAnimationFrame loop copies the
+  // snapshot into React state at ~30 fps so the bars actually animate.
+  const WAVEFORM_BARS = 18;
+  const levelBufferRef = useRef(new Array(WAVEFORM_BARS).fill(0));
+  const [waveform, setWaveform] = useState(() => new Array(WAVEFORM_BARS).fill(0));
 
   useEffect(() => {
     flushRef.current = flush;
@@ -149,6 +150,28 @@ export function VibeTab() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
+
+  // Pump the waveform from the level-buffer ref into React state at ~30 fps
+  // while we're listening. Reset the buffer back to zero on stop so the bars
+  // don't freeze at their last height.
+  useEffect(() => {
+    if (!listening) {
+      levelBufferRef.current = new Array(WAVEFORM_BARS).fill(0);
+      setWaveform(new Array(WAVEFORM_BARS).fill(0));
+      return;
+    }
+    let raf = 0;
+    let last = 0;
+    const tick = (t) => {
+      if (t - last > 33) {
+        last = t;
+        setWaveform([...levelBufferRef.current]);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [listening]);
 
   // Hydrate the chat from the backend on mount so a refresh restores
   // the conversation. The backend treats unknown session ids as empty.
@@ -173,17 +196,16 @@ export function VibeTab() {
 
   useEffect(
     () => () => {
-      listeningRef.current = false;
       pttActiveRef.current = false;
-      try {
-        recRef.current?.stop();
-      } catch {}
+      const r = recorderRef.current;
+      recorderRef.current = null;
+      r?.stop().catch(() => {});
     },
     [],
   );
 
-  async function send() {
-    const text = prompt.trim();
+  async function send(textOverride) {
+    const text = (textOverride ?? prompt).trim();
     if (!text || loading) return;
     setError('');
     setLoading(true);
@@ -208,7 +230,9 @@ export function VibeTab() {
         setMessages(data.messages);
       }
       const code = data.code || '';
-      if (auto && code) hotSwap(code);
+      // noChange: model couldn't turn the request into a pattern (see
+      // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
+      if (auto && code && !data.noChange) hotSwap(code);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -220,109 +244,102 @@ export function VibeTab() {
   // current closure (with current prompt / messages state)
   sendRef.current = send;
 
-  function startMic({ ptt = false } = {}) {
-    if (listeningRef.current) return;
-    const SR = getSpeechRecognition();
-    if (!SR) {
-      setError('Voice input is not supported in this browser. Try Chrome.');
-      return;
-    }
+  // Pull current settings off refs at recorder-construction time so the
+  // closure inside onSilence sees the latest values without needing
+  // useEffect to rebuild the recorder on every change.
+  function startRecording({ ptt = false } = {}) {
+    if (recorderRef.current) return;
     setError('');
-    const rec = new SR();
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.lang = navigator.language || 'en-US';
-    let buffer = prompt;
-    let silenceTimer = null;
-    const clearSilence = () => {
-      if (silenceTimer) {
-        clearTimeout(silenceTimer);
-        silenceTimer = null;
-      }
-    };
-    // While PTT is held, if no speech result arrives for SILENCE_MS,
-    // dispatch what we have and keep the mic open for the next utterance.
-    const armSilence = () => {
-      clearSilence();
-      if (!ptt || !flushRef.current) return;
-      silenceTimer = setTimeout(() => {
-        silenceTimer = null;
-        if (!pttActiveRef.current) return;
-        if (!buffer.trim()) return;
-        sendRef.current?.();
-        buffer = '';
-      }, silenceMsRef.current);
-    };
-    rec.onresult = (event) => {
-      let final = '';
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const r = event.results[i];
-        if (r.isFinal) final += r[0].transcript;
-        else interim += r[0].transcript;
-      }
-      if (final) {
-        buffer = (buffer ? buffer + ' ' : '') + final.trim();
-      }
-      setPrompt(buffer + (interim ? (buffer ? ' ' : '') + interim : ''));
-      armSilence();
-    };
-    rec.onend = () => {
-      clearSilence();
-      // If the session is still active (user hasn't released PTT or
-      // clicked stop), the browser timed out — restart transparently.
-      if (listeningRef.current) {
-        try {
-          rec.start();
-          return;
-        } catch {
-          // fall through to cleanup
-        }
-      }
-      const wasPtt = pttActiveRef.current;
-      pttActiveRef.current = false;
-      listeningRef.current = false;
-      recRef.current = null;
-      setListening(false);
-      if (wasPtt) {
-        // give the recogniser a tick to flush any final result into prompt
-        setTimeout(() => {
-          sendRef.current?.();
-        }, 120);
-      }
-    };
-    rec.onerror = (event) => {
-      const code = event.error;
-      if (code === 'no-speech' || code === 'aborted') return;
-      setError(`Voice input error: ${code || 'unknown'}`);
-      clearSilence();
-      listeningRef.current = false;
-      pttActiveRef.current = false;
-    };
-    try {
-      rec.start();
-      recRef.current = rec;
-      listeningRef.current = true;
-      pttActiveRef.current = ptt;
-      setListening(true);
-    } catch (err) {
-      setError(`Could not start voice input: ${err.message || err}`);
-    }
+    const recorder = createVoiceRecorder({
+      silenceMs: ptt && flushRef.current ? silenceMsRef.current : 0,
+      onSilence: handleSilenceFlush,
+      onLevel: (rms) => {
+        const buf = levelBufferRef.current;
+        // shift left, append latest — same shape, mutated in place
+        for (let i = 0; i < buf.length - 1; i++) buf[i] = buf[i + 1];
+        buf[buf.length - 1] = rms;
+      },
+    });
+    recorder
+      .start()
+      .then(() => {
+        recorderRef.current = recorder;
+        pttActiveRef.current = ptt;
+        setListening(true);
+      })
+      .catch((err) => {
+        setError(`Could not start recording: ${err?.message || err}`);
+      });
   }
 
-  function stopMic() {
-    listeningRef.current = false;
+  // Triggered by the recorder when no voice has been heard for the
+  // configured silence window. Flushes the current take and — if the
+  // user is still holding PTT — starts a new one for the next utterance.
+  async function handleSilenceFlush() {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    recorderRef.current = null;
+    setListening(false);
+    let blob = null;
     try {
-      recRef.current?.stop();
-    } catch {}
+      blob = await recorder.stop();
+    } catch (err) {
+      setError(`Recording failed: ${err?.message || err}`);
+    }
+    if (pttKeyDownRef.current) {
+      // continue listening seamlessly while we transcribe in the background
+      startRecording({ ptt: true });
+    }
+    if (blob) transcribeAndSend(blob);
+  }
+
+  async function stopRecording() {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    recorderRef.current = null;
+    setListening(false);
+    const wasPtt = pttActiveRef.current;
+    pttActiveRef.current = false;
+    let blob = null;
+    try {
+      blob = await recorder.stop();
+    } catch (err) {
+      setError(`Recording failed: ${err?.message || err}`);
+      return;
+    }
+    if (blob && wasPtt) transcribeAndSend(blob);
+  }
+
+  async function transcribeAndSend(wavBlob) {
+    if (!wavBlob || wavBlob.size < 2048) return; // skip empty / too-short takes
+    setTranscribing(true);
+    try {
+      const url = `${API_URL}/transcribe?sessionId=${encodeURIComponent(sessionId)}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'audio/wav' },
+        body: wavBlob,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error || `Transcribe failed: HTTP ${res.status}`);
+        return;
+      }
+      const text = (data.text || '').trim();
+      if (!text) return;
+      setPrompt(text);
+      await send(text);
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setTranscribing(false);
+    }
   }
 
   // Global push-to-talk handler. Hold the configured key to record,
   // release to stop and auto-send. Skipped while focus is in any text
   // input (so Space still types a space).
   useEffect(() => {
-    if (!speechSupported) return;
-
     function onKeyDown(e) {
       if (e.code !== pttKey) return;
       if (isTextInput(e.target)) return;
@@ -330,7 +347,7 @@ export function VibeTab() {
       e.preventDefault();
       pttKeyDownRef.current = true;
       setPttHint(true);
-      startMic({ ptt: true });
+      startRecording({ ptt: true });
     }
 
     function onKeyUp(e) {
@@ -338,8 +355,8 @@ export function VibeTab() {
       if (!pttKeyDownRef.current) return;
       pttKeyDownRef.current = false;
       setPttHint(false);
-      if (listeningRef.current && pttActiveRef.current) {
-        stopMic();
+      if (recorderRef.current && pttActiveRef.current) {
+        stopRecording();
       }
     }
 
@@ -350,7 +367,7 @@ export function VibeTab() {
       window.removeEventListener('keyup', onKeyUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pttKey, speechSupported]);
+  }, [pttKey]);
 
   function reuse(code) {
     hotSwap(code);
@@ -403,6 +420,7 @@ export function VibeTab() {
           <Message key={i} msg={msg} onReuse={reuse} />
         ))}
 
+        {transcribing && <div className="text-xs opacity-60">Transcribing…</div>}
         {loading && <div className="text-xs opacity-60">Generating…</div>}
 
         {error && (
@@ -419,11 +437,13 @@ export function VibeTab() {
           placeholder={
             listening
               ? pttHint
-                ? `Listening… release ${displayKey(pttKey)} to send`
-                : 'Listening… speak now'
-              : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(
-                  pttKey,
-                )} for push-to-talk.`
+                ? `Recording… release ${displayKey(pttKey)} to send`
+                : 'Recording… speak now'
+              : transcribing
+                ? 'Transcribing…'
+                : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(
+                    pttKey,
+                  )} for push-to-talk.`
           }
           className="w-full min-h-[68px] p-2 bg-background border border-muted rounded-md text-foreground resize-y focus:outline-none focus:border-foreground"
           onKeyDown={(e) => {
@@ -436,22 +456,26 @@ export function VibeTab() {
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <div
-              title={
-                speechSupported
-                  ? `Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Change the key in Settings.`
-                  : 'Voice input not supported in this browser'
-              }
+              title={`Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Change the key in Settings.`}
               className={cx(
-                'px-3 py-1 rounded-md border text-sm flex items-center gap-1 select-none',
+                'px-3 py-1 rounded-md border text-sm flex items-center gap-2 select-none',
                 listening
-                  ? 'border-foreground bg-foreground text-background animate-pulse'
-                  : 'border-muted text-foreground',
-                !speechSupported && 'opacity-40',
+                  ? 'border-foreground bg-foreground text-background'
+                  : transcribing
+                    ? 'border-foreground text-foreground opacity-70'
+                    : 'border-muted text-foreground',
               )}
             >
-              {listening
-                ? `● Recording (release ${displayKey(pttKey)})`
-                : `🎤 Voice input (${displayKey(pttKey)})`}
+              {listening ? (
+                <>
+                  <Waveform levels={waveform} />
+                  <span className="tabular-nums">release {displayKey(pttKey)}</span>
+                </>
+              ) : transcribing ? (
+                '… Transcribing'
+              ) : (
+                `🎤 Voice input (${displayKey(pttKey)})`
+              )}
             </div>
             <label
               className="flex items-center gap-1 cursor-pointer text-xs opacity-70"
@@ -482,7 +506,7 @@ export function VibeTab() {
             </select>
           </div>
           <button
-            onClick={send}
+            onClick={() => send()}
             disabled={loading || !prompt.trim()}
             className={cx(
               'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
@@ -497,12 +521,42 @@ export function VibeTab() {
   );
 }
 
+function Waveform({ levels }) {
+  // Each bar's height comes from a recent RMS sample. We map a linear RMS
+  // 0..1 onto a min-floor-of-15% for visual presence and clamp to 100%.
+  // The multiplier (~700) is empirically what makes normal speech fill
+  // roughly 60-90% of the bar height without clipping on shouts.
+  return (
+    <span className="flex items-end gap-px h-3 w-[42px]" aria-hidden>
+      {levels.map((rms, i) => {
+        const h = Math.max(15, Math.min(100, rms * 700));
+        return (
+          <span
+            key={i}
+            className="w-0.5 bg-background rounded-sm transition-all duration-75"
+            style={{ height: `${h}%` }}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
 function Message({ msg, onReuse }) {
   if (msg.role === 'user') {
     return (
       <div className="flex justify-end">
         <div className="max-w-[85%] px-3 py-2 rounded-md bg-foreground text-background text-sm whitespace-pre-wrap break-words">
           {msg.text}
+        </div>
+      </div>
+    );
+  }
+  if (msg.noChange) {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[85%] px-3 py-2 rounded-md border border-dashed border-muted text-sm italic opacity-70 whitespace-pre-wrap break-words">
+          {msg.text || "Couldn't generate or modify — please try again."}
         </div>
       </div>
     );

@@ -52,7 +52,7 @@ export function makeChatSession({ sessionStore, generateStrudel }) {
       const record = await sessionStore.load(sessionId);
       const history = toLlmHistory(record.messages);
 
-      const { code, model } = await generateStrudel({
+      const result = await generateStrudel({
         prompt,
         currentCode,
         history,
@@ -60,10 +60,27 @@ export function makeChatSession({ sessionStore, generateStrudel }) {
 
       const ts = new Date().toISOString();
       record.messages.push({ role: 'user', text: prompt, ts });
-      record.messages.push({ role: 'assistant', code, ts });
+      if (result.noChange) {
+        // Keep the user-visible message but skip pushing assistant `code`,
+        // so the LLM history transformer drops it on the next turn.
+        record.messages.push({
+          role: 'assistant',
+          text: result.message,
+          noChange: true,
+          ts,
+        });
+      } else {
+        record.messages.push({ role: 'assistant', code: result.code, ts });
+      }
       await sessionStore.save(record);
 
-      return { code, model, messages: record.messages };
+      return {
+        code: result.code,
+        message: result.message,
+        noChange: !!result.noChange,
+        model: result.model,
+        messages: record.messages,
+      };
     },
   };
 }

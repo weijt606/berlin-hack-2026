@@ -20,10 +20,20 @@
  * @property {() => string} getModelId
  * @property {(wavBuffer: Buffer) => Promise<Buffer>} enhance
  *
+ * @typedef {Object} TranscriptionResult
+ * @property {string} text
+ * @property {string} [language]
+ * @property {number} [confidence]
+ *
+ * @typedef {Object} Transcriber
+ * @property {() => string} getModelId
+ * @property {(pcm: Float32Array, opts?: { language?: string }) => Promise<TranscriptionResult>} transcribe
+ *
  * @typedef {() => Promise<string>} SystemPromptProvider
  *
  * @typedef {{ role: 'user', text: string, ts: string }
- *   | { role: 'assistant', code: string, ts: string }} StoredMessage
+ *   | { role: 'assistant', code: string, ts: string }
+ *   | { role: 'assistant', text: string, noChange: true, ts: string }} StoredMessage
  *
  * @typedef {Object} ChatSessionRecord
  * @property {string} id
