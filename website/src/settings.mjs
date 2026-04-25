@@ -69,6 +69,8 @@ export const defaultSettings = {
   multiChannelOrbits: false,
   includePrebakeScriptInShare: true,
   settingsTab: 'settings',
+  vibePttKey: 'Space',
+  vibeAutoApply: true,
 };
 
 let search = null;
@@ -113,6 +115,7 @@ export const $settings = computed(settingsMap, (state) => {
     userPatterns: userPatterns,
     multiChannelOrbits: parseBoolean(state.multiChannelOrbits),
     includePrebakeScriptInShare: parseBoolean(state.includePrebakeScriptInShare),
+    vibeAutoApply: state.vibeAutoApply === undefined ? true : parseBoolean(state.vibeAutoApply),
     patternAutoStart: isUdels()
       ? false
       : state.patternAutoStart === undefined
@@ -128,6 +131,8 @@ export function useSettings() {
 }
 
 export const setActiveFooter = (tab) => settingsMap.setKey('activeFooter', tab);
+export const setVibePttKey = (code) => settingsMap.setKey('vibePttKey', code);
+export const setVibeAutoApply = (bool) => settingsMap.setKey('vibeAutoApply', !!bool);
 export const setPanelPinned = (bool) => settingsMap.setKey('isPanelPinned', bool);
 export const setIsPanelOpened = (bool) => settingsMap.setKey('isPanelOpen', bool);
 export const setSettingsTab = (tab) => settingsMap.setKey('settingsTab', tab);

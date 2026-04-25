@@ -1,4 +1,11 @@
-import { defaultSettings, settingsMap, useSettings, storePrebakeScript, setSettingsTab } from '../../../settings.mjs';
+import {
+  defaultSettings,
+  settingsMap,
+  useSettings,
+  storePrebakeScript,
+  setSettingsTab,
+  setVibePttKey,
+} from '../../../settings.mjs';
 import { themes } from '@strudel/codemirror';
 import { PrebakeCodeMirror } from '../../../repl/prebakeCodeMirror.mjs';
 import { confirmAndReloadPage, isUdels } from '../../util.mjs';
@@ -9,7 +16,8 @@ import { confirmDialog } from '../../util.mjs';
 import { DEFAULT_MAX_POLYPHONY, setMaxPolyphony, setMultiChannelOrbits } from '@strudel/webaudio';
 import { ActionButton } from '../button/action-button.jsx';
 import { exportScript, ImportPrebakeScriptButton } from './ImportPrebakeScriptButton.jsx';
-import { useEffect, useRef } from 'react';
+import { NON_PTT_CODES, displayKey } from './VibeTab.jsx';
+import { useEffect, useRef, useState } from 'react';
 import cx from '@src/cx.mjs';
 
 const inputClass =
@@ -101,6 +109,39 @@ function FormItem({ label, children, sublabel }) {
   );
 }
 
+function PttKeyCapture({ value, onChange }) {
+  const [capturing, setCapturing] = useState(false);
+  useEffect(() => {
+    if (!capturing) return;
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setCapturing(false);
+        return;
+      }
+      if (NON_PTT_CODES.has(e.code)) return;
+      e.preventDefault();
+      onChange(e.code);
+      setCapturing(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [capturing, onChange]);
+  return (
+    <button
+      onClick={() => setCapturing((v) => !v)}
+      className={cx(
+        'px-2 py-1 rounded border text-xs w-fit',
+        capturing
+          ? 'border-foreground bg-foreground text-background'
+          : 'border-muted hover:opacity-80',
+      )}
+    >
+      {capturing ? 'press a key… (Esc to cancel)' : displayKey(value)}
+    </button>
+  );
+}
+
 const themeOptions = Object.fromEntries(Object.keys(themes).map((k) => [k, k]));
 const fontFamilyOptions = {
   monospace: 'monospace',
@@ -148,6 +189,8 @@ function MainSettingsContent({ started }) {
     isMultiCursorEnabled,
     patternAutoStart,
     isBlockBasedEvalEnabled,
+    vibePttKey,
+    vibeAutoApply,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
@@ -244,6 +287,17 @@ function MainSettingsContent({ started }) {
           onChange={(value) => settingsMap.setKey('panelPosition', value)}
           items={{ bottom: 'Bottom', right: 'Right' }}
         ></ButtonGroup>
+      </FormItem>
+      <FormItem label="Vibe">
+        <div className="flex items-center gap-2">
+          <span className="text-xs opacity-70">Push-to-talk key:</span>
+          <PttKeyCapture value={vibePttKey} onChange={setVibePttKey} />
+        </div>
+        <Checkbox
+          label="Auto-apply changes"
+          onChange={(cbEvent) => settingsMap.setKey('vibeAutoApply', cbEvent.target.checked)}
+          value={vibeAutoApply}
+        />
       </FormItem>
       <FormItem label="More Settings">
         <Checkbox

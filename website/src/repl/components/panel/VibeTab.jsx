@@ -6,15 +6,12 @@ const API_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) ||
   'http://localhost:4322';
 
-const AUTO_KEY = 'strudel:vibe:autoApply';
-const PTT_KEY = 'strudel:vibe:pttKey';
 const FLUSH_KEY = 'strudel:vibe:silenceFlush';
 const SILENCE_MS_KEY = 'strudel:vibe:silenceMs';
 const SESSION_KEY = 'strudel:vibe:sessionId';
-const DEFAULT_PTT = 'Space';
 const SILENCE_OPTIONS = [2000, 3000, 5000, 8000, 10000];
 const DEFAULT_SILENCE_MS = 5000;
-const NON_PTT_CODES = new Set([
+export const NON_PTT_CODES = new Set([
   'ShiftLeft',
   'ShiftRight',
   'ControlLeft',
@@ -44,17 +41,6 @@ function hotSwap(code) {
 function getSpeechRecognition() {
   if (typeof window === 'undefined') return null;
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-}
-
-function readAuto() {
-  if (typeof window === 'undefined') return true;
-  const raw = window.localStorage?.getItem(AUTO_KEY);
-  return raw === null ? true : raw === 'true';
-}
-
-function readPttKey() {
-  if (typeof window === 'undefined') return DEFAULT_PTT;
-  return window.localStorage?.getItem(PTT_KEY) || DEFAULT_PTT;
 }
 
 function readFlush() {
@@ -89,7 +75,7 @@ function readOrCreateSessionId() {
   return fresh;
 }
 
-function displayKey(code) {
+export function displayKey(code) {
   if (!code) return '—';
   if (code === 'Space') return 'Space';
   if (code === 'Backquote') return '`';
@@ -120,17 +106,14 @@ function isTextInput(target) {
 }
 
 export function VibeTab() {
-  const { fontFamily } = useSettings();
+  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto } = useSettings();
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const [auto, setAuto] = useState(readAuto);
-  const [pttKey, setPttKey] = useState(readPttKey);
   const [flush, setFlush] = useState(readFlush);
   const [silenceMs, setSilenceMs] = useState(readSilenceMs);
-  const [capturingKey, setCapturingKey] = useState(false);
   const [pttHint, setPttHint] = useState(false);
   const [sessionId] = useState(readOrCreateSessionId);
 
@@ -146,18 +129,6 @@ export function VibeTab() {
   const silenceMsRef = useRef(silenceMs);
 
   const speechSupported = Boolean(getSpeechRecognition());
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage?.setItem(AUTO_KEY, String(auto));
-    }
-  }, [auto]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage?.setItem(PTT_KEY, pttKey);
-    }
-  }, [pttKey]);
 
   useEffect(() => {
     flushRef.current = flush;
@@ -348,23 +319,11 @@ export function VibeTab() {
 
   // Global push-to-talk handler. Hold the configured key to record,
   // release to stop and auto-send. Skipped while focus is in any text
-  // input (so Space still types a space) and while in capture mode.
+  // input (so Space still types a space).
   useEffect(() => {
     if (!speechSupported) return;
 
     function onKeyDown(e) {
-      if (capturingKey) {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          setCapturingKey(false);
-          return;
-        }
-        if (NON_PTT_CODES.has(e.code)) return;
-        e.preventDefault();
-        setPttKey(e.code);
-        setCapturingKey(false);
-        return;
-      }
       if (e.code !== pttKey) return;
       if (isTextInput(e.target)) return;
       if (e.repeat || pttKeyDownRef.current) return;
@@ -375,7 +334,6 @@ export function VibeTab() {
     }
 
     function onKeyUp(e) {
-      if (capturingKey) return;
       if (e.code !== pttKey) return;
       if (!pttKeyDownRef.current) return;
       pttKeyDownRef.current = false;
@@ -392,7 +350,7 @@ export function VibeTab() {
       window.removeEventListener('keyup', onKeyUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pttKey, capturingKey, speechSupported]);
+  }, [pttKey, speechSupported]);
 
   function reuse(code) {
     hotSwap(code);
@@ -414,28 +372,14 @@ export function VibeTab() {
     <div className="flex flex-col h-full w-full" style={{ fontFamily }}>
       <div className="flex items-center justify-between px-3 py-2 border-b border-muted text-xs opacity-70 shrink-0 gap-2">
         <span className="truncate">Vibe coding · iterating on the current track</span>
-        <div className="flex items-center gap-2 shrink-0">
+        {messages.length > 0 && (
           <button
-            onClick={() => setCapturingKey((v) => !v)}
-            title="Push-to-talk key. Hold this key anywhere on the page to record, release to send. Click to change."
-            className={cx(
-              'px-2 py-0.5 rounded border text-xs',
-              capturingKey
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-muted hover:opacity-80',
-            )}
+            onClick={reset}
+            className="px-2 py-0.5 rounded border border-muted hover:opacity-80 shrink-0"
           >
-            PTT: {capturingKey ? 'press a key…' : displayKey(pttKey)}
+            Reset
           </button>
-          {messages.length > 0 && (
-            <button
-              onClick={reset}
-              className="px-2 py-0.5 rounded border border-muted hover:opacity-80"
-            >
-              Reset
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-auto p-3 space-y-3 min-h-0">
@@ -489,24 +433,53 @@ export function VibeTab() {
             }
           }}
         />
-        <div className="flex items-center justify-between gap-2">
-          <div
-            title={
-              speechSupported
-                ? `Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Click "PTT" above to rebind.`
-                : 'Voice input not supported in this browser'
-            }
-            className={cx(
-              'px-3 py-1 rounded-md border text-sm flex items-center gap-1 select-none',
-              listening
-                ? 'border-foreground bg-foreground text-background animate-pulse'
-                : 'border-muted text-foreground',
-              !speechSupported && 'opacity-40',
-            )}
-          >
-            {listening
-              ? `● Recording (release ${displayKey(pttKey)})`
-              : `🎤 Voice input (${displayKey(pttKey)})`}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div
+              title={
+                speechSupported
+                  ? `Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Change the key in Settings.`
+                  : 'Voice input not supported in this browser'
+              }
+              className={cx(
+                'px-3 py-1 rounded-md border text-sm flex items-center gap-1 select-none',
+                listening
+                  ? 'border-foreground bg-foreground text-background animate-pulse'
+                  : 'border-muted text-foreground',
+                !speechSupported && 'opacity-40',
+              )}
+            >
+              {listening
+                ? `● Recording (release ${displayKey(pttKey)})`
+                : `🎤 Voice input (${displayKey(pttKey)})`}
+            </div>
+            <label
+              className="flex items-center gap-1 cursor-pointer text-xs opacity-70"
+              title={`While holding ${displayKey(pttKey)}, auto-send after the chosen pause and keep listening for the next utterance.`}
+            >
+              <input
+                type="checkbox"
+                checked={flush}
+                onChange={(e) => setFlush(e.target.checked)}
+              />
+              auto-send after
+            </label>
+            <select
+              value={silenceMs}
+              onChange={(e) => setSilenceMs(Number(e.target.value))}
+              disabled={!flush}
+              title="How long of a pause counts as 'done speaking'."
+              className={cx(
+                'bg-background border border-muted rounded px-1 py-0.5 text-xs',
+                !flush && 'opacity-50 cursor-not-allowed',
+              )}
+            >
+              {SILENCE_OPTIONS.map((ms) => (
+                <option key={ms} value={ms}>
+                  {ms / 1000}s
+                </option>
+              ))}
+            </select>
           </div>
           <button
             onClick={send}
@@ -518,46 +491,6 @@ export function VibeTab() {
           >
             {loading ? 'Generating…' : 'Send (Enter)'}
           </button>
-        </div>
-        <div className="flex items-center gap-3 text-xs opacity-70">
-          <label
-            className="flex items-center gap-1 cursor-pointer"
-            title="When on, each generated edit is hot-swapped into the running pattern (update mode) — no beat break."
-          >
-            <input
-              type="checkbox"
-              checked={auto}
-              onChange={(e) => setAuto(e.target.checked)}
-            />
-            auto
-          </label>
-          <label
-            className="flex items-center gap-1 cursor-pointer"
-            title={`While holding ${displayKey(pttKey)}, auto-send after the chosen pause and keep listening for the next utterance.`}
-          >
-            <input
-              type="checkbox"
-              checked={flush}
-              onChange={(e) => setFlush(e.target.checked)}
-            />
-            auto-send after
-          </label>
-          <select
-            value={silenceMs}
-            onChange={(e) => setSilenceMs(Number(e.target.value))}
-            disabled={!flush}
-            title="How long of a pause counts as 'done speaking'."
-            className={cx(
-              'bg-background border border-muted rounded px-1 py-0.5',
-              !flush && 'opacity-50 cursor-not-allowed',
-            )}
-          >
-            {SILENCE_OPTIONS.map((ms) => (
-              <option key={ms} value={ms}>
-                {ms / 1000}s
-              </option>
-            ))}
-          </select>
         </div>
       </div>
     </div>
