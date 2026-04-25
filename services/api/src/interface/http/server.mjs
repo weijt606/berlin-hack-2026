@@ -4,6 +4,7 @@ import { DomainError } from '../../domain/errors.mjs';
 import { registerHealth } from './routes/health.mjs';
 import { registerGenerate } from './routes/generate.mjs';
 import { registerEnhance } from './routes/enhance.mjs';
+import { registerSessions } from './routes/sessions.mjs';
 
 export async function createServer({ deps, config }) {
   const fastify = Fastify({
@@ -29,6 +30,7 @@ export async function createServer({ deps, config }) {
 
   registerHealth(fastify, deps);
   registerGenerate(fastify, deps);
+  registerSessions(fastify, deps);
   registerEnhance(fastify, deps);
 
   return fastify;

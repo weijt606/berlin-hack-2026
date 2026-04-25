@@ -21,5 +21,19 @@
  * @property {(wavBuffer: Buffer) => Promise<Buffer>} enhance
  *
  * @typedef {() => Promise<string>} SystemPromptProvider
+ *
+ * @typedef {{ role: 'user', text: string, ts: string }
+ *   | { role: 'assistant', code: string, ts: string }} StoredMessage
+ *
+ * @typedef {Object} ChatSessionRecord
+ * @property {string} id
+ * @property {string} createdAt
+ * @property {string} updatedAt
+ * @property {StoredMessage[]} messages
+ *
+ * @typedef {Object} SessionStore
+ * @property {(id: string) => Promise<ChatSessionRecord>} load    returns an empty record for unknown ids
+ * @property {(record: ChatSessionRecord) => Promise<void>} save  upserts; sets updatedAt
+ * @property {(id: string) => Promise<void>} clear                no-op if missing
  */
 export {};

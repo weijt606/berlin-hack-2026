@@ -1,6 +1,6 @@
-export function registerGenerate(fastify, { generateStrudel }) {
+export function registerGenerate(fastify, { chatSession }) {
   fastify.post('/generate', async (request) => {
-    const { prompt, currentCode, history } = request.body ?? {};
-    return generateStrudel({ prompt, currentCode, history });
+    const { sessionId, prompt, currentCode } = request.body ?? {};
+    return chatSession.sendTurn({ sessionId, prompt, currentCode });
   });
 }

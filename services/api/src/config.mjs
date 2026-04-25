@@ -13,5 +13,8 @@ export function loadConfig() {
       licenseKey: process.env.AIC_SDK_LICENSE ?? null,
       modelId: process.env.AIC_MODEL_ID || 'quail-vf-2.1-l-16khz',
     },
+    sessions: {
+      dir: process.env.API_SESSIONS_DIR || null,
+    },
   };
 }

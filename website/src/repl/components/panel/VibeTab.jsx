@@ -8,6 +8,7 @@ const API_URL =
 
 const AUTO_KEY = 'strudel:vibe:autoApply';
 const PTT_KEY = 'strudel:vibe:pttKey';
+const SESSION_KEY = 'strudel:vibe:sessionId';
 const DEFAULT_PTT = 'Space';
 const NON_PTT_CODES = new Set([
   'ShiftLeft',
@@ -52,6 +53,26 @@ function readPttKey() {
   return window.localStorage?.getItem(PTT_KEY) || DEFAULT_PTT;
 }
 
+function generateSessionId() {
+  // Backend accepts ^[A-Za-z0-9_-]{1,64}$. Use crypto.randomUUID when
+  // available, falling back to a timestamp+random combo.
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `s${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function readOrCreateSessionId() {
+  if (typeof window === 'undefined') return generateSessionId();
+  const existing = window.localStorage?.getItem(SESSION_KEY);
+  if (existing && /^[A-Za-z0-9_-]{1,64}$/.test(existing)) return existing;
+  const fresh = generateSessionId();
+  try {
+    window.localStorage?.setItem(SESSION_KEY, fresh);
+  } catch {}
+  return fresh;
+}
+
 function displayKey(code) {
   if (!code) return '—';
   if (code === 'Space') return 'Space';
@@ -93,6 +114,7 @@ export function VibeTab() {
   const [pttKey, setPttKey] = useState(readPttKey);
   const [capturingKey, setCapturingKey] = useState(false);
   const [pttHint, setPttHint] = useState(false);
+  const [sessionId] = useState(readOrCreateSessionId);
 
   const recRef = useRef(null);
   const listeningRef = useRef(false);
@@ -121,6 +143,27 @@ export function VibeTab() {
     }
   }, [messages, loading]);
 
+  // Hydrate the chat from the backend on mount so a refresh restores
+  // the conversation. The backend treats unknown session ids as empty.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/sessions/${encodeURIComponent(sessionId)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data.messages)) {
+          setMessages(data.messages);
+        }
+      } catch {
+        // backend unreachable — fine, just start empty
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
   useEffect(
     () => () => {
       listeningRef.current = false;
@@ -139,28 +182,25 @@ export function VibeTab() {
     setLoading(true);
     const m = getStrudelMirror();
     const currentCode = m?.code ?? '';
-    const history = messages.flatMap((msg) =>
-      msg.role === 'user'
-        ? [{ role: 'user', text: msg.text }]
-        : msg.code
-          ? [{ role: 'assistant', text: msg.code }]
-          : [],
-    );
-    setMessages((prev) => [...prev, { role: 'user', text }]);
+    // Optimistic: show the user's bubble immediately. The backend
+    // returns the authoritative messages array, which we adopt below.
+    setMessages((prev) => [...prev, { role: 'user', text, ts: 'pending' }]);
     setPrompt('');
     try {
       const res = await fetch(`${API_URL}/generate`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt: text, currentCode, history }),
+        body: JSON.stringify({ sessionId, prompt: text, currentCode }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data?.error || `HTTP ${res.status}`);
         return;
       }
+      if (Array.isArray(data.messages)) {
+        setMessages(data.messages);
+      }
       const code = data.code || '';
-      setMessages((prev) => [...prev, { role: 'assistant', code }]);
       if (auto && code) hotSwap(code);
     } catch (err) {
       setError(err.message || String(err));
@@ -299,9 +339,16 @@ export function VibeTab() {
     hotSwap(code);
   }
 
-  function reset() {
+  async function reset() {
     setMessages([]);
     setError('');
+    try {
+      await fetch(`${API_URL}/sessions/${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      setError(err.message || String(err));
+    }
   }
 
   return (
