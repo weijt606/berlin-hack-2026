@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import cx from '@src/cx.mjs';
 import { useSettings } from '../../../settings.mjs';
 
-const LLM_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LLM_URL) ||
-  'http://localhost:4323';
+const API_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) ||
+  'http://localhost:4322';
 
 const AUTO_KEY = 'strudel:vibe:autoApply';
 const PTT_KEY = 'strudel:vibe:pttKey';
@@ -149,7 +149,7 @@ export function VibeTab() {
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setPrompt('');
     try {
-      const res = await fetch(`${LLM_URL}/generate`, {
+      const res = await fetch(`${API_URL}/generate`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ prompt: text, currentCode, history }),
