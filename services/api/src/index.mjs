@@ -5,9 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.mjs';
 import { createGeminiClient } from './infrastructure/gemini-client.mjs';
 import { createAicProcessor } from './infrastructure/aic-processor.mjs';
+import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.mjs';
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
+import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs';
 import { makeGenerateStrudel } from './application/generate-strudel.mjs';
 import { makeEnhanceAudio } from './application/enhance-audio.mjs';
+import { makeTranscribeAudio } from './application/transcribe-audio.mjs';
 import { makeChatSession } from './application/chat-session.mjs';
 import { createServer } from './interface/http/server.mjs';
 
@@ -57,12 +60,19 @@ const audioEnhancer = createAicProcessor({
   ...config.audio,
   modelsDir: resolve(__dirname, '..', 'models'),
 });
+const transcriber = createWhisperTranscriber(config.stt);
 const sessionStore = createFileSessionStore({
   dir: config.sessions.dir || resolve(__dirname, '..', 'data', 'sessions'),
+});
+const metricsStore = createFileMetricsStore({
+  file:
+    process.env.API_METRICS_FILE ||
+    resolve(__dirname, '..', 'data', 'metrics', 'transcribe.jsonl'),
 });
 
 const generateStrudel = makeGenerateStrudel({ llmClient, loadSystemPrompt });
 const enhanceAudio = makeEnhanceAudio({ audioEnhancer });
+const transcribeAudio = makeTranscribeAudio({ transcriber, audioEnhancer, metricsStore });
 const chatSession = makeChatSession({ sessionStore, generateStrudel });
 
 const server = await createServer({
@@ -71,9 +81,12 @@ const server = await createServer({
     config,
     llmClient,
     audioEnhancer,
+    transcriber,
     sessionStore,
+    metricsStore,
     generateStrudel,
     enhanceAudio,
+    transcribeAudio,
     chatSession,
   },
 });
