@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { loadConfig } from './config.mjs';
 import { createGeminiClient } from './infrastructure/gemini-client.mjs';
+import { createOllamaClient } from './infrastructure/ollama-client.mjs';
 import { createAicProcessor } from './infrastructure/aic-processor.mjs';
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
 import { makeGenerateStrudel } from './application/generate-strudel.mjs';
@@ -52,7 +53,17 @@ const loadSystemPrompt = async () => {
 // during startup instead of on the first /generate request.
 await loadSystemPrompt();
 
-const llmClient = createGeminiClient(config.llm);
+// LLM_PROVIDER picks which backend to use:
+//   gemini → Google AI Studio (default; needs GEMINI_API_KEY)
+//   ollama → local Ollama daemon (needs the model already pulled)
+function buildLlmClient(llmCfg) {
+  if (llmCfg.provider === 'ollama') {
+    return createOllamaClient(llmCfg.ollama);
+  }
+  return createGeminiClient(llmCfg.gemini);
+}
+const llmClient = buildLlmClient(config.llm);
+console.log(`[llm] provider=${config.llm.provider}`);
 const audioEnhancer = createAicProcessor({
   ...config.audio,
   modelsDir: resolve(__dirname, '..', 'models'),
