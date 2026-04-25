@@ -101,10 +101,10 @@ export default defineConfig({
       },
       manifest: {
         includeAssets: ['favicon.ico', 'icons/apple-icon-180.png'],
-        name: 'Strudel REPL',
-        short_name: 'Strudel',
+        name: 'TalkToRave',
+        short_name: 'TalkToRave',
         description:
-          'Strudel is a music live coding environment for the browser, porting the TidalCycles pattern language to JavaScript.',
+          'TalkToRave — voice-driven live-coding music in the browser, built on Strudel.',
         theme_color: '#222222',
         icons: [
           {

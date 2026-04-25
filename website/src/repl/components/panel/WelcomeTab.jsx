@@ -9,8 +9,9 @@ export function WelcomeTab({ context }) {
     <div className="prose dark:prose-invert min-w-full py-4 font-sans px-4 text-sm" style={{ fontFamily }}>
       <h3>welcome</h3>
       <p>
-        You have found <span className="underline">strudel</span>, a new live coding platform to write dynamic music
-        pieces in the browser! It is free and open-source and made for beginners and experts alike. To get started:
+        You have found <span className="underline">TalkToRave</span>, a voice-driven live-coding music environment
+        built on <a href="https://codeberg.org/uzu/strudel" target="_blank">Strudel</a>. Free and open-source. To get
+        started:
         <br />
         <br />
         <span className="underline">1. hit play</span> - <span className="underline">2. change something</span> -{' '}
@@ -32,12 +33,16 @@ export function WelcomeTab({ context }) {
       </p>
       <h3>about</h3>
       <p>
-        strudel is a JavaScript version of{' '}
+        TalkToRave wraps{' '}
+        <a href="https://codeberg.org/uzu/strudel" target="_blank">
+          Strudel
+        </a>
+        , a JavaScript port of{' '}
         <a href="https://tidalcycles.org/" target="_blank">
           tidalcycles
         </a>
-        , which is a popular live coding language for music, written in Haskell. Strudel is free/open source software:
-        you can redistribute and/or modify it under the terms of the{' '}
+        , with voice input and an LLM that rewrites the running pattern from natural language. Free/open source under
+        the{' '}
         <a href="https://codeberg.org/uzu/strudel/src/branch/main/LICENSE" target="_blank">
           GNU Affero General Public License
         </a>

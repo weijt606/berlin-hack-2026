@@ -159,7 +159,7 @@ export function useReplContext() {
       }
       editor.setCode(code);
       setDocumentTitle(code);
-      logger(`Welcome to Strudel! ${msg} Press play or hit ctrl+enter to run it!`, 'highlight');
+      logger(`Welcome to TalkToRave! ${msg} Press play or hit ctrl+enter to run it!`, 'highlight');
     });
 
     editorRef.current = editor;
@@ -188,7 +188,7 @@ export function useReplContext() {
 
   const setDocumentTitle = (code) => {
     const meta = getMetadata(code);
-    document.title = (meta.title ? `${meta.title} - ` : '') + 'Strudel REPL';
+    document.title = (meta.title ? `${meta.title} - ` : '') + 'TalkToRave';
   };
 
   const handleTogglePlay = async () => {

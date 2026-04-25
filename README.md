@@ -1,52 +1,52 @@
-# strudel
+# TalkToRave
 
-Live coding patterns on the web
+Vibe-code music with your voice. TalkToRave is a voice-driven live-coding
+environment built on top of [Strudel](https://codeberg.org/uzu/strudel) —
+hold a key, describe the track you want, and an LLM rewrites the running
+pattern in place without breaking the beat.
 
+- **Frontend** — Astro / React REPL, forked from Strudel
+- **Backend** — `services/api` ([Fastify](https://fastify.dev)) wrapping:
+  - Google Gemini for natural-language → Strudel code
+  - the [ai-coustics](https://www.ai-coustics.com) speech-enhancement SDK
+    as a quality stage for noisy mic input
+- **Voice in** — Web Speech API for STT, push-to-talk hotkey (default
+  `Space`), conversation history persisted server-side per session
 
-- Try it here: <https://strudel.cc>
-- Docs: <https://strudel.cc/learn>
-- Source: https://codeberg.org/uzu/strudel/
-  * Along with many other live coding projects, we have moved from Microsoft's Github platform to Codeberg for ethical reasons. **Please don't fork the project back to github**.
-- Technical Blog Post: <https://loophole-letters.vercel.app/strudel>
-- 1 Year of Strudel Blog Post: <https://loophole-letters.vercel.app/strudel1year>
-- 2 Years of Strudel Blog Post: <https://strudel.cc/blog/#year-2>
+Built for the **Big Berlin Hack 2026 — Voice Interface in the Wild** track.
 
+## Running locally
 
-## Running Locally
+Requires Node ≥ 20.6 and [pnpm](https://pnpm.io). Add a `.env` at the repo
+root:
 
-After cloning the project, you can run the REPL locally:
+```env
+GEMINI_API_KEY=...        # https://aistudio.google.com/app/apikey
+GEMINI_MODEL=gemini-2.5-flash
+AIC_SDK_LICENSE=...       # https://developers.ai-coustics.com (optional)
+```
 
-1. Install [Node.js](https://nodejs.org/) 18 or newer
-2. Install [pnpm](https://pnpm.io/installation)
-3. Install dependencies by running the following command:
-   ```bash
-   pnpm i
-   ```
-4. Run the development server:
-   ```bash
-   pnpm dev
-   ```
+Then:
 
-## Using Strudel In Your Project
+```bash
+pnpm install
+pnpm dev          # REPL frontend on http://localhost:4321
+pnpm dev:api      # backend on http://localhost:4322
+```
 
-This project is organized into many [packages](./packages), which are also available on [npm](https://www.npmjs.com/search?q=%40strudel).
+Open the **vibe** tab in the side panel, hold `Space` anywhere on the page,
+describe a track, release. The generated pattern hot-swaps into the running
+scheduler — no audible break.
 
-Read more about how to use these in your own project [here](https://strudel.cc/technical-manual/project-start).
+## License
 
-You will need to abide by the terms of the [GNU Affero Public Licence v3](LICENSE). As such, Strudel code can only be shared within free/open source projects under the same license -- see the license for details.
+[GNU AGPL v3](LICENSE) — inherited from Strudel. Anything you ship based on
+this repo must be open-sourced under the same license.
 
-Licensing info for the default sound banks can be found over on the [dough-samples](https://github.com/felixroos/dough-samples/blob/main/README.md) repository.
+Strudel itself was created by Felix Roos, Alex McLean, and many others; the
+underlying packages (`@strudel/core`, `@strudel/mini`, `@strudel/webaudio`,
+…) are unchanged in this fork. See
+[Strudel's contributors](https://codeberg.org/uzu/strudel/activity/contributors).
 
-## Contributing
-
-There are many ways to contribute to this project! See [contribution guide](./CONTRIBUTING.md). You can find the full list of contributors [here](https://codeberg.org/uzu/strudel/activity/contributors).
-
-## Community
-
-There is a #strudel channel on the TidalCycles discord: <https://discord.com/invite/HGEdXmRkzT>
-
-You can also ask questions and find related discussions on the tidal club forum: <https://club.tidalcycles.org/>
-
-The discord and forum is shared with the haskell (tidal) and python (vortex) siblings of this project.
-
-We also have a mastodon account: <a rel="me" href="https://social.toplap.org/@strudel">social.toplap.org/@strudel</a>
+Default sound bank licensing lives in
+[dough-samples](https://github.com/felixroos/dough-samples/blob/main/README.md).

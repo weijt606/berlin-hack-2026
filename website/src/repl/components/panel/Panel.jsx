@@ -87,8 +87,7 @@ export function MainPanel({ context, isEmbedded = false, className }) {
             <LogoButton context={context} isEmbedded={isEmbedded} />
             {!isZen && (
               <div className="space-x-2 flex items-baseline">
-                <span className="hidden sm:block">strudel</span>
-                <span className="text-sm font-medium hidden sm:block">REPL</span>
+                <span className="hidden sm:block">TalkToRave</span>
                 {!hot ? (
                   <span className="text-sm font-medium hidden sm:block">({ver})</span>
                 ) : (
