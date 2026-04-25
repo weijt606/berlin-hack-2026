@@ -1,129 +1,52 @@
-# Procurement AI — Hackathon Template
+# strudel
 
-An Nx monorepo template with a NestJS API (clean architecture), React + Vite web,
-MikroORM on Postgres, Kafka, and an Anthropic adapter wired behind a domain port.
+Live coding patterns on the web
 
-## Stack
 
-| Layer      | Tech                                                       |
-| ---------- | ---------------------------------------------------------- |
-| Monorepo   | Nx 22                                                      |
-| API        | NestJS 11, MikroORM 6, `@anthropic-ai/sdk`, Zod env schema |
-| Web        | React 19, Vite, Tailwind v4, shadcn/ui, React Router       |
-| Data / bus | Postgres 17.4, Kafka 7.9 (Confluent), Karapace, Kafka UI   |
-| Tooling    | ESLint (+ layer boundaries), Prettier, Jest, Vitest        |
+- Try it here: <https://strudel.cc>
+- Docs: <https://strudel.cc/learn>
+- Source: https://codeberg.org/uzu/strudel/
+  * Along with many other live coding projects, we have moved from Microsoft's Github platform to Codeberg for ethical reasons. **Please don't fork the project back to github**.
+- Technical Blog Post: <https://loophole-letters.vercel.app/strudel>
+- 1 Year of Strudel Blog Post: <https://loophole-letters.vercel.app/strudel1year>
+- 2 Years of Strudel Blog Post: <https://strudel.cc/blog/#year-2>
 
-## Layout
 
-```
-apps/
-  api/                          NestJS app
-    src/
-      config/                   typed ConfigService + Zod env schema
-      domain/                   entities, value-objects, ports (framework-free)
-      application/              use cases (depend only on domain)
-      infrastructure/           adapters implementing domain ports
-        persistence/            MikroORM entities, repos, migrations
-        llm/                    Anthropic adapter → LlmPort
-        messaging/              (Kafka producer/consumer)
-      api/                      HTTP controllers, DTOs
-      app.module.ts
-      main.ts
-  web/                          React + Vite + Tailwind + shadcn
-libs/
-  shared-types/                 API contracts shared between api and web
-docker/
-  docker-compose.yml            postgres + zookeeper + kafka + karapace + kafka-ui
-.env.example
-```
+## Running Locally
 
-## Clean-architecture dependency rules
+After cloning the project, you can run the REPL locally:
 
-Enforced by `apps/api/eslint.config.mjs`:
+1. Install [Node.js](https://nodejs.org/) 18 or newer
+2. Install [pnpm](https://pnpm.io/installation)
+3. Install dependencies by running the following command:
+   ```bash
+   pnpm i
+   ```
+4. Run the development server:
+   ```bash
+   pnpm dev
+   ```
 
-```
-domain         → (nothing — framework-free)
-application    → domain
-infrastructure → domain, application
-api            → application, domain (types only)
-```
+## Using Strudel In Your Project
 
-Run `nx lint @procurement-ai/api` to check.
+This project is organized into many [packages](./packages), which are also available on [npm](https://www.npmjs.com/search?q=%40strudel).
 
-## Getting started
+Read more about how to use these in your own project [here](https://strudel.cc/technical-manual/project-start).
 
-```bash
-# 1. Install
-npm install
+You will need to abide by the terms of the [GNU Affero Public Licence v3](LICENSE). As such, Strudel code can only be shared within free/open source projects under the same license -- see the license for details.
 
-# 2. Start services
-cp .env.example .env
-# fill in ANTHROPIC_API_KEY
-npm run docker:up
+Licensing info for the default sound banks can be found over on the [dough-samples](https://github.com/felixroos/dough-samples/blob/main/README.md) repository.
 
-# 3. Run
-npm run dev:api     # http://localhost:3000/api
-npm run dev:web     # http://localhost:4200
-```
+## Contributing
 
-`dev:web` proxies `/api/*` to the NestJS server, so `fetch('/api/health')` from the
-browser works out of the box.
+There are many ways to contribute to this project! See [contribution guide](./CONTRIBUTING.md). You can find the full list of contributors [here](https://codeberg.org/uzu/strudel/activity/contributors).
 
-## Useful commands
+## Community
 
-| Command                      | What it does                           |
-| ---------------------------- | -------------------------------------- |
-| `npm run dev:api`            | Nest in watch mode                     |
-| `npm run dev:web`            | Vite dev server                        |
-| `npm run build`              | Build every project                    |
-| `npm run lint`               | Lint every project (incl. layer rules) |
-| `npm run typecheck`          | `tsc --build` for every project        |
-| `npm run test`               | Run all unit tests                     |
-| `npm run docker:up` / `down` | Start / stop the local stack           |
-| `npx nx graph`               | Interactive dependency graph           |
+There is a #strudel channel on the TidalCycles discord: <https://discord.com/invite/HGEdXmRkzT>
 
-## Adding a shadcn component
+You can also ask questions and find related discussions on the tidal club forum: <https://club.tidalcycles.org/>
 
-`components.json` already lives in `apps/web`. From the repo root:
+The discord and forum is shared with the haskell (tidal) and python (vortex) siblings of this project.
 
-```bash
-npx shadcn@latest add dialog --cwd apps/web
-```
-
-## Adding a MikroORM entity
-
-1. Create the class under `apps/api/src/infrastructure/persistence/entities/`
-2. `npx mikro-orm migration:create` (CLI config is `apps/api/src/infrastructure/persistence/mikro-orm.config.ts`)
-3. Repositories go next to the entities; keep domain entities pure and translate in the repo.
-
-## Using the LLM port
-
-```ts
-import { LLM_PORT, LlmPort } from '../../domain/ports/llm.port';
-
-@Injectable()
-export class DraftPurchaseOrder {
-  constructor(@Inject(LLM_PORT) private readonly llm: LlmPort) {}
-
-  async run(prompt: string) {
-    const result = await this.llm.complete({
-      messages: [{ role: 'user', content: prompt }],
-    });
-    return result.text;
-  }
-}
-```
-
-Swap `AnthropicAdapter` for another provider by binding a different class to `LLM_PORT`
-in `infrastructure/llm/llm.module.ts` — application code doesn't change.
-
-## Hackathon notes
-
-- On 2026-04-22 at 09:00 you receive a codebase zip. This template is for **practice**,
-  not the final entry. Use it to warm up with the stack the day before.
-- Docker images used here match the ones the hackathon instructions pre-pull, so the
-  first `docker compose up` is instant on hackathon day.
-
-## Product Design Docs
-
-- [Pitch to Video](docs/pitch-to-video.md) — GTM in 60s: pitch → AI-optimized marketing video (Peec AI track)
+We also have a mastodon account: <a rel="me" href="https://social.toplap.org/@strudel">social.toplap.org/@strudel</a>

@@ -1,8 +1,0 @@
-{
-  "name": "@procurement-ai/web",
-  "version": "0.0.1",
-  "private": true,
-  "dependencies": {
-    "@procurement-ai/shared-types": "*"
-  }
-}
