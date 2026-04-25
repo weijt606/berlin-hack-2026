@@ -1,0 +1,20 @@
+{
+  "name": "@strudel/llm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LLM service that turns natural-language prompts into Strudel code via Gemini",
+  "main": "src/index.mjs",
+  "scripts": {
+    "dev": "node --env-file=../../.env --watch src/index.mjs",
+    "start": "node --env-file=../../.env src/index.mjs"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.2",
+    "@google/genai": "^0.7.0",
+    "fastify": "^5.2.1"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  }
+}

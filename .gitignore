@@ -2,6 +2,10 @@ dist
 out
 !docs/dist
 dist-*
+.env
+.env.local
+.env.*.local
+.claude/
 cabal-dev
 *.o
 *.hi

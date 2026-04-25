@@ -4,6 +4,7 @@ import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
 import { useSettings, setIsZen, setIsPanelOpened, setActiveFooter as setTab } from '../../../settings.mjs';
 import '../../Repl.css';
 import { useLogger } from '../useLogger';
+import { AITab } from './AITab';
 import { ConsoleTab } from './ConsoleTab';
 import ExportTab from './ExportTab';
 import { FilesTab } from './FilesTab';
@@ -231,6 +232,7 @@ export function RightPanel({ context }) {
 
 const tabNames = {
   welcome: 'intro',
+  ai: 'ai',
   patterns: 'patterns',
   sounds: 'sounds',
   reference: 'reference',
@@ -263,6 +265,8 @@ function PanelNav({ children, className, ...props }) {
 function PanelContent({ context, tab }) {
   useLogger();
   switch (tab) {
+    case tabNames.ai:
+      return <AITab />;
     case tabNames.patterns:
       return <PatternsTab context={context} />;
     case tabNames.console:

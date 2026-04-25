@@ -16,6 +16,8 @@
     "repl": "npm run prestart && cd website && npm run dev",
     "start": "npm run prestart && cd website && npm run dev",
     "dev": "npm run prestart && cd website && npm run dev",
+    "dev:audio": "pnpm --filter @strudel/audio-enhance dev",
+    "dev:llm": "pnpm --filter @strudel/llm dev",
     "build": "npm run prebuild && cd website && npm run build",
     "preview": "cd website && npm run preview",
     "osc": "cd packages/osc && npm run server",
@@ -72,8 +74,8 @@
     "jsdoc-json": "^2.0.2",
     "lerna": "^8.1.9",
     "prettier": "^3.4.2",
-    "vitest": "^3.0.4",
-    "vite-plugin-bundle-audioworklet": "workspace:*"
+    "vite-plugin-bundle-audioworklet": "workspace:*",
+    "vitest": "^3.0.4"
   },
   "engines": {
     "node": ">=18.0.0"

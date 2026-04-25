@@ -1,0 +1,21 @@
+{
+  "name": "@strudel/audio-enhance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Speech enhancement HTTP service backed by the ai-coustics SDK",
+  "main": "src/index.mjs",
+  "scripts": {
+    "dev": "node --env-file=../../.env --watch src/index.mjs",
+    "start": "node --env-file=../../.env src/index.mjs"
+  },
+  "dependencies": {
+    "@ai-coustics/aic-sdk": "^0.17.0",
+    "@fastify/cors": "^10.0.2",
+    "fastify": "^5.2.1",
+    "wavefile": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  }
+}
