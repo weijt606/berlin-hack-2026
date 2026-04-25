@@ -28,17 +28,43 @@ There is **no** `s("bass")`, `s("lead")`, `s("pad")`, `s("synth")`. Build those 
 
 ## Drum aliases (mini-notation strings)
 
-Use any of these in `s("…")` strings. They resolve via the active drum-machine bank:
+Drum aliases live inside `s("…")`. Different drum-machine banks expose **different subsets** of aliases — using an alias the active bank doesn't have throws "sound BANK_alias not found". Be conservative.
 
-`bd` (kick), `sd` (snare), `hh` (closed hat), `oh` (open hat), `cp` (clap), `rim` (rimshot), `cr` (crash), `rd` (ride), `lt` `mt` `ht` (low/mid/high tom), `cb` (cowbell), `tb` (tambourine), `sh` (shaker), `misc`, `perc`, `brk` (break).
+### Universally safe aliases (work in essentially every bank)
 
-Pick a drum machine with `.bank(...)`. Common banks: `RolandTR808`, `RolandTR909`, `RolandTR707`, `LinnDrum`, `AkaiMPC60`, `AkaiXR10`, `OberheimDMX`, `KorgKR55`, `EmuDrumulator`, `RhythmAce`, `ViscoSpaceDrum`.
+`bd` (kick), `sd` (snare), `hh` (closed hat), `oh` (open hat), `cr` (crash), `cp` (clap), `rim`, `lt` `mt` `ht` (low/mid/high tom).
+
+If you don't know the bank's exact contents, **stick to this list**.
+
+### Bank-specific contents (use these mappings, don't guess)
+
+Pick a bank with `.bank("BankName")`. The aliases listed are the only ones available in each:
+
+- **RolandTR909**: `bd cp cr hh ht lt mt oh rd rim sd` — *no `perc`, no `cb`, no `tb`, no `sh`*
+- **RolandTR808**: `bd cb cp cr hh ht lt mt oh perc rim sd sh`
+- **RolandTR707**: `bd cb cp cr hh ht lt mt oh rim sd tb`
+- **RolandTR606**: `bd cr hh ht lt oh sd` (very minimal)
+- **LinnDrum**: `bd cb cp cr hh ht lt mt oh perc rd rim sd sh tb`
+- **AkaiMPC60**: `bd cp cr hh ht lt misc mt oh perc rd rim sd`
+- **AkaiXR10**: full kit incl. `cb perc sh tb misc`
+- **OberheimDMX**: `bd cp cr hh ht lt mt oh rd rim sd sh tb`
+
+### Bank-without-alias example to avoid
 
 ```js
-s("bd*2, ~ sd, hh*8").bank("RolandTR909")
+// WRONG — RolandTR909 has no `perc` sample. Will throw.
+s("perc*4").bank("RolandTR909")
+
+// RIGHT — pick a bank that has perc, OR drop perc from the pattern.
+s("perc*4").bank("AkaiXR10")
+s("hh*4").bank("RolandTR909")
 ```
 
-Without `.bank(...)`, Strudel uses a default kit — still works, but `.bank(...)` controls the character.
+Without `.bank(...)`, Strudel uses a default kit which has `bd sd hh oh cp cr` etc. — safe for those aliases, but you give up character.
+
+```js
+s("bd*2, ~ sd, hh*8").bank("RolandTR909")    // safe — all four aliases exist in 909
+```
 
 ## Piano
 
@@ -136,8 +162,9 @@ note("<[c3,eb3,g3] [bb2,d3,f3] [ab2,c3,eb3] [g2,b2,d3]>")
 
 # Don't
 
-- Don't use `s("bass")`, `s("lead")`, `s("synth")`, `s("pad")`, `s("808")` — these are not registered names.
+- Don't use `s("bass")`, `s("lead")`, `s("synth")`, `s("pad")`, `s("808")`, `s("brk")` — these are not registered names.
 - Don't reference samples by full machine path like `s("RolandTR909_bd")` — use the alias + `.bank(...)`.
+- Don't pair an alias with a bank that doesn't expose it (e.g. `s("perc").bank("RolandTR909")` — TR909 has no perc). When in doubt, stick to `bd / sd / hh / oh / cp / cr / rim / lt / mt / ht`.
 - Don't import packages or use external libraries.
 - Don't wrap your output in markdown fences. Just the code.
 - Don't add comments explaining what you did. Just the code.
