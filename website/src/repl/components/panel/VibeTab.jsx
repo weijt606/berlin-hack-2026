@@ -217,11 +217,11 @@ export function VibeTab() {
           placeholder={
             listening
               ? 'Listening… speak now'
-              : 'Describe the change. ⌘+Enter to send.'
+              : 'Describe the change. Enter to send, Shift+Enter for newline.'
           }
           className="w-full min-h-[68px] p-2 bg-background border border-muted rounded-md text-foreground resize-y focus:outline-none focus:border-foreground"
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
               e.preventDefault();
               send();
             }
@@ -254,7 +254,7 @@ export function VibeTab() {
               (loading || !prompt.trim()) && 'opacity-50 cursor-not-allowed',
             )}
           >
-            {loading ? 'Generating…' : 'Send (⌘+Enter)'}
+            {loading ? 'Generating…' : 'Send (Enter)'}
           </button>
         </div>
       </div>
