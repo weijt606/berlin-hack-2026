@@ -10,6 +10,16 @@ function getStrudelMirror() {
   return typeof window !== 'undefined' ? window.strudelMirror : null;
 }
 
+// Live "update" — same path as the REPL's update button.
+// scheduler.setPattern just reassigns the pattern; if already playing,
+// the next cycle picks up the new pattern with no audible break.
+function hotSwap(code) {
+  const editor = getStrudelMirror();
+  if (!editor || !code) return;
+  editor.setCode(code);
+  editor.evaluate(true);
+}
+
 function getSpeechRecognition() {
   if (typeof window === 'undefined') return null;
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -82,13 +92,7 @@ export function VibeTab() {
       }
       const code = data.code || '';
       setMessages((prev) => [...prev, { role: 'assistant', code }]);
-      if (auto) {
-        const editor = getStrudelMirror();
-        if (editor && code) {
-          editor.setCode(code);
-          editor.evaluate();
-        }
-      }
+      if (auto && code) hotSwap(code);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -145,10 +149,7 @@ export function VibeTab() {
   }
 
   function reuse(code) {
-    const editor = getStrudelMirror();
-    if (!editor || !code) return;
-    editor.setCode(code);
-    editor.evaluate();
+    hotSwap(code);
   }
 
   function reset() {
@@ -161,7 +162,10 @@ export function VibeTab() {
       <div className="flex items-center justify-between px-3 py-2 border-b border-muted text-xs opacity-70 shrink-0 gap-2">
         <span className="truncate">Vibe coding · iterating on the current track</span>
         <div className="flex items-center gap-2 shrink-0">
-          <label className="flex items-center gap-1 cursor-pointer" title="Auto-apply generated code to the editor and play it">
+          <label
+            className="flex items-center gap-1 cursor-pointer"
+            title="When on, each generated edit is hot-swapped into the running pattern (update mode) — no beat break."
+          >
             <input
               type="checkbox"
               checked={auto}
