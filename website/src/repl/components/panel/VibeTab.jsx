@@ -8,8 +8,12 @@ const API_URL =
 
 const AUTO_KEY = 'strudel:vibe:autoApply';
 const PTT_KEY = 'strudel:vibe:pttKey';
+const FLUSH_KEY = 'strudel:vibe:silenceFlush';
+const SILENCE_MS_KEY = 'strudel:vibe:silenceMs';
 const SESSION_KEY = 'strudel:vibe:sessionId';
 const DEFAULT_PTT = 'Space';
+const SILENCE_OPTIONS = [2000, 3000, 5000, 8000, 10000];
+const DEFAULT_SILENCE_MS = 5000;
 const NON_PTT_CODES = new Set([
   'ShiftLeft',
   'ShiftRight',
@@ -51,6 +55,18 @@ function readAuto() {
 function readPttKey() {
   if (typeof window === 'undefined') return DEFAULT_PTT;
   return window.localStorage?.getItem(PTT_KEY) || DEFAULT_PTT;
+}
+
+function readFlush() {
+  if (typeof window === 'undefined') return true;
+  const raw = window.localStorage?.getItem(FLUSH_KEY);
+  return raw === null ? true : raw === 'true';
+}
+
+function readSilenceMs() {
+  if (typeof window === 'undefined') return DEFAULT_SILENCE_MS;
+  const n = Number(window.localStorage?.getItem(SILENCE_MS_KEY));
+  return SILENCE_OPTIONS.includes(n) ? n : DEFAULT_SILENCE_MS;
 }
 
 function generateSessionId() {
@@ -112,6 +128,8 @@ export function VibeTab() {
   const [listening, setListening] = useState(false);
   const [auto, setAuto] = useState(readAuto);
   const [pttKey, setPttKey] = useState(readPttKey);
+  const [flush, setFlush] = useState(readFlush);
+  const [silenceMs, setSilenceMs] = useState(readSilenceMs);
   const [capturingKey, setCapturingKey] = useState(false);
   const [pttHint, setPttHint] = useState(false);
   const [sessionId] = useState(readOrCreateSessionId);
@@ -122,6 +140,10 @@ export function VibeTab() {
   const pttKeyDownRef = useRef(false);
   const scrollRef = useRef(null);
   const sendRef = useRef(null);
+  // mirror flush + silenceMs into refs so the active recogniser closure
+  // always reads the current toggle values
+  const flushRef = useRef(flush);
+  const silenceMsRef = useRef(silenceMs);
 
   const speechSupported = Boolean(getSpeechRecognition());
 
@@ -136,6 +158,20 @@ export function VibeTab() {
       window.localStorage?.setItem(PTT_KEY, pttKey);
     }
   }, [pttKey]);
+
+  useEffect(() => {
+    flushRef.current = flush;
+    if (typeof window !== 'undefined') {
+      window.localStorage?.setItem(FLUSH_KEY, String(flush));
+    }
+  }, [flush]);
+
+  useEffect(() => {
+    silenceMsRef.current = silenceMs;
+    if (typeof window !== 'undefined') {
+      window.localStorage?.setItem(SILENCE_MS_KEY, String(silenceMs));
+    }
+  }, [silenceMs]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -226,6 +262,26 @@ export function VibeTab() {
     rec.interimResults = true;
     rec.lang = navigator.language || 'en-US';
     let buffer = prompt;
+    let silenceTimer = null;
+    const clearSilence = () => {
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+      }
+    };
+    // While PTT is held, if no speech result arrives for SILENCE_MS,
+    // dispatch what we have and keep the mic open for the next utterance.
+    const armSilence = () => {
+      clearSilence();
+      if (!ptt || !flushRef.current) return;
+      silenceTimer = setTimeout(() => {
+        silenceTimer = null;
+        if (!pttActiveRef.current) return;
+        if (!buffer.trim()) return;
+        sendRef.current?.();
+        buffer = '';
+      }, silenceMsRef.current);
+    };
     rec.onresult = (event) => {
       let final = '';
       let interim = '';
@@ -238,8 +294,10 @@ export function VibeTab() {
         buffer = (buffer ? buffer + ' ' : '') + final.trim();
       }
       setPrompt(buffer + (interim ? (buffer ? ' ' : '') + interim : ''));
+      armSilence();
     };
     rec.onend = () => {
+      clearSilence();
       // If the session is still active (user hasn't released PTT or
       // clicked stop), the browser timed out — restart transparently.
       if (listeningRef.current) {
@@ -266,6 +324,7 @@ export function VibeTab() {
       const code = event.error;
       if (code === 'no-speech' || code === 'aborted') return;
       setError(`Voice input error: ${code || 'unknown'}`);
+      clearSilence();
       listeningRef.current = false;
       pttActiveRef.current = false;
     };
@@ -356,17 +415,6 @@ export function VibeTab() {
       <div className="flex items-center justify-between px-3 py-2 border-b border-muted text-xs opacity-70 shrink-0 gap-2">
         <span className="truncate">Vibe coding · iterating on the current track</span>
         <div className="flex items-center gap-2 shrink-0">
-          <label
-            className="flex items-center gap-1 cursor-pointer"
-            title="When on, each generated edit is hot-swapped into the running pattern (update mode) — no beat break."
-          >
-            <input
-              type="checkbox"
-              checked={auto}
-              onChange={(e) => setAuto(e.target.checked)}
-            />
-            auto
-          </label>
           <button
             onClick={() => setCapturingKey((v) => !v)}
             title="Push-to-talk key. Hold this key anywhere on the page to record, release to send. Click to change."
@@ -445,7 +493,7 @@ export function VibeTab() {
           <div
             title={
               speechSupported
-                ? `Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Click "PTT" in the header to rebind.`
+                ? `Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Click "PTT" above to rebind.`
                 : 'Voice input not supported in this browser'
             }
             className={cx(
@@ -470,6 +518,46 @@ export function VibeTab() {
           >
             {loading ? 'Generating…' : 'Send (Enter)'}
           </button>
+        </div>
+        <div className="flex items-center gap-3 text-xs opacity-70">
+          <label
+            className="flex items-center gap-1 cursor-pointer"
+            title="When on, each generated edit is hot-swapped into the running pattern (update mode) — no beat break."
+          >
+            <input
+              type="checkbox"
+              checked={auto}
+              onChange={(e) => setAuto(e.target.checked)}
+            />
+            auto
+          </label>
+          <label
+            className="flex items-center gap-1 cursor-pointer"
+            title={`While holding ${displayKey(pttKey)}, auto-send after the chosen pause and keep listening for the next utterance.`}
+          >
+            <input
+              type="checkbox"
+              checked={flush}
+              onChange={(e) => setFlush(e.target.checked)}
+            />
+            auto-send after
+          </label>
+          <select
+            value={silenceMs}
+            onChange={(e) => setSilenceMs(Number(e.target.value))}
+            disabled={!flush}
+            title="How long of a pause counts as 'done speaking'."
+            className={cx(
+              'bg-background border border-muted rounded px-1 py-0.5',
+              !flush && 'opacity-50 cursor-not-allowed',
+            )}
+          >
+            {SILENCE_OPTIONS.map((ms) => (
+              <option key={ms} value={ms}>
+                {ms / 1000}s
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
