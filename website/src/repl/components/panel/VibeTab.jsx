@@ -42,6 +42,7 @@ export function VibeTab() {
   const [listening, setListening] = useState(false);
   const [auto, setAuto] = useState(readAuto);
   const recRef = useRef(null);
+  const listeningRef = useRef(false);
   const scrollRef = useRef(null);
   const speechSupported = Boolean(getSpeechRecognition());
 
@@ -58,6 +59,7 @@ export function VibeTab() {
   }, [messages, loading]);
 
   useEffect(() => () => {
+    listeningRef.current = false;
     try {
       recRef.current?.stop();
     } catch {}
@@ -100,11 +102,16 @@ export function VibeTab() {
     }
   }
 
+  function stopMic() {
+    listeningRef.current = false;
+    try {
+      recRef.current?.stop();
+    } catch {}
+  }
+
   function toggleMic() {
-    if (listening) {
-      try {
-        recRef.current?.stop();
-      } catch {}
+    if (listeningRef.current) {
+      stopMic();
       return;
     }
     const SR = getSpeechRecognition();
@@ -113,7 +120,9 @@ export function VibeTab() {
       return;
     }
     const rec = new SR();
-    rec.continuous = false;
+    // continuous: keep listening across pauses; only stop when the user
+    // clicks the mic button again or the browser fires a fatal error.
+    rec.continuous = true;
     rec.interimResults = true;
     rec.lang = navigator.language || 'en-US';
     let buffer = prompt;
@@ -131,17 +140,33 @@ export function VibeTab() {
       setPrompt(buffer + (interim ? (buffer ? ' ' : '') + interim : ''));
     };
     rec.onend = () => {
-      setListening(false);
+      // Browsers (Chrome especially) silently end the session after ~60s
+      // even in continuous mode. If the user still wants to listen,
+      // restart transparently.
+      if (listeningRef.current) {
+        try {
+          rec.start();
+          return;
+        } catch {
+          // fall through to cleanup
+        }
+      }
+      listeningRef.current = false;
       recRef.current = null;
+      setListening(false);
     };
     rec.onerror = (event) => {
-      setError(`Voice input error: ${event.error || 'unknown'}`);
-      setListening(false);
-      recRef.current = null;
+      const code = event.error;
+      // 'no-speech' / 'aborted' are normal in continuous mode — let
+      // onend's restart handler take over silently.
+      if (code === 'no-speech' || code === 'aborted') return;
+      setError(`Voice input error: ${code || 'unknown'}`);
+      listeningRef.current = false;
     };
     try {
       rec.start();
       recRef.current = rec;
+      listeningRef.current = true;
       setListening(true);
     } catch (err) {
       setError(`Could not start voice input: ${err.message || err}`);
