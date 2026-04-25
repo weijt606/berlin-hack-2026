@@ -13,10 +13,16 @@ export function createGeminiClient({ apiKey, model, temperature = 0.7 }) {
   const genai = new GoogleGenAI({ apiKey });
 
   return {
-    async complete({ systemPrompt, userMessage }) {
+    async complete({ systemPrompt, userMessage, history = [] }) {
+      const contents = history.map((turn) => ({
+        role: turn.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: turn.text }],
+      }));
+      contents.push({ role: 'user', parts: [{ text: userMessage }] });
+
       const response = await genai.models.generateContent({
         model,
-        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        contents,
         config: { systemInstruction: systemPrompt, temperature },
       });
       return { text: response.text ?? '', model };

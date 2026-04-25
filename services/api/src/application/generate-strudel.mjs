@@ -7,11 +7,25 @@ function stripCodeFences(text) {
   return m ? m[1] : text;
 }
 
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+  const out = [];
+  for (const turn of history) {
+    if (!turn || typeof turn.text !== 'string') continue;
+    if (turn.role !== 'user' && turn.role !== 'assistant') continue;
+    out.push({ role: turn.role, text: turn.text });
+  }
+  return out;
+}
+
 /**
- * @param {{ llmClient: import('./ports.mjs').LlmClient | null, systemPrompt: string }} deps
+ * @param {{
+ *   llmClient: import('./ports.mjs').LlmClient | null,
+ *   loadSystemPrompt: import('./ports.mjs').SystemPromptProvider,
+ * }} deps
  */
-export function makeGenerateStrudel({ llmClient, systemPrompt }) {
-  return async function generateStrudel({ prompt, currentCode }) {
+export function makeGenerateStrudel({ llmClient, loadSystemPrompt }) {
+  return async function generateStrudel({ prompt, currentCode, history }) {
     if (!llmClient) {
       throw new ServiceUnavailable('GEMINI_API_KEY is not set in the root .env file.');
     }
@@ -19,13 +33,21 @@ export function makeGenerateStrudel({ llmClient, systemPrompt }) {
       throw new InvalidInput('Body must include a non-empty string `prompt` field.');
     }
 
+    const turns = sanitizeHistory(history);
     const userMessage = currentCode
       ? `<current>\n${currentCode}\n</current>\n\n${prompt}`
       : prompt;
 
+    // Re-read on every request so prompt edits don't require a restart.
+    const systemPrompt = await loadSystemPrompt();
+
     let completion;
     try {
-      completion = await llmClient.complete({ systemPrompt, userMessage });
+      completion = await llmClient.complete({
+        systemPrompt,
+        userMessage,
+        history: turns,
+      });
     } catch (err) {
       throw new UpstreamError(`Gemini error: ${err.message}`);
     }

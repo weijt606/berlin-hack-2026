@@ -15,10 +15,8 @@ import { createServer } from './interface/http/server.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const config = loadConfig();
 
-const systemPrompt = await readFile(
-  resolve(__dirname, 'prompts/strudel-system.md'),
-  'utf8',
-);
+const SYSTEM_PROMPT_PATH = resolve(__dirname, 'prompts/strudel-system.md');
+const loadSystemPrompt = () => readFile(SYSTEM_PROMPT_PATH, 'utf8');
 
 const llmClient = createGeminiClient(config.llm);
 const audioEnhancer = createAicProcessor({
@@ -26,7 +24,7 @@ const audioEnhancer = createAicProcessor({
   modelsDir: resolve(__dirname, '..', 'models'),
 });
 
-const generateStrudel = makeGenerateStrudel({ llmClient, systemPrompt });
+const generateStrudel = makeGenerateStrudel({ llmClient, loadSystemPrompt });
 const enhanceAudio = makeEnhanceAudio({ audioEnhancer });
 
 const server = await createServer({
