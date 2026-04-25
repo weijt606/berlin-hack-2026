@@ -2,9 +2,30 @@ import { InvalidInput, ServiceUnavailable, UpstreamError } from '../domain/error
 
 const FENCE_RE = /^```(?:javascript|js|strudel)?\n([\s\S]*?)\n```$/;
 
+// Sentinel emitted by the model when the request can't be turned into a
+// pattern — see skills/strudel/rules/cannot-handle.md. Detected here so we
+// can flag the response and prevent the editor from being overwritten.
+export const CANNOT_HANDLE_SENTINEL = 'Couldn’t generate or modify — please try again.';
+const CANNOT_HANDLE_PLAIN = "Couldn't generate or modify - please try again.";
+
 function stripCodeFences(text) {
   const m = text.match(FENCE_RE);
   return m ? m[1] : text;
+}
+
+function isCannotHandle(text) {
+  // Be lenient with smart-vs-straight quotes and em-dashes since the model
+  // sometimes "auto-corrects" punctuation.
+  const norm = text
+    .replace(/[‘’]/g, "'")
+    .replace(/[—–]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return (
+    norm === CANNOT_HANDLE_PLAIN.toLowerCase() ||
+    norm === CANNOT_HANDLE_PLAIN.toLowerCase().replace(/\.$/, '')
+  );
 }
 
 function sanitizeHistory(history) {
@@ -52,8 +73,19 @@ export function makeGenerateStrudel({ llmClient, loadSystemPrompt }) {
       throw new UpstreamError(`Gemini error: ${err.message}`);
     }
 
+    const cleaned = stripCodeFences((completion.text ?? '').trim());
+
+    if (isCannotHandle(cleaned)) {
+      return {
+        code: '',
+        message: CANNOT_HANDLE_SENTINEL,
+        noChange: true,
+        model: completion.model,
+      };
+    }
+
     return {
-      code: stripCodeFences((completion.text ?? '').trim()),
+      code: cleaned,
       model: completion.model,
     };
   };

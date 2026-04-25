@@ -29,6 +29,7 @@ const SKILL_ORDER = [
   'rules/iteration.md',
   'rules/host-controls.md',
   'rules/uncertainty.md',
+  'rules/cannot-handle.md',
   'reference/sounds.md',
   'reference/mini-notation.md',
   'reference/pattern-transforms.md',

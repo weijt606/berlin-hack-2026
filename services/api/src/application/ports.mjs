@@ -32,7 +32,8 @@
  * @typedef {() => Promise<string>} SystemPromptProvider
  *
  * @typedef {{ role: 'user', text: string, ts: string }
- *   | { role: 'assistant', code: string, ts: string }} StoredMessage
+ *   | { role: 'assistant', code: string, ts: string }
+ *   | { role: 'assistant', text: string, noChange: true, ts: string }} StoredMessage
  *
  * @typedef {Object} ChatSessionRecord
  * @property {string} id

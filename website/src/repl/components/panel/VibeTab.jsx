@@ -230,7 +230,9 @@ export function VibeTab() {
         setMessages(data.messages);
       }
       const code = data.code || '';
-      if (auto && code) hotSwap(code);
+      // noChange: model couldn't turn the request into a pattern (see
+      // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
+      if (auto && code && !data.noChange) hotSwap(code);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -546,6 +548,15 @@ function Message({ msg, onReuse }) {
       <div className="flex justify-end">
         <div className="max-w-[85%] px-3 py-2 rounded-md bg-foreground text-background text-sm whitespace-pre-wrap break-words">
           {msg.text}
+        </div>
+      </div>
+    );
+  }
+  if (msg.noChange) {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[85%] px-3 py-2 rounded-md border border-dashed border-muted text-sm italic opacity-70 whitespace-pre-wrap break-words">
+          {msg.text || "Couldn't generate or modify — please try again."}
         </div>
       </div>
     );
