@@ -648,23 +648,11 @@ importers:
         specifier: ^3.0.4
         version: 3.0.4(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/ui@3.0.4)(jiti@2.4.2)(lightningcss@1.29.1)(terser@5.37.0)(yaml@2.7.0)
 
-  services/audio-enhance:
+  services/api:
     dependencies:
       '@ai-coustics/aic-sdk':
         specifier: ^0.17.0
         version: 0.17.0
-      '@fastify/cors':
-        specifier: ^10.0.2
-        version: 10.1.0
-      fastify:
-        specifier: ^5.2.1
-        version: 5.8.5
-      wavefile:
-        specifier: ^11.0.0
-        version: 11.0.0
-
-  services/llm:
-    dependencies:
       '@fastify/cors':
         specifier: ^10.0.2
         version: 10.1.0
@@ -674,6 +662,9 @@ importers:
       fastify:
         specifier: ^5.2.1
         version: 5.8.5
+      wavefile:
+        specifier: ^11.0.0
+        version: 11.0.0
 
   tools/dbpatch:
     dependencies:
@@ -12445,7 +12436,7 @@ snapshots:
       cross-spawn: 7.0.6
       get-stream: 6.0.0
       human-signals: 2.1.0
-      is-stream: 2.0.0
+      is-stream: 2.0.1
       merge-stream: 2.0.0
       npm-run-path: 4.0.1
       onetime: 5.1.2
