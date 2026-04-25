@@ -4,15 +4,12 @@ import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
 import { useSettings, setIsZen, setIsPanelOpened, setActiveFooter as setTab } from '../../../settings.mjs';
 import '../../Repl.css';
 import { useLogger } from '../useLogger';
-import { AITab } from './AITab';
 import { ConsoleTab } from './ConsoleTab';
-import ExportTab from './ExportTab';
 import { FilesTab } from './FilesTab';
-import { PatternsTab } from './PatternsTab';
 import { Reference } from './Reference';
 import { SettingsTab } from './SettingsTab';
 import { SoundsTab } from './SoundsTab';
-import { WelcomeTab } from './WelcomeTab';
+import { VibeTab } from './VibeTab';
 
 const TAURI = typeof window !== 'undefined' && window.__TAURI__;
 
@@ -231,12 +228,9 @@ export function RightPanel({ context }) {
 }
 
 const tabNames = {
-  welcome: 'intro',
-  ai: 'ai',
-  patterns: 'patterns',
+  vibe: 'vibe',
   sounds: 'sounds',
   reference: 'reference',
-  export: 'export',
   console: 'console',
   settings: 'settings',
 };
@@ -265,24 +259,19 @@ function PanelNav({ children, className, ...props }) {
 function PanelContent({ context, tab }) {
   useLogger();
   switch (tab) {
-    case tabNames.ai:
-      return <AITab />;
-    case tabNames.patterns:
-      return <PatternsTab context={context} />;
     case tabNames.console:
       return <ConsoleTab />;
     case tabNames.sounds:
       return <SoundsTab />;
     case tabNames.reference:
       return <Reference />;
-    case tabNames.export:
-      return <ExportTab handleExport={context.handleExport} />;
     case tabNames.settings:
       return <SettingsTab started={context.started} />;
     case tabNames.files:
       return <FilesTab />;
+    case tabNames.vibe:
     default:
-      return <WelcomeTab context={context} />;
+      return <VibeTab />;
   }
 }
 

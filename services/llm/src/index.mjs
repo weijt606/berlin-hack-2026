@@ -11,10 +11,10 @@ const HOST = process.env.LLM_HOST || '0.0.0.0';
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const apiKey = process.env.GEMINI_API_KEY;
 
-const systemPrompt = await readFile(
-  resolve(__dirname, 'prompts/strudel-system.md'),
-  'utf8',
-);
+const SYSTEM_PROMPT_PATH = resolve(__dirname, 'prompts/strudel-system.md');
+async function loadSystemPrompt() {
+  return readFile(SYSTEM_PROMPT_PATH, 'utf8');
+}
 
 const genai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
@@ -34,21 +34,34 @@ fastify.post('/generate', async (request, reply) => {
     });
   }
 
-  const { prompt, currentCode } = request.body ?? {};
+  const { prompt, currentCode, history } = request.body ?? {};
   if (!prompt || typeof prompt !== 'string') {
     return reply.code(400).send({ error: 'Body must include a string `prompt` field.' });
+  }
+
+  const contents = [];
+  if (Array.isArray(history)) {
+    for (const turn of history) {
+      if (!turn || typeof turn.text !== 'string') continue;
+      contents.push({
+        role: turn.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: turn.text }],
+      });
+    }
   }
 
   const userMessage = currentCode
     ? `<current>\n${currentCode}\n</current>\n\n${prompt}`
     : prompt;
+  contents.push({ role: 'user', parts: [{ text: userMessage }] });
 
   try {
+    const systemInstruction = await loadSystemPrompt();
     const response = await genai.models.generateContent({
       model: MODEL,
-      contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+      contents,
       config: {
-        systemInstruction: systemPrompt,
+        systemInstruction,
         temperature: 0.7,
       },
     });

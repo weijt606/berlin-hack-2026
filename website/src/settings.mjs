@@ -33,7 +33,7 @@ const ratchet = register('ratchet', (pat) => pat.sometimes(ply(2)))
 `;
 
 export const defaultSettings = {
-  activeFooter: 'intro',
+  activeFooter: 'vibe',
   keybindings: 'codemirror',
   isBracketMatchingEnabled: true,
   isBracketClosingEnabled: true,
