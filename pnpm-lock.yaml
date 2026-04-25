@@ -662,6 +662,9 @@ importers:
       fastify:
         specifier: ^5.2.1
         version: 5.8.5
+      nodejs-whisper:
+        specifier: ^0.3.0
+        version: 0.3.0
       wavefile:
         specifier: ^11.0.0
         version: 11.0.0
@@ -4393,6 +4396,10 @@ packages:
     resolution: {integrity: sha512-ov6w/2LCiuyO4RLYGdpFGjkcs0wMTgGE8PrkTHikeUy5iJekXyPIKUjifk5CsE0pt7sMCrMZ3YNqoCj6idQOnQ==}
     engines: {node: '>=10'}
 
+  execa@5.1.1:
+    resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
+    engines: {node: '>=10'}
+
   expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
@@ -6102,6 +6109,10 @@ packages:
     resolution: {integrity: sha512-1uiY543L+N7Og4yswvlm5NCKgPKDEXd9AUR9Jh3gen6oOeBsesr6LqhXom1er3eRzSUcVRWXzhv8tSNrIfGHKw==}
     engines: {node: '>=18'}
 
+  nodejs-whisper@0.3.0:
+    resolution: {integrity: sha512-fIj1Aw6mKevfWKW2wuoFEZuYDRAJPM+L9VWdceGgji3sU8+QKoO8pI30L3+kCYVCCssGOXRzU5qQ0eZdRhfMyg==}
+    hasBin: true
+
   nopt@7.2.1:
     resolution: {integrity: sha512-taM24ViiimT/XntxbPyJQzCG+p4EKOpgD3mxFwW38mGjVUrfERQOeY4EDHjdnptttfHuHQXFx+lTP08Q+mLa/w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -6753,6 +6764,10 @@ packages:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
 
+  readline-sync@1.4.10:
+    resolution: {integrity: sha512-gNva8/6UAe8QYepIQH/jQ2qn91Qj0B9sYjMBBs3QOB8F2CXcKgLxQaJRP76sWVRQt+QU+8fAkCbCvjjMFu7Ycw==}
+    engines: {node: '>= 0.8.0'}
+
   real-require@0.2.0:
     resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
     engines: {node: '>= 12.13.0'}
@@ -7091,6 +7106,10 @@ packages:
   shebang-regex@3.0.0:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
+
+  shelljs@0.10.0:
+    resolution: {integrity: sha512-Jex+xw5Mg2qMZL3qnzXIfaxEtBaC4n7xifqaqtrZDdlheR70OGkydrPJWT0V1cA1k3nanC86x9FwAmQl6w3Klw==}
+    engines: {node: '>=18'}
 
   shiki@1.29.1:
     resolution: {integrity: sha512-TghWKV9pJTd/N+IgAIVJtr0qZkB7FfFCUrrEJc0aRmZupo3D1OCVRknQWVRVA7AX/M0Ld7QfoAruPzr3CnUJuw==}
@@ -12443,6 +12462,18 @@ snapshots:
       signal-exit: 3.0.7
       strip-final-newline: 2.0.0
 
+  execa@5.1.1:
+    dependencies:
+      cross-spawn: 7.0.6
+      get-stream: 6.0.0
+      human-signals: 2.1.0
+      is-stream: 2.0.1
+      merge-stream: 2.0.0
+      npm-run-path: 4.0.1
+      onetime: 5.1.2
+      signal-exit: 3.0.7
+      strip-final-newline: 2.0.0
+
   expand-template@2.0.3: {}
 
   expect-type@1.1.0: {}
@@ -14647,6 +14678,11 @@ snapshots:
     dependencies:
       '@babel/parser': 7.26.7
 
+  nodejs-whisper@0.3.0:
+    dependencies:
+      readline-sync: 1.4.10
+      shelljs: 0.10.0
+
   nopt@7.2.1:
     dependencies:
       abbrev: 2.0.0
@@ -15429,6 +15465,8 @@ snapshots:
     dependencies:
       picomatch: 2.3.1
 
+  readline-sync@1.4.10: {}
+
   real-require@0.2.0: {}
 
   recma-build-jsx@1.0.0:
@@ -15907,6 +15945,11 @@ snapshots:
       shebang-regex: 3.0.0
 
   shebang-regex@3.0.0: {}
+
+  shelljs@0.10.0:
+    dependencies:
+      execa: 5.1.1
+      fast-glob: 3.3.3
 
   shiki@1.29.1:
     dependencies:

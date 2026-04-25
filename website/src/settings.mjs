@@ -71,6 +71,10 @@ export const defaultSettings = {
   settingsTab: 'settings',
   vibePttKey: 'Space',
   vibeAutoApply: true,
+  // Speech recognition language. 'auto' uses navigator.language (which on
+  // Chinese-locale browsers picks zh-CN and butchers English prompts —
+  // hence the en-US default).
+  vibeVoiceLang: 'en-US',
 };
 
 let search = null;
@@ -133,6 +137,7 @@ export function useSettings() {
 export const setActiveFooter = (tab) => settingsMap.setKey('activeFooter', tab);
 export const setVibePttKey = (code) => settingsMap.setKey('vibePttKey', code);
 export const setVibeAutoApply = (bool) => settingsMap.setKey('vibeAutoApply', !!bool);
+export const setVibeVoiceLang = (lang) => settingsMap.setKey('vibeVoiceLang', lang);
 export const setPanelPinned = (bool) => settingsMap.setKey('isPanelPinned', bool);
 export const setIsPanelOpened = (bool) => settingsMap.setKey('isPanelOpen', bool);
 export const setSettingsTab = (tab) => settingsMap.setKey('settingsTab', tab);

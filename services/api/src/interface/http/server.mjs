@@ -5,6 +5,7 @@ import { registerHealth } from './routes/health.mjs';
 import { registerGenerate } from './routes/generate.mjs';
 import { registerEnhance } from './routes/enhance.mjs';
 import { registerSessions } from './routes/sessions.mjs';
+import { registerVoicePrompt } from './routes/voice-prompt.mjs';
 
 export async function createServer({ deps, config }) {
   const fastify = Fastify({
@@ -32,6 +33,7 @@ export async function createServer({ deps, config }) {
   registerGenerate(fastify, deps);
   registerSessions(fastify, deps);
   registerEnhance(fastify, deps);
+  registerVoicePrompt(fastify, deps);
 
   return fastify;
 }

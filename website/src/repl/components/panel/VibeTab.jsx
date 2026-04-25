@@ -31,16 +31,90 @@ function getStrudelMirror() {
 // Live "update" — same path as the REPL's update button.
 // scheduler.setPattern just reassigns the pattern; if already playing,
 // the next cycle picks up the new pattern with no audible break.
-function hotSwap(code) {
+//
+// IMPORTANT for live coding: never call .stop() / .repl.stop() / .repl.pause()
+// here. The user's complaint "music stops on every input" was traced to
+// hotSwap firing while the new pattern had a runtime error — the scheduler
+// kept its empty/broken pattern slot and the user heard silence. Awaiting
+// evaluate and surfacing the error preserves the previous pattern in that
+// case (Strudel's evaluate path doesn't touch the scheduler.pattern slot
+// when compilation throws), so audio continues playing whatever was last
+// good.
+async function hotSwap(code, onError) {
   const editor = getStrudelMirror();
   if (!editor || !code) return;
   editor.setCode(code);
-  editor.evaluate(true);
+  try {
+    await editor.evaluate(true);
+  } catch (err) {
+    const msg = err?.message || String(err);
+    console.error('[vibe] hotSwap eval failed:', msg);
+    onError?.(`Code didn't run: ${msg}`);
+  }
 }
 
-function getSpeechRecognition() {
-  if (typeof window === 'undefined') return null;
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+// We no longer use Web Speech API (it bypassed ai-coustics — the whole point
+// of the project track is enhancing noisy stage audio before STT). The voice
+// path is now: mic → ScriptProcessor float32 capture → 16kHz mono WAV →
+// POST /voice-prompt → ai-coustics enhance → Gemini STT → transcript.
+function hasMicSupport() {
+  return typeof window !== 'undefined' && !!navigator?.mediaDevices?.getUserMedia;
+}
+
+// --- WAV / resampling helpers (no external dep) ---
+function mergeFloat32(chunks) {
+  let total = 0;
+  for (const c of chunks) total += c.length;
+  const out = new Float32Array(total);
+  let offset = 0;
+  for (const c of chunks) { out.set(c, offset); offset += c.length; }
+  return out;
+}
+
+async function resampleTo16k(input, inputRate) {
+  if (inputRate === 16000) return input;
+  // OfflineAudioContext gives us a proper polyphase resampler with
+  // anti-aliasing built in — orders of magnitude better than the previous
+  // nearest-neighbour pick, which introduced aliasing that confused both
+  // ai-coustics and Gemini's STT (manifested as "the model hears garbled
+  // hissy English" → wrong transcripts).
+  const targetRate = 16000;
+  const outLength = Math.floor(input.length * (targetRate / inputRate));
+  const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+    1,
+    outLength,
+    targetRate,
+  );
+  const buf = offlineCtx.createBuffer(1, input.length, inputRate);
+  buf.getChannelData(0).set(input);
+  const src = offlineCtx.createBufferSource();
+  src.buffer = buf;
+  src.connect(offlineCtx.destination);
+  src.start();
+  const rendered = await offlineCtx.startRendering();
+  return rendered.getChannelData(0);
+}
+
+function encodeWavMono16k(samples) {
+  const sampleRate = 16000;
+  const bytesPerSample = 2;
+  const dataSize = samples.length * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  let offset = 0;
+  const ws = (s) => { for (let i = 0; i < s.length; i++) view.setUint8(offset++, s.charCodeAt(i)); };
+  const u32 = (v) => { view.setUint32(offset, v, true); offset += 4; };
+  const u16 = (v) => { view.setUint16(offset, v, true); offset += 2; };
+  ws('RIFF'); u32(36 + dataSize); ws('WAVE');
+  ws('fmt '); u32(16); u16(1); u16(1); u32(sampleRate);
+  u32(sampleRate * 1 * bytesPerSample); u16(1 * bytesPerSample); u16(16);
+  ws('data'); u32(dataSize);
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    offset += 2;
+  }
+  return new Blob([buffer], { type: 'audio/wav' });
 }
 
 function readFlush() {
@@ -106,7 +180,7 @@ function isTextInput(target) {
 }
 
 export function VibeTab() {
-  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto } = useSettings();
+  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto, vibeVoiceLang } = useSettings();
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
@@ -123,12 +197,23 @@ export function VibeTab() {
   const pttKeyDownRef = useRef(false);
   const scrollRef = useRef(null);
   const sendRef = useRef(null);
+  // AbortController for the in-flight /generate fetch, so the user can cancel
+  // a long-running LLM call (esp. local Ollama with cold prefill) and re-input.
+  const abortRef = useRef(null);
   // mirror flush + silenceMs into refs so the active recogniser closure
   // always reads the current toggle values
   const flushRef = useRef(flush);
   const silenceMsRef = useRef(silenceMs);
 
-  const speechSupported = Boolean(getSpeechRecognition());
+  const speechSupported = hasMicSupport();
+  // 'idle' | 'recording' | 'processing'
+  const [voiceStage, setVoiceStage] = useState('idle');
+  // Last STT transcript — pinned in the UI so it stays visible even after
+  // the textarea is cleared by send(). Cleared on next recording.
+  const [lastTranscript, setLastTranscript] = useState('');
+  // Pending auto-send timer ref. We let the user *cancel* the auto-send by
+  // typing in the textarea (handled in textarea onChange).
+  const autoSendTimerRef = useRef(null);
 
   useEffect(() => {
     flushRef.current = flush;
@@ -192,12 +277,17 @@ export function VibeTab() {
     // Optimistic: show the user's bubble immediately. The backend
     // returns the authoritative messages array, which we adopt below.
     setMessages((prev) => [...prev, { role: 'user', text, ts: 'pending' }]);
+    // Clear input now so the DJ can start typing the next prompt while this
+    // one is in flight (or after cancel without having to wipe stale text).
     setPrompt('');
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       const res = await fetch(`${API_URL}/generate`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ sessionId, prompt: text, currentCode }),
+        signal: ctrl.signal,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -208,113 +298,154 @@ export function VibeTab() {
         setMessages(data.messages);
       }
       const code = data.code || '';
-      if (auto && code) hotSwap(code);
+      if (auto && code) hotSwap(code, setError);
     } catch (err) {
-      setError(err.message || String(err));
+      if (err?.name === 'AbortError') {
+        // user cancelled — drop the optimistic bubble; input is already empty
+        setMessages((prev) => prev.filter((msg) => msg.ts !== 'pending'));
+      } else {
+        setError(err.message || String(err));
+      }
     } finally {
+      abortRef.current = null;
       setLoading(false);
     }
+  }
+
+  function cancelSend() {
+    abortRef.current?.abort();
   }
 
   // keep a ref to the latest send so global key handlers always call the
   // current closure (with current prompt / messages state)
   sendRef.current = send;
 
-  function startMic({ ptt = false } = {}) {
+  // New voice path: capture raw mic audio, encode WAV, post to /voice-prompt
+  // (server runs ai-coustics enhance + Gemini STT), then drop the transcript
+  // into the prompt. Replaces the old Web Speech API path entirely — that
+  // bypassed ai-coustics, which is the whole point of this hackathon track.
+  async function startMic({ ptt = false } = {}) {
     if (listeningRef.current) return;
-    const SR = getSpeechRecognition();
-    if (!SR) {
-      setError('Voice input is not supported in this browser. Try Chrome.');
+    if (!hasMicSupport()) {
+      setError('Microphone capture is not available in this browser.');
       return;
     }
     setError('');
-    const rec = new SR();
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.lang = navigator.language || 'en-US';
-    let buffer = prompt;
-    let silenceTimer = null;
-    const clearSilence = () => {
-      if (silenceTimer) {
-        clearTimeout(silenceTimer);
-        silenceTimer = null;
-      }
-    };
-    // While PTT is held, if no speech result arrives for SILENCE_MS,
-    // dispatch what we have and keep the mic open for the next utterance.
-    const armSilence = () => {
-      clearSilence();
-      if (!ptt || !flushRef.current) return;
-      silenceTimer = setTimeout(() => {
-        silenceTimer = null;
-        if (!pttActiveRef.current) return;
-        if (!buffer.trim()) return;
-        sendRef.current?.();
-        buffer = '';
-      }, silenceMsRef.current);
-    };
-    rec.onresult = (event) => {
-      let final = '';
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const r = event.results[i];
-        if (r.isFinal) final += r[0].transcript;
-        else interim += r[0].transcript;
-      }
-      if (final) {
-        buffer = (buffer ? buffer + ' ' : '') + final.trim();
-      }
-      setPrompt(buffer + (interim ? (buffer ? ' ' : '') + interim : ''));
-      armSilence();
-    };
-    rec.onend = () => {
-      clearSilence();
-      // If the session is still active (user hasn't released PTT or
-      // clicked stop), the browser timed out — restart transparently.
-      if (listeningRef.current) {
-        try {
-          rec.start();
-          return;
-        } catch {
-          // fall through to cleanup
-        }
-      }
-      const wasPtt = pttActiveRef.current;
-      pttActiveRef.current = false;
-      listeningRef.current = false;
-      recRef.current = null;
-      setListening(false);
-      if (wasPtt) {
-        // give the recogniser a tick to flush any final result into prompt
-        setTimeout(() => {
-          sendRef.current?.();
-        }, 120);
-      }
-    };
-    rec.onerror = (event) => {
-      const code = event.error;
-      if (code === 'no-speech' || code === 'aborted') return;
-      setError(`Voice input error: ${code || 'unknown'}`);
-      clearSilence();
-      listeningRef.current = false;
-      pttActiveRef.current = false;
-    };
+    let stream;
     try {
-      rec.start();
-      recRef.current = rec;
-      listeningRef.current = true;
-      pttActiveRef.current = ptt;
-      setListening(true);
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          // Keep AGC on so quiet voice still has reasonable level for both
+          // ai-coustics and Gemini STT — disabling it killed accuracy on
+          // soft speakers. Browser noise suppression / echo cancel stay OFF
+          // so ai-coustics gets the raw broadband noise to actually denoise
+          // (its whole reason for existing).
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: true,
+        },
+      });
     } catch (err) {
-      setError(`Could not start voice input: ${err.message || err}`);
+      setError(`Microphone access denied: ${err.message || err}`);
+      return;
+    }
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioCtx();
+    const source = audioCtx.createMediaStreamSource(stream);
+    // ScriptProcessorNode is deprecated but works everywhere; AudioWorklet
+    // would need a separate file in /public, not worth it for a 50-line hack.
+    const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+    const chunks = [];
+    processor.onaudioprocess = (e) => {
+      const ch = e.inputBuffer.getChannelData(0);
+      // copy: the buffer is reused between callbacks
+      chunks.push(new Float32Array(ch));
+    };
+    source.connect(processor);
+    // ScriptProcessor needs a sink to actually fire; route to a muted gain so
+    // the user doesn't hear feedback.
+    const sink = audioCtx.createGain();
+    sink.gain.value = 0;
+    processor.connect(sink);
+    sink.connect(audioCtx.destination);
+
+    recRef.current = { stream, audioCtx, source, processor, sink, chunks, ptt };
+    listeningRef.current = true;
+    pttActiveRef.current = ptt;
+    setListening(true);
+    setVoiceStage('recording');
+    // Clear any banner from the previous turn.
+    setLastTranscript('');
+    if (autoSendTimerRef.current) {
+      clearTimeout(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
     }
   }
 
-  function stopMic() {
+  async function stopMic() {
+    const ctx = recRef.current;
+    if (!ctx) return;
+    recRef.current = null;
     listeningRef.current = false;
+    const wasPtt = pttActiveRef.current;
+    pttActiveRef.current = false;
+    setListening(false);
+
+    // Tear down audio graph + tracks first so the mic LED turns off promptly.
+    try { ctx.processor.disconnect(); } catch {}
+    try { ctx.source.disconnect(); } catch {}
+    try { ctx.sink.disconnect(); } catch {}
+    try { ctx.stream.getTracks().forEach((t) => t.stop()); } catch {}
+    const inputRate = ctx.audioCtx.sampleRate;
+    try { await ctx.audioCtx.close(); } catch {}
+
+    if (!ctx.chunks.length) {
+      setVoiceStage('idle');
+      return;
+    }
+    setVoiceStage('processing');
+    const merged = mergeFloat32(ctx.chunks);
+    const ds = await resampleTo16k(merged, inputRate);
+    const wavBlob = encodeWavMono16k(ds);
+
     try {
-      recRef.current?.stop();
-    } catch {}
+      const lang = vibeVoiceLang && vibeVoiceLang !== 'auto' ? `?lang=${encodeURIComponent(vibeVoiceLang)}` : '';
+      const res = await fetch(`${API_URL}/voice-prompt${lang}`, {
+        method: 'POST',
+        headers: { 'content-type': 'audio/wav' },
+        body: wavBlob,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error || `Voice HTTP ${res.status}`);
+        return;
+      }
+      const text = (data.text || '').trim();
+      if (!text) {
+        setError('Empty transcript — speak louder, get closer to the mic, or hold the PTT key longer.');
+        return;
+      }
+      setPrompt(text);
+      // Pin a copy of the transcript so it stays visible even after send()
+      // clears the textarea — gives the user clear feedback "this is what
+      // was heard" without depending on textarea timing.
+      setLastTranscript(text);
+      // Auto-send if PTT was held + flush ("auto-send after pause") is on.
+      // 2-second window so the user can actually read the transcript and
+      // optionally cancel by typing into the textarea (see onChange below).
+      if (wasPtt && flushRef.current) {
+        if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
+        autoSendTimerRef.current = setTimeout(() => {
+          autoSendTimerRef.current = null;
+          sendRef.current?.();
+        }, 2000);
+      }
+    } catch (err) {
+      setError(`Voice pipeline error: ${err.message || err}`);
+    } finally {
+      setVoiceStage('idle');
+    }
   }
 
   // Global push-to-talk handler. Hold the configured key to record,
@@ -353,7 +484,7 @@ export function VibeTab() {
   }, [pttKey, speechSupported]);
 
   function reuse(code) {
-    hotSwap(code);
+    hotSwap(code, setError);
   }
 
   async function reset() {
@@ -413,17 +544,38 @@ export function VibeTab() {
       </div>
 
       <div className="border-t border-muted p-3 space-y-2 shrink-0">
+        {lastTranscript && (
+          <div
+            className="text-xs px-2 py-1 rounded border border-muted opacity-80 truncate"
+            title={lastTranscript}
+          >
+            <span className="opacity-60">📝 heard:</span> {lastTranscript}
+            {autoSendTimerRef.current && (
+              <span className="opacity-60 ml-2">— auto-sending in 2s, type to cancel</span>
+            )}
+          </div>
+        )}
         <textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            // User edited — cancel any pending auto-send so the typed text
+            // isn't immediately blown away.
+            if (autoSendTimerRef.current) {
+              clearTimeout(autoSendTimerRef.current);
+              autoSendTimerRef.current = null;
+            }
+            setPrompt(e.target.value);
+          }}
           placeholder={
             listening
               ? pttHint
-                ? `Listening… release ${displayKey(pttKey)} to send`
-                : 'Listening… speak now'
-              : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(
-                  pttKey,
-                )} for push-to-talk.`
+                ? `🎙 Recording… release ${displayKey(pttKey)} to denoise + transcribe`
+                : '🎙 Recording… speak now'
+              : voiceStage === 'processing'
+                ? '✨ Enhancing audio + transcribing… (~5s)'
+                : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(
+                    pttKey,
+                  )} for push-to-talk.`
           }
           className="w-full min-h-[68px] p-2 bg-background border border-muted rounded-md text-foreground resize-y focus:outline-none focus:border-foreground"
           onKeyDown={(e) => {
@@ -451,7 +603,9 @@ export function VibeTab() {
             >
               {listening
                 ? `● Recording (release ${displayKey(pttKey)})`
-                : `🎤 Voice input (${displayKey(pttKey)})`}
+                : voiceStage === 'processing'
+                  ? '✨ Enhancing + transcribing…'
+                  : `🎤 Voice input (${displayKey(pttKey)})`}
             </div>
             <label
               className="flex items-center gap-1 cursor-pointer text-xs opacity-70"
@@ -481,16 +635,26 @@ export function VibeTab() {
               ))}
             </select>
           </div>
-          <button
-            onClick={send}
-            disabled={loading || !prompt.trim()}
-            className={cx(
-              'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
-              (loading || !prompt.trim()) && 'opacity-50 cursor-not-allowed',
-            )}
-          >
-            {loading ? 'Generating…' : 'Send (Enter)'}
-          </button>
+          {loading ? (
+            <button
+              onClick={cancelSend}
+              title="Cancel in-flight request and edit the prompt"
+              className="px-3 py-1 rounded-md border border-foreground text-foreground text-sm hover:opacity-80"
+            >
+              ✕ Cancel
+            </button>
+          ) : (
+            <button
+              onClick={send}
+              disabled={!prompt.trim()}
+              className={cx(
+                'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
+                !prompt.trim() && 'opacity-50 cursor-not-allowed',
+              )}
+            >
+              Send (Enter)
+            </button>
+          )}
         </div>
       </div>
     </div>

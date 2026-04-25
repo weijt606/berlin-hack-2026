@@ -20,6 +20,17 @@
  * @property {() => string} getModelId
  * @property {(wavBuffer: Buffer) => Promise<Buffer>} enhance
  *
+ * @typedef {Object} SttResult
+ * @property {string} text
+ * @property {string} model
+ *
+ * @typedef {Object} SttTranscribeArgs
+ * @property {Buffer} wavBuffer
+ * @property {string|null} [languageHint]  optional ISO-like hint, e.g. "en-US"
+ *
+ * @typedef {Object} SttClient
+ * @property {(args: SttTranscribeArgs) => Promise<SttResult>} transcribe
+ *
  * @typedef {() => Promise<string>} SystemPromptProvider
  *
  * @typedef {{ role: 'user', text: string, ts: string }
