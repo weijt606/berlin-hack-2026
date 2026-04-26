@@ -25,5 +25,3 @@ treat it as an automated fix request, not a new user instruction:
   - `is not defined` / `is not a function` → replace the unknown call with a
     documented Strudel API.
 
-Do not add a `// viz: …` hint unless the previous code already had one;
-keep the per-track visualization stable across fixes.

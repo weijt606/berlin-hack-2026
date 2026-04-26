@@ -51,6 +51,27 @@ export async function deleteSession(sessionId) {
   await fetch(`${API_URL}/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
 }
 
+// Stateless second hop after /generate: ship the just-applied code to
+// the Pioneer GLiNER2 classifier and get back which painter to use
+// (`{ viz, model, latencyMs }`). The frontend shows a "Pioneer picking
+// viz…" badge while this is in flight. Returns `{ viz: null }` (or
+// null on network failure) — caller falls back to the user's current pick.
+export async function postRecommendViz({ code, signal }) {
+  const res = await fetch(`${API_URL}/recommend-viz`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code }),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data?.error || `HTTP ${res.status}`);
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
 // Stateless one-shot fix: no session history, no chat-log mutation. Used
 // when the in-browser scheduler emits runtime errors (sound not loaded,
 // NaN AudioParam, wrong-typed control) — we ship the failing code + first

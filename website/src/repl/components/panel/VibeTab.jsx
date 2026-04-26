@@ -2,7 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import cx from '@src/cx.mjs';
 import { useSettings } from '../../../settings.mjs';
 import { useStore } from '@nanostores/react';
-import { $selectedTrackId, $selectedTrack, setTrackCode, setTrackViz } from '../../tracks/tracksStore.mjs';
+import {
+  $selectedTrackId,
+  $selectedTrack,
+  setTrackCode,
+  setTrackViz,
+  setVizPending,
+} from '../../tracks/tracksStore.mjs';
 import { createVoiceRecorder } from './voice-recorder.mjs';
 import {
   displayKey,
@@ -16,6 +22,7 @@ import {
   fetchSessionMessages,
   postGenerate,
   postGenerateFix,
+  postRecommendViz,
   postTranscribe,
   deleteSession,
 } from './vibe/vibeApi.mjs';
@@ -83,9 +90,12 @@ function watchForRuntimeError(ms = RUNTIME_ERROR_WINDOW_MS) {
   });
 }
 
-// Apply incoming code (and optional viz suggestion) to the *selected*
-// track: update the persisted store and hot-swap the live editor so
-// playback continues seamlessly.
+// Apply incoming code to the *selected* track: update the persisted
+// store, hot-swap the live editor, then ask the Pioneer GLiNER2
+// classifier which painter to use and apply that too. Visualization is
+// kicked off *after* the code lands so the user hears audio continue
+// uninterrupted while the small "Pioneer picking viz…" badge appears
+// next to the viz picker.
 //
 // When `allowFix` is true, we also listen for runtime errors from the
 // scheduler for ~1.5s after the swap; if any fire, we POST the failing
@@ -97,12 +107,11 @@ function watchForRuntimeError(ms = RUNTIME_ERROR_WINDOW_MS) {
 // the new pattern has a runtime error, the scheduler keeps its previous
 // pattern slot — calling stop in that path produces the "music drops on
 // every input" regression from the old code path.
-async function applyCodeToSelectedTrack(code, viz, onError, { allowFix = false } = {}) {
+async function applyCodeToSelectedTrack(code, onError, { allowFix = false } = {}) {
   if (!code) return;
   const id = $selectedTrackId.get();
   if (!id) return;
   setTrackCode(id, code);
-  if (viz) setTrackViz(id, viz);
   if (typeof window === 'undefined') return;
   // window.strudelMirror always points at the selected track's editor.
   const editor = window.strudelMirror;
@@ -117,6 +126,10 @@ async function applyCodeToSelectedTrack(code, viz, onError, { allowFix = false }
     onError?.(err?.message || String(err));
     return;
   }
+  // Fire the Pioneer recommendation in the background so the user can
+  // hear the new pattern immediately. Tracked per-track so the picker
+  // can render its "推荐中…" badge while we wait.
+  recommendVizForTrack(id, code);
   if (!watcher) return;
   const runtimeError = await watcher;
   if (!runtimeError) return;
@@ -125,12 +138,27 @@ async function applyCodeToSelectedTrack(code, viz, onError, { allowFix = false }
     if (fix?.code && !fix.noChange) {
       // One-shot retry. allowFix:false prevents an infinite loop if the
       // fix itself is broken — surface the original error instead.
-      await applyCodeToSelectedTrack(fix.code, fix.viz, onError, { allowFix: false });
+      await applyCodeToSelectedTrack(fix.code, onError, { allowFix: false });
     } else {
       onError?.(`runtime error: ${runtimeError}`);
     }
   } catch (err) {
     onError?.(`runtime error: ${runtimeError} (auto-fix failed: ${err?.message || err})`);
+  }
+}
+
+// Background viz recommendation — never throws into the apply path.
+// On success, swaps the per-track viz; on failure (Pioneer key unset,
+// network hiccup, model returns junk), leaves the existing viz alone.
+async function recommendVizForTrack(trackId, code) {
+  setVizPending(trackId, true);
+  try {
+    const data = await postRecommendViz({ code });
+    if (data?.viz) setTrackViz(trackId, data.viz);
+  } catch {
+    /* leave existing viz alone */
+  } finally {
+    setVizPending(trackId, false);
   }
 }
 
@@ -294,7 +322,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
       // noChange: model couldn't turn the request into a pattern (see
       // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
       if (auto && code && !data.noChange) {
-        applyCodeToSelectedTrack(code, data.viz, setError, { allowFix: true });
+        applyCodeToSelectedTrack(code, setError, { allowFix: true });
       }
     } catch (err) {
       if (err?.name === 'AbortError') {
@@ -438,8 +466,8 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pttKey]);
 
-  function reuse(code, viz) {
-    applyCodeToSelectedTrack(code, viz, setError, { allowFix: true });
+  function reuse(code) {
+    applyCodeToSelectedTrack(code, setError, { allowFix: true });
   }
 
   async function reset() {

@@ -4,9 +4,8 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
 
 ## Must
 
-- Reply with **only the Strudel code**, optionally prefixed by a single
-  one-line viz hint (see "Viz hint" below). No prose before, no prose
-  after, no explanation, no markdown fences, no commentary.
+- Reply with **only the Strudel code**. No prose before, no prose after,
+  no explanation, no markdown fences, no commentary, no viz hint.
 - The code must be a **single self-contained expression** that the Strudel REPL
   can evaluate as the entire program. The expression is typically `stack(...)`,
   `note(...)...`, or `s(...)...`.
@@ -20,31 +19,13 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
 - **Code must compile and play first try.** Run the self-check below before
   responding.
 
-## Viz hint
+## Visualization
 
-The host renders a per-track visualization on its own canvas — you do
-**not** need to append `.scope()` / `.pianoroll()` etc. to the
-expression. Instead, recommend a viz by emitting **exactly one comment
-on the very first line** of your response:
-
-```
-// viz: <one of: pianoroll | waveform | spectrum | scope | spiral>
-<your code>
-```
-
-Pick the viz that best fits the pattern:
-
-| viz | best for |
-| --- | --- |
-| `pianoroll` | melodic / harmonic content with distinct pitches (default) |
-| `waveform` | bass / drums / anything with strong dynamics — DAW-style scrolling peak envelope |
-| `spectrum` | textural / pad / FX / filter sweeps — scrolling log-frequency spectrogram |
-| `scope` | resonant / monophonic / synth leads — single-snapshot zero-aligned oscilloscope |
-| `spiral` | ambient, slow / cyclic patterns where periodicity matters |
-
-If you are unsure, omit the viz hint — the host will keep the user's
-current choice. Don't pick the same viz two turns in a row unless the
-music character genuinely demands it; see `rules/diversity.md`.
+**Do not** pick or emit a viz hint. The host runs a separate Pioneer
+classifier on the returned code to choose the per-track painter
+(pianoroll / waveform / spectrum / scope / spiral) — it owns that
+decision. You also do **not** need to append `.scope()` / `.pianoroll()`
+to the expression; the host renders the viz on its own canvas.
 
 ## Must not
 
@@ -56,7 +37,6 @@ music character genuinely demands it; see `rules/diversity.md`.
 - No markdown fences (`` ``` ``) — the response must be raw code.
 - No leading or trailing comments. Inline comments are allowed only in
   these cases:
-  - The optional **viz hint** as the very first line (see "Viz hint" above).
   - **Dual-deck programs** (see `reference/dual-deck.md`): a single short
     `// Left deck — <vibe>` / `// Right deck — <vibe>` line per deck is OK,
     because it materially helps the reader distinguish stereo halves.
@@ -66,24 +46,16 @@ music character genuinely demands it; see `rules/diversity.md`.
 
 ## Output shape
 
-A response is one of:
+A response is exactly one Strudel expression. For example:
 
 ```
-[// viz: <one of the keys above>\n]<single Strudel expression>
-```
-
-For example:
-
-```
-// viz: pianoroll
 stack(
   s("bd ~ ~ bd, ~ ~ sd ~, hh*8").bank("RolandTR909"),
   note("<c2 g1 a1 e1>").s("sawtooth").lpf(800).gain(0.6)
 ).slow(2)
 ```
 
-That entire response is one optional viz comment plus the code. Nothing
-else.
+Nothing else — no comment, no fence, no prose.
 
 ## Compilation self-check
 
@@ -97,8 +69,7 @@ these means re-emit, do not ship.
 | **Method names verified** | Every `.foo(...)` after a pattern is in `reference/effects.md` / `reference/pattern-transforms.md` / `reference/visualization.md`. No `.resonance`, `.reverb`, `.legato`, `.feel`. |
 | **Sound names verified** | Every `s("...")` argument decomposes into names from `reference/sounds.md` (drum aliases, GM names, waveform names). No `s("bass")` / `s("kick")` / `s("synth")`. |
 | **No forbidden tokens** | No `import`, `require`, `console`, `return`, `await`, `Tone`, `AudioContext`, `document`, `window`. |
-| **Viz hint (optional)** | If present, it is the only thing on the very first line and matches `// viz: <key>` where `<key>` is one of `pianoroll | waveform | spectrum | scope | spiral`. |
-| **No prose / no fences** | Output starts directly with the code. Output ends with `)` (or `;` or a method call). No leading or trailing whitespace lines except a single newline. |
+| **No prose / no fences / no viz hint** | Output starts directly with the code. Output ends with `)` (or `;` or a method call). No leading or trailing whitespace lines except a single newline. |
 
 If any cell answers "no", fix and re-check the whole list — do not ship a
 "close enough" program. Strudel parser errors abort the whole evaluation; the

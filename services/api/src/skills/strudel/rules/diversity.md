@@ -12,35 +12,21 @@ turns in the chat history):
 1. **Don't reuse the same drum kit two turns in a row.** If last turn was
    `RolandTR909`, this turn pick `RolandTR808`, `LinnDrum`, `AkaiMPC60`,
    `OberheimDMX`, etc. unless the user explicitly said "keep the kit".
-2. **Don't reuse the same visualizer two turns in a row.** Pick a different
-   `// viz: <key>` than last turn — cycle through `pianoroll`, `waveform`,
-   `spectrum`, `scope`, `spiral` based on musical character (see the
-   table below and `rules/output-format.md`).
-3. **Vary the structure idiom.** If last turn was `stack(drums, bass, chord)`,
+2. **Vary the structure idiom.** If last turn was `stack(drums, bass, chord)`,
    this turn try one of:
    - `arrange([4, drums], [4, drumsAndBass], [8, fullStack])`
    - `stack(drums, melody.jux(rev))`
    - `stack(drums, layer.off(0.125, x => x.add(7)))`
    - euclidean: `s("bd").euclid(5, 8)` instead of `bd*4`
-4. **Reach for a less-common transform every 2-3 turns**: `.chunk(N, fn)`,
+3. **Reach for a less-common transform every 2-3 turns**: `.chunk(N, fn)`,
    `.iter(N)`, `.swing(N)`, `.palindrome()`, `.ply("<1 2 3>")`,
    `.degradeBy(0.2)`, `.mask("<1 [0 1]>")`, `.struct("x ~ x ~")`.
-5. **Don't always pick the obvious sound.** "Lo-fi" doesn't HAVE to be
+4. **Don't always pick the obvious sound.** "Lo-fi" doesn't HAVE to be
    `gm_epiano2` — sometimes try `gm_celesta`, `gm_vibraphone`, or a
    bandpass-filtered `triangle`.
 
-## Choosing visualizer by character
-
-| Music character | Default `// viz:` |
-| --- | --- |
-| Melodic / chord-heavy (jazz, lo-fi, ambient) | `pianoroll` |
-| Beat / bass-driven (techno, house, dnb, dubstep) | `waveform` |
-| Textural / pad / FX / filter sweeps | `spectrum` |
-| Resonant mono lead / synth solo | `scope` |
-| Looping arp / cyclic / ambient patterns | `spiral` |
-
-If you've used `pianoroll` two turns in a row, **rotate** to whichever option
-above isn't `pianoroll` — even if `pianoroll` would technically fit.
+Visualization is picked separately by a Pioneer classifier downstream;
+do not emit a `// viz:` hint or call `.scope()`/`.pianoroll()` etc.
 
 ## Don't pretend to randomize
 
@@ -54,5 +40,3 @@ each turn, not stuffing randomness inside one program.
   cohesive starting point.
 - **User says "again" / "same vibe"**: relax this rule — they explicitly
   asked for continuity. Match the previous structure.
-- **User explicitly references a viz** ("show the spectrum"): that wins
-  over the rotation rule.

@@ -108,7 +108,6 @@ export function makeChatSession({ sessionStore, generateStrudel, validatePattern
       });
       return {
         code: result.code,
-        viz: result.viz,
         message: result.message,
         noChange: !!result.noChange,
         model: result.model,
@@ -141,15 +140,12 @@ export function makeChatSession({ sessionStore, generateStrudel, validatePattern
           ts,
         });
       } else {
-        const msg = { role: 'assistant', code: result.code, ts };
-        if (result.viz) msg.viz = result.viz;
-        record.messages.push(msg);
+        record.messages.push({ role: 'assistant', code: result.code, ts });
       }
       await sessionStore.save(record);
 
       return {
         code: result.code,
-        viz: result.viz,
         message: result.message,
         noChange: !!result.noChange,
         model: result.model,

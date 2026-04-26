@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { DomainError } from '../../domain/errors.mjs';
 import { registerHealth } from './routes/health.mjs';
 import { registerGenerate } from './routes/generate.mjs';
+import { registerRecommendViz } from './routes/recommend-viz.mjs';
 import { registerEnhance } from './routes/enhance.mjs';
 import { registerTranscribe } from './routes/transcribe.mjs';
 import { registerSessions } from './routes/sessions.mjs';
@@ -31,6 +32,7 @@ export async function createServer({ deps, config }) {
 
   registerHealth(fastify, deps);
   registerGenerate(fastify, deps);
+  registerRecommendViz(fastify, deps);
   registerSessions(fastify, deps);
   registerEnhance(fastify, deps);
   registerTranscribe(fastify, deps);
