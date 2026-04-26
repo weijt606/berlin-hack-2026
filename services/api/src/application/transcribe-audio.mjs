@@ -21,6 +21,21 @@ export function pickBetterTranscript(raw, enhanced) {
   const eWords = wordCount(enhanced.text);
   // Empty enhanced + non-trivial raw → keep raw.
   if (!eWords && rWords > 0) return { text: raw.text, source: 'raw-enh-empty' };
+
+  // The enhancer occasionally pins its output to the absolute noise floor
+  // (rmsDb = -120 dB, voicedRatio = 0) on already-clean close-talk audio.
+  // Whisper then HALLUCINATES from that silence, sometimes producing more
+  // text than raw ("Thank you for watching and see you in the next one.").
+  // The pure rmsDrop+length heuristic below misses that case because the
+  // hallucination is longer than the truth. Detect it by the metrics shape
+  // and always prefer raw when present.
+  const enhSilent =
+    (enhanced.metrics?.rmsDb ?? 0) <= -100 ||
+    (enhanced.metrics?.voicedRatio ?? 1) < 0.05;
+  if (enhSilent && rWords > 0) {
+    return { text: raw.text, source: 'raw-enh-silent' };
+  }
+
   // Enhancer collapsed loudness (rms dropped >20dB) AND shortened the text
   // by >50% — strong "the enhancer ate the signal" signature.
   const rmsDrop = (raw.metrics?.rmsDb ?? 0) - (enhanced.metrics?.rmsDb ?? 0);
