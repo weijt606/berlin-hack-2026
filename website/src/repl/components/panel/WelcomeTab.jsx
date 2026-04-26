@@ -9,7 +9,7 @@ export function WelcomeTab({ context }) {
     <div className="prose dark:prose-invert min-w-full py-4 font-sans px-4 text-sm" style={{ fontFamily }}>
       <h3>welcome</h3>
       <p>
-        You have found <span className="underline">TalkToRave</span>, a voice-driven live-coding music environment
+        You have found <span className="underline">VibeRave</span>, a voice-driven live-coding music environment
         built on <a href="https://codeberg.org/uzu/strudel" target="_blank">Strudel</a>. Free and open-source. To get
         started:
         <br />
@@ -33,7 +33,7 @@ export function WelcomeTab({ context }) {
       </p>
       <h3>about</h3>
       <p>
-        TalkToRave wraps{' '}
+        VibeRave wraps{' '}
         <a href="https://codeberg.org/uzu/strudel" target="_blank">
           Strudel
         </a>

@@ -1,6 +1,6 @@
-# TalkToRave
+# VibeRave
 
-Vibe-code music with your voice. TalkToRave is a voice-driven live-coding
+Vibe-code music with your voice. VibeRave is a voice-driven live-coding
 environment built on top of [Strudel](https://codeberg.org/uzu/strudel) —
 hold a key, describe the track you want, and an LLM rewrites the running
 pattern in place without breaking the beat.

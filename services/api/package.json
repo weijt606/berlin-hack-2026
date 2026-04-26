@@ -1,9 +1,9 @@
 {
-  "name": "@talktorave/api",
+  "name": "@viberave/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "talkToRave API — speech enhancement (ai-coustics) + Strudel code generation (Gemini)",
+  "description": "VibeRave API — speech enhancement (ai-coustics) + Strudel code generation (Gemini)",
   "main": "src/index.mjs",
   "scripts": {
     "dev": "node --env-file=../../.env --watch src/index.mjs",
