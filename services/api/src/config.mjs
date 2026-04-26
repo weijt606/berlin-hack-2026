@@ -58,6 +58,8 @@ export function loadConfig() {
       //   whisper → local smart-whisper (default, no network, ~700-900ms)
       //   gemini  → Gemini multimodal API (~1-2s, much better on short
       //             commands; uses the same GEMINI_API_KEY as code-gen)
+      //   vosk    → local closed-grammar VOSK (~10ms, only recognises the
+      //             canonical demo phrases — see vosk-transcriber.mjs)
       provider: (process.env.STT_PROVIDER || 'whisper').toLowerCase(),
       modelName: process.env.WHISPER_MODEL || 'base.en',
       gpu: process.env.WHISPER_GPU !== '0',
@@ -75,6 +77,9 @@ export function loadConfig() {
       // accuracy on short DJ commands (verified 2026-04-26 against the
       // demo phrase list). Override per env if a newer model is needed.
       geminiModel: process.env.GEMINI_STT_MODEL || 'gemini-2.5-flash',
+      // VOSK model directory (only used when STT_PROVIDER=vosk). Default
+      // points at the small-en model that ships in services/api/models/.
+      voskModelPath: process.env.VOSK_MODEL_PATH || null,
     },
     sessions: {
       dir: process.env.API_SESSIONS_DIR || null,
