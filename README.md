@@ -30,9 +30,11 @@ Then:
 
 ```bash
 pnpm install
-pnpm dev          # REPL frontend on http://localhost:4321
-pnpm dev:api      # backend on http://localhost:4322
+pnpm dev          # REPL on http://localhost:4321 + API on http://localhost:4322
 ```
+
+`pnpm dev` starts both the frontend and the API together. To run them
+individually use `pnpm dev:web` or `pnpm dev:api`.
 
 Open the **vibe** tab in the side panel, hold `Space` anywhere on the page,
 describe a track, release. The generated pattern hot-swaps into the running
