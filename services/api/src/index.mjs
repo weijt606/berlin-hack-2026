@@ -10,12 +10,14 @@ import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.m
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
 import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs';
 import { createStageDumpStore } from './infrastructure/stage-dump-store.mjs';
+import { createPioneerVizClient } from './infrastructure/pioneer-viz-client.mjs';
 import { makeGenerateStrudel } from './application/generate-strudel.mjs';
 import { makeValidateStrudel } from './application/validate-strudel.mjs';
 import { makeEnhanceAudio } from './application/enhance-audio.mjs';
 import { makeTranscribeAudio } from './application/transcribe-audio.mjs';
 import { makeTranscriptNormalizer } from './application/transcript-normalizer.mjs';
 import { makeChatSession } from './application/chat-session.mjs';
+import { makeRecommendViz } from './application/recommend-viz.mjs';
 import { createServer } from './interface/http/server.mjs';
 
 // Composition root: the only place that wires concrete dependencies
@@ -114,6 +116,15 @@ const transcribeAudio = makeTranscribeAudio({
 const validatePattern = makeValidateStrudel();
 const chatSession = makeChatSession({ sessionStore, generateStrudel, validatePattern });
 
+const pioneerVizClient = createPioneerVizClient({
+  apiKey: config.pioneer.apiKey,
+  modelId: config.pioneer.vizModelId,
+});
+console.log(
+  `[pioneer-viz] ${pioneerVizClient ? `enabled → model=${config.pioneer.vizModelId}` : 'disabled (set PIONEER_API_KEY + PIONEER_VIZ_MODEL_ID)'}`,
+);
+const recommendViz = makeRecommendViz({ pioneerVizClient });
+
 const server = await createServer({
   config,
   deps: {
@@ -127,6 +138,7 @@ const server = await createServer({
     enhanceAudio,
     transcribeAudio,
     chatSession,
+    recommendViz,
   },
 });
 

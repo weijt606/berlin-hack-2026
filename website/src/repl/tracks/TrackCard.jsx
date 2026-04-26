@@ -59,6 +59,7 @@ export function TrackCard({
 
       {/* Always-visible per-track visualization */}
       <TrackVisualizer
+        trackId={track.id}
         onCanvas={onCanvas}
         viz={track.viz}
         onVizChange={(v) => onVizChange(track.id, v)}

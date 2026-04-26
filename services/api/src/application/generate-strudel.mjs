@@ -2,21 +2,15 @@ import { InvalidInput, ServiceUnavailable, UpstreamError } from '../domain/error
 
 const FENCE_RE = /^```(?:javascript|js|strudel)?\n([\s\S]*?)\n```$/;
 
-// First-line viz hint emitted by the model. We strip it from the code we
-// hand back so the editor sees pure Strudel, but echo the chosen key in
-// the response so the frontend can switch the per-track visualization.
-// See skills/strudel/rules/output-format.md for the contract.
-const VIZ_HINT_RE = /^\s*\/\/\s*viz\s*:\s*([a-zA-Z_-]+)\s*\r?\n/;
-const ALLOWED_VIZ = new Set(['pianoroll', 'waveform', 'spectrum', 'scope', 'spiral']);
+// Visualization is now picked by the Pioneer-trained classifier in a
+// separate /recommend-viz call (see application/recommend-viz.mjs). The
+// main LLM no longer chooses it, but we still strip a leading `// viz:`
+// comment defensively so any cached/in-flight skill-prompt revision that
+// still emits one doesn't leak into the editor as a stray comment.
+const STALE_VIZ_HINT_RE = /^\s*\/\/\s*viz\s*:\s*[a-zA-Z_-]+\s*\r?\n/;
 
-function extractVizHint(text) {
-  const m = text.match(VIZ_HINT_RE);
-  if (!m) return { viz: null, rest: text };
-  const key = m[1].toLowerCase();
-  return {
-    viz: ALLOWED_VIZ.has(key) ? key : null,
-    rest: text.slice(m[0].length),
-  };
+function stripStaleVizHint(text) {
+  return text.replace(STALE_VIZ_HINT_RE, '');
 }
 
 // Sentinel emitted by the model when the request can't be turned into a
@@ -101,11 +95,8 @@ export function makeGenerateStrudel({ llmClient, loadSystemPrompt }) {
       };
     }
 
-    const { viz, rest } = extractVizHint(cleaned);
-
     return {
-      code: rest,
-      viz,
+      code: stripStaleVizHint(cleaned),
       model: completion.model,
     };
   };

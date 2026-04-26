@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
+import { useStore } from '@nanostores/react';
 import { TrackVizPicker } from './TrackVizPicker.jsx';
 import { getShape } from './painters.mjs';
+import { $vizPending } from './tracksStore.mjs';
 
 // A per-track canvas. The actual painting is done by the editor (chosen
 // painter from painters.mjs); this component just owns the DOM element
@@ -16,9 +18,15 @@ import { getShape } from './painters.mjs';
 
 const SQUARE_SIDE = 160; // px — square viz fits this width × height
 
-export function TrackVisualizer({ onCanvas, viz, onVizChange }) {
+export function TrackVisualizer({ trackId, onCanvas, viz, onVizChange }) {
   const ref = useRef(null);
   const shape = getShape(viz);
+  // Per-track flag flipped by VibeTab while the Pioneer GLiNER2
+  // classifier is choosing a painter for freshly-generated code. We
+  // surface it as a small inline badge next to the picker so the user
+  // sees the "smart pick" actively running.
+  const pendingMap = useStore($vizPending);
+  const pending = trackId ? !!pendingMap[trackId] : false;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -47,7 +55,23 @@ export function TrackVisualizer({ onCanvas, viz, onVizChange }) {
 
   return (
     <div className="px-3 py-2">
-      <div className="flex items-center justify-end mb-1">
+      <div className="flex items-center justify-end mb-1 gap-2">
+        {pending ? (
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded border border-foreground/40 text-foreground/80 inline-flex items-center gap-1 animate-pulse"
+            title="Pioneer GLiNER2 is picking a visualizer for the new pattern"
+          >
+            <span aria-hidden>✨</span>
+            Pioneer picking viz…
+          </span>
+        ) : (
+          <span
+            className="text-[10px] opacity-50"
+            title="Visualizer suggestions come from a Pioneer-trained GLiNER2 classifier"
+          >
+            ⚡ Powered by Pioneer GLiNER2
+          </span>
+        )}
         <TrackVizPicker value={viz} onChange={onVizChange} />
       </div>
       <canvas

@@ -156,3 +156,21 @@ export function setTrackViz(id, viz) {
 export function getTrack(id) {
   return $tracks.get().find((t) => t.id === id) || null;
 }
+
+// Transient per-track flag: true while we're awaiting the Pioneer
+// GLiNER2 viz recommendation for this track's freshly-applied code.
+// Lives in memory only — no localStorage round-trip — so the spinner
+// never gets stuck across page reloads.
+export const $vizPending = atom({});
+
+export function setVizPending(id, pending) {
+  if (!id) return;
+  const cur = $vizPending.get();
+  if (!!cur[id] === !!pending) return;
+  if (pending) {
+    $vizPending.set({ ...cur, [id]: true });
+  } else {
+    const { [id]: _drop, ...rest } = cur;
+    $vizPending.set(rest);
+  }
+}

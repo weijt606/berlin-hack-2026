@@ -84,5 +84,12 @@ export function loadConfig() {
       // disable (saves one Gemini call per voice prompt).
       llmCorrect: !/^(0|false|no|off)$/i.test(process.env.LLM_CORRECT_TRANSCRIPT || ''),
     },
+    pioneer: {
+      // Pioneer-trained GLiNER2 classifier for per-track viz selection.
+      // When unset the /recommend-viz endpoint returns 503 and the frontend
+      // falls back to the user's existing viz choice.
+      apiKey: process.env.PIONEER_API_KEY ?? null,
+      vizModelId: process.env.PIONEER_VIZ_MODEL_ID ?? null,
+    },
   };
 }
