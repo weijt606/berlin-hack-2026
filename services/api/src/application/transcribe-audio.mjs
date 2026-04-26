@@ -21,6 +21,21 @@ export function pickBetterTranscript(raw, enhanced) {
   const eWords = wordCount(enhanced.text);
   // Empty enhanced + non-trivial raw → keep raw.
   if (!eWords && rWords > 0) return { text: raw.text, source: 'raw-enh-empty' };
+
+  // The enhancer occasionally pins its output to the absolute noise floor
+  // (rmsDb = -120 dB, voicedRatio = 0) on already-clean close-talk audio.
+  // Whisper then HALLUCINATES from that silence, sometimes producing more
+  // text than raw ("Thank you for watching and see you in the next one.").
+  // The pure rmsDrop+length heuristic below misses that case because the
+  // hallucination is longer than the truth. Detect it by the metrics shape
+  // and always prefer raw when present.
+  const enhSilent =
+    (enhanced.metrics?.rmsDb ?? 0) <= -100 ||
+    (enhanced.metrics?.voicedRatio ?? 1) < 0.05;
+  if (enhSilent && rWords > 0) {
+    return { text: raw.text, source: 'raw-enh-silent' };
+  }
+
   // Enhancer collapsed loudness (rms dropped >20dB) AND shortened the text
   // by >50% — strong "the enhancer ate the signal" signature.
   const rmsDrop = (raw.metrics?.rmsDb ?? 0) - (enhanced.metrics?.rmsDb ?? 0);
@@ -88,7 +103,10 @@ export function makeTranscribeAudio({
     const rawMetrics = computeAudioMetrics(decoded.pcm);
 
     const sttStartedAt = Date.now();
-    const rawResult = await transcriber.transcribe(decoded.pcm, { language });
+    const rawResult = await transcriber.transcribe(decoded.pcm, {
+      language,
+      wavBuffer,
+    });
     const rawSttMs = Date.now() - sttStartedAt;
     take?.text('raw', rawResult.text);
 
@@ -113,7 +131,10 @@ export function makeTranscribeAudio({
       const enhancedMetrics = computeAudioMetrics(decodedEnhanced.pcm);
 
       const enhSttStartedAt = Date.now();
-      const enhResult = await transcriber.transcribe(decodedEnhanced.pcm, { language });
+      const enhResult = await transcriber.transcribe(decodedEnhanced.pcm, {
+        language,
+        wavBuffer: enhancedWav,
+      });
       const enhSttMs = Date.now() - enhSttStartedAt;
       take?.text('enhanced', enhResult.text);
 
@@ -140,7 +161,20 @@ export function makeTranscribeAudio({
       };
     }
 
-    const { text: rawRecommended, source: pickSource } = pickBetterTranscript(raw, enhanced);
+    let { text: rawRecommended, source: pickSource } = pickBetterTranscript(raw, enhanced);
+
+    // Final guard against silence-fed hallucinations. Whisper invents fillers
+    // ("Thanks for watching.", "you", "Music playing in the background.")
+    // whenever the decode source is nearly silent. The picked source's
+    // voicedRatio is the cleanest signal that "there was no real speech".
+    // < 0.10 means basically the whole window was unvoiced — drop the text
+    // and let the frontend show "didn't catch that".
+    const pickedMetrics = pickSource.startsWith('raw') ? raw.metrics : enhanced?.metrics;
+    const voicedRatio = pickedMetrics?.voicedRatio ?? 1;
+    if (rawRecommended && voicedRatio < 0.1) {
+      pickSource = `${pickSource}-vad-rejected`;
+      rawRecommended = '';
+    }
     take?.text('picked', `${pickSource}: ${rawRecommended}`);
 
     // Optional: tiny LLM cleanup pass to fix STT errors that the static

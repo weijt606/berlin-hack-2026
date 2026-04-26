@@ -11,6 +11,8 @@ the editor without breaking the beat.
 > and **Google DeepMind Gemini**. Also addresses the **Pioneer**, **Entire**,
 > and **Aikido** side challenges.
 
+![VibeRave — live UI](src-tauri/images/viberave-interface.png)
+
 ```
    you (in a noisy club)
         │  "drop the kick, more reverb on the lead, make it darker"

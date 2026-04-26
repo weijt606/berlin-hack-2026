@@ -54,6 +54,11 @@ export function loadConfig() {
       enhancementLevel: clampUnit(process.env.AIC_ENHANCEMENT_LEVEL, 0.5),
     },
     stt: {
+      // STT_PROVIDER picks which transcriber the composition root wires:
+      //   whisper → local smart-whisper (default, no network, ~700-900ms)
+      //   gemini  → Gemini multimodal API (~1-2s, much better on short
+      //             commands; uses the same GEMINI_API_KEY as code-gen)
+      provider: (process.env.STT_PROVIDER || 'whisper').toLowerCase(),
       modelName: process.env.WHISPER_MODEL || 'base.en',
       gpu: process.env.WHISPER_GPU !== '0',
       language: process.env.WHISPER_LANGUAGE || 'auto',
@@ -65,6 +70,11 @@ export function loadConfig() {
       // decoder as `initial_prompt`. When unset, whisper-transcriber.mjs
       // uses its built-in DJ/Strudel vocab.
       initialPrompt: process.env.WHISPER_INITIAL_PROMPT || null,
+      // Gemini STT model. gemini-2.5-flash has the broadest free-tier
+      // quota and lands transcripts in ~2s warm with state-of-the-art
+      // accuracy on short DJ commands (verified 2026-04-26 against the
+      // demo phrase list). Override per env if a newer model is needed.
+      geminiModel: process.env.GEMINI_STT_MODEL || 'gemini-2.5-flash',
     },
     sessions: {
       dir: process.env.API_SESSIONS_DIR || null,

@@ -91,7 +91,7 @@ export function TrackVisualizer({ trackId, onCanvas, viz, onVizChange }) {
       </div>
       <canvas
         ref={ref}
-        className="block rounded border border-muted bg-background/40 mx-auto"
+        className="block rounded mx-auto"
         style={canvasStyle}
       />
     </div>
