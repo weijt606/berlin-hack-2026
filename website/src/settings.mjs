@@ -76,6 +76,8 @@ export const defaultSettings = {
   // zh-CN, which butchers English prompts via the wrong phonetic model.
   // Defaulting to en-US matches the demo language.
   vibeVoiceLang: 'en-US',
+  // Persisted multi-track state.
+  tracks: '[]',
 };
 
 let search = null;

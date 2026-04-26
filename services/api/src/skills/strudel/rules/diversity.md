@@ -12,9 +12,10 @@ turns in the chat history):
 1. **Don't reuse the same drum kit two turns in a row.** If last turn was
    `RolandTR909`, this turn pick `RolandTR808`, `LinnDrum`, `AkaiMPC60`,
    `OberheimDMX`, etc. unless the user explicitly said "keep the kit".
-2. **Don't reuse the same visualizer two turns in a row.** Cycle through
-   `.scope()`, `.pianoroll()`, `.spectrum()`, `.spiral()`, `.pitchwheel()`,
-   `.fscope()` based on the musical character (see `reference/visualization.md`).
+2. **Don't reuse the same visualizer two turns in a row.** Pick a different
+   `// viz: <key>` than last turn — cycle through `punchcard`, `pianoroll`,
+   `wordfall`, `spiral`, `pitchwheel` based on musical character (see the
+   table below and `rules/output-format.md`).
 3. **Vary the structure idiom.** If last turn was `stack(drums, bass, chord)`,
    this turn try one of:
    - `arrange([4, drums], [4, drumsAndBass], [8, fullStack])`
@@ -30,17 +31,16 @@ turns in the chat history):
 
 ## Choosing visualizer by character
 
-| Music character | Default viz |
+| Music character | Default `// viz:` |
 | --- | --- |
-| Beat-driven, percussive (techno, house, dnb) | `.scope()` |
-| Melodic / chord-heavy (jazz, lo-fi, ambient) | `.pianoroll()` |
-| Textural pad / drone | `.spectrum()` |
-| Acid / fast filter movement | `.fscope()` |
-| Looping arp / repetitive patterns | `.spiral()` |
-| Microtonal / pitch-bending content | `.pitchwheel()` |
+| Beat-driven, percussive (techno, house, dnb) | `punchcard` |
+| Melodic / chord-heavy (jazz, lo-fi, ambient) | `pianoroll` |
+| Spoken-word, sample-trigger heavy, chord names | `wordfall` |
+| Looping arp / cyclic patterns | `spiral` |
+| Microtonal / pitch-bending content | `pitchwheel` |
 
-If you've used `.scope()` two turns in a row, **rotate** to whichever option
-above isn't `.scope()` — even if `.scope()` would technically fit.
+If you've used `punchcard` two turns in a row, **rotate** to whichever option
+above isn't `punchcard` — even if `punchcard` would technically fit.
 
 ## Don't pretend to randomize
 

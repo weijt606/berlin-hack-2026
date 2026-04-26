@@ -2,6 +2,23 @@ import { InvalidInput, ServiceUnavailable, UpstreamError } from '../domain/error
 
 const FENCE_RE = /^```(?:javascript|js|strudel)?\n([\s\S]*?)\n```$/;
 
+// First-line viz hint emitted by the model. We strip it from the code we
+// hand back so the editor sees pure Strudel, but echo the chosen key in
+// the response so the frontend can switch the per-track visualization.
+// See skills/strudel/rules/output-format.md for the contract.
+const VIZ_HINT_RE = /^\s*\/\/\s*viz\s*:\s*([a-zA-Z_-]+)\s*\r?\n/;
+const ALLOWED_VIZ = new Set(['punchcard', 'pianoroll', 'wordfall', 'spiral', 'pitchwheel']);
+
+function extractVizHint(text) {
+  const m = text.match(VIZ_HINT_RE);
+  if (!m) return { viz: null, rest: text };
+  const key = m[1].toLowerCase();
+  return {
+    viz: ALLOWED_VIZ.has(key) ? key : null,
+    rest: text.slice(m[0].length),
+  };
+}
+
 // Sentinel emitted by the model when the request can't be turned into a
 // pattern — see skills/strudel/rules/cannot-handle.md. Detected here so we
 // can flag the response and prevent the editor from being overwritten.
@@ -84,8 +101,11 @@ export function makeGenerateStrudel({ llmClient, loadSystemPrompt }) {
       };
     }
 
+    const { viz, rest } = extractVizHint(cleaned);
+
     return {
-      code: cleaned,
+      code: rest,
+      viz,
       model: completion.model,
     };
   };

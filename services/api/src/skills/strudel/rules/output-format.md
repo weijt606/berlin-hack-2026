@@ -4,8 +4,9 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
 
 ## Must
 
-- Reply with **only the Strudel code**. No prose before, no prose after, no
-  explanation, no markdown fences, no commentary.
+- Reply with **only the Strudel code**, optionally prefixed by a single
+  one-line viz hint (see "Viz hint" below). No prose before, no prose
+  after, no explanation, no markdown fences, no commentary.
 - The code must be a **single self-contained expression** that the Strudel REPL
   can evaluate as the entire program. The expression is typically `stack(...)`,
   `note(...)...`, or `s(...)...`.
@@ -16,15 +17,34 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
   for "long", "elaborate", "extended", or similar.
 - Functions / methods used must exist. If you are tempted to use something that
   is not in `reference/*` of this skill, follow `rules/uncertainty.md`.
-- **Always include a visualizer.** Pick the one that best fits the music
-  character — do NOT default to `.scope()` every time, visual monotony kills
-  the live-coding feel. Beat-driven → `.scope()`. Melodic / chord-heavy →
-  `.pianoroll()`. Textural pad / drone → `.spectrum()`. Acid / fast filter
-  movement → `.fscope()`. Looping arp → `.spiral()`. Microtonal /
-  pitch-bending → `.pitchwheel()`. **Rotate** if the previous turn already
-  used the same one — see `rules/diversity.md`.
 - **Code must compile and play first try.** Run the self-check below before
   responding.
+
+## Viz hint
+
+The host renders a per-track visualization on its own canvas — you do
+**not** need to append `.scope()` / `.pianoroll()` etc. to the
+expression. Instead, recommend a viz by emitting **exactly one comment
+on the very first line** of your response:
+
+```
+// viz: <one of: punchcard | pianoroll | wordfall | spiral | pitchwheel>
+<your code>
+```
+
+Pick the viz that best fits the pattern:
+
+| viz | best for |
+| --- | --- |
+| `punchcard` | drum machines, percussion, dense rhythms (default) |
+| `pianoroll` | melodic / harmonic content with distinct pitches |
+| `wordfall` | spoken-word, sample-trigger heavy patterns, chord names |
+| `spiral` | ambient, slow / cyclic patterns where periodicity matters |
+| `pitchwheel` | microtonal / EDO experiments, harmonic relationships |
+
+If you are unsure, omit the viz hint — the host will keep the user's
+current choice. Don't pick the same viz two turns in a row unless the
+music character genuinely demands it; see `rules/diversity.md`.
 
 ## Must not
 
@@ -34,8 +54,9 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
 - No `Tone.js`, no raw `AudioContext`, no Web Audio API, no `fetch`.
 - No DOM manipulation (`document.*`, `window.*`).
 - No markdown fences (`` ``` ``) — the response must be raw code.
-- No leading or trailing comments. Inline comments are allowed only in two
-  cases:
+- No leading or trailing comments. Inline comments are allowed only in
+  these cases:
+  - The optional **viz hint** as the very first line (see "Viz hint" above).
   - **Dual-deck programs** (see `reference/dual-deck.md`): a single short
     `// Left deck — <vibe>` / `// Right deck — <vibe>` line per deck is OK,
     because it materially helps the reader distinguish stereo halves.
@@ -48,21 +69,21 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
 A response is one of:
 
 ```
-<single Strudel expression>
+[// viz: <one of the keys above>\n]<single Strudel expression>
 ```
 
 For example:
 
 ```
+// viz: punchcard
 stack(
   s("bd ~ ~ bd, ~ ~ sd ~, hh*8").bank("RolandTR909"),
   note("<c2 g1 a1 e1>").s("sawtooth").lpf(800).gain(0.6)
-).slow(2).scope()
+).slow(2)
 ```
 
-That entire response is the code. Nothing else. Note the trailing `.scope()` —
-this is one valid visualizer choice for a beat-driven track; pick whichever
-fits the music (see the table above).
+That entire response is one optional viz comment plus the code. Nothing
+else.
 
 ## Compilation self-check
 
@@ -76,7 +97,7 @@ these means re-emit, do not ship.
 | **Method names verified** | Every `.foo(...)` after a pattern is in `reference/effects.md` / `reference/pattern-transforms.md` / `reference/visualization.md`. No `.resonance`, `.reverb`, `.legato`, `.feel`. |
 | **Sound names verified** | Every `s("...")` argument decomposes into names from `reference/sounds.md` (drum aliases, GM names, waveform names). No `s("bass")` / `s("kick")` / `s("synth")`. |
 | **No forbidden tokens** | No `import`, `require`, `console`, `return`, `await`, `Tone`, `AudioContext`, `document`, `window`. |
-| **Visualizer present** | Outermost expression ends with at least one of `.scope()`, `.spectrum()`, `.fscope()`, `.pianoroll()`, `.spiral()`, `.pitchwheel()`. |
+| **Viz hint (optional)** | If present, it is the only thing on the very first line and matches `// viz: <key>` where `<key>` is one of `punchcard | pianoroll | wordfall | spiral | pitchwheel`. |
 | **No prose / no fences** | Output starts directly with the code. Output ends with `)` (or `;` or a method call). No leading or trailing whitespace lines except a single newline. |
 
 If any cell answers "no", fix and re-check the whole list — do not ship a

@@ -1,4 +1,4 @@
-import { Bars3Icon, PlayIcon, StopIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/16/solid';
 import cx from '@src/cx.mjs';
 import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
 import { useSettings, setIsZen, setIsPanelOpened, setActiveFooter as setTab } from '../../../settings.mjs';
@@ -101,7 +101,6 @@ export function MainPanel({ context, isEmbedded = false, className }) {
         </div>
         {!isZen && (
           <div className="flex grow justify-end">
-            {!isButtonRowHidden && <MainMenu isEmbedded={isEmbedded} context={context} />}
             <PanelToggle isEmbedded={isEmbedded} isZen={isZen} />
           </div>
         )}
