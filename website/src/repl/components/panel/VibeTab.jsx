@@ -691,7 +691,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between gap-2 mt-2 text-xs">
+        <div className="flex items-center justify-end gap-2 mt-2 text-xs">
           <label
             className="flex items-center gap-1.5"
             title="ai-coustics enhancement scene. Studio = light denoise for a close-talk mic; Open Air = aggressive denoise for windy / outdoor stages."
