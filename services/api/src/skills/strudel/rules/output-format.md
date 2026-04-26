@@ -16,12 +16,13 @@ These rules are non-negotiable. Every Strudel-code response must obey all of the
   for "long", "elaborate", "extended", or similar.
 - Functions / methods used must exist. If you are tempted to use something that
   is not in `reference/*` of this skill, follow `rules/uncertainty.md`.
-- **Always include a waveform visualizer.** Append `.scope()` to the outermost
-  expression so the live signal is drawn behind the editor. Acceptable
-  alternatives are `.spectrum()`, `.fscope()`, `.pianoroll()`, `.spiral()`,
-  `.pitchwheel()` — pick the one that best fits the request, but at least one
-  visualizer must always be on the final expression. Default = `.scope()`.
-  See `reference/visualization.md`.
+- **Always include a visualizer.** Pick the one that best fits the music
+  character — do NOT default to `.scope()` every time, visual monotony kills
+  the live-coding feel. Beat-driven → `.scope()`. Melodic / chord-heavy →
+  `.pianoroll()`. Textural pad / drone → `.spectrum()`. Acid / fast filter
+  movement → `.fscope()`. Looping arp → `.spiral()`. Microtonal /
+  pitch-bending → `.pitchwheel()`. **Rotate** if the previous turn already
+  used the same one — see `rules/diversity.md`.
 - **Code must compile and play first try.** Run the self-check below before
   responding.
 
@@ -60,7 +61,8 @@ stack(
 ```
 
 That entire response is the code. Nothing else. Note the trailing `.scope()` —
-that is the mandatory waveform visualizer.
+this is one valid visualizer choice for a beat-driven track; pick whichever
+fits the music (see the table above).
 
 ## Compilation self-check
 

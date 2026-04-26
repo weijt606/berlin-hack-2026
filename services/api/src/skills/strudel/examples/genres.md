@@ -124,6 +124,57 @@ stack(
 ).scope()
 ```
 
+## Dub (heavy delay, sparse drums)
+
+```js
+setcps(76/60/4)
+stack(
+  s("bd ~ ~ ~, ~ ~ sd ~").bank("RolandTR808").gain(0.85),
+  s("hh*4?").bank("RolandTR808").gain(0.4).delay(0.6).delaytime("3/16").delayfeedback(0.7),
+  note("c2 ~ ~ ~ eb2 ~ ~ ~").s("sawtooth").lpf(280).gain(0.7),
+  note("<[c4,eb4,g4] ~ ~ ~>").s("gm_synth_strings_1").attack(0.1).release(0.6)
+    .delay(0.5).delaytime(0.375).delayfeedback(0.6).gain(0.4)
+).pianoroll()
+```
+
+## Trap (140 half-time, 808 sub, hi-hat rolls)
+
+```js
+setcps(140/60/4)
+stack(
+  s("bd ~ ~ ~ ~ ~ bd bd").bank("RolandTR808"),
+  s("~ ~ sd ~ ~ ~ sd ~").bank("RolandTR808").gain(0.9),
+  s("hh*16").bank("RolandTR808").gain(perlin.range(0.3, 0.9)).every(4, x=>x.fast(2)),
+  note("c1 ~ ~ ~ eb1 ~ g1 ~").s("sine").gain(0.85).attack(0.001).release(0.4)
+).scope()
+```
+
+## IDM (broken beats, mutating effects)
+
+```js
+stack(
+  s("bd*4").bank("AkaiMPC60").chunk(4, x=>x.fast(2)).sometimes(rev),
+  s("hh*16").bank("AkaiMPC60").gain(perlin.range(0.2, 0.9)).degradeBy(0.3),
+  n("0 4 7 5 0 7 4 2".add("<0 5 -3>")).scale("D:dorian").note().s("triangle")
+    .lpf(sine.range(400,3000).slow(7)).every(3, x=>x.add(12)),
+  note("d2 ~ a1 ~ d2 ~ ~ a1").s("gm_synth_bass_1").gain(0.6)
+).fscope()
+```
+
+## Hyperpop / chiptune (fast, bright, melodic)
+
+```js
+setcps(160/60/4)
+stack(
+  s("bd*4, ~ cp, hh*8").bank("RolandTR909").gain(0.9),
+  n("0 5 7 12 7 5 0 -3".add("<0 5 7 3>")).scale("F:major").note().s("square")
+    .gain(0.5).lpf(4000),
+  note("<f2 c2 ab1 c2>").s("triangle").lpf(800).gain(0.7).fast(2),
+  note("<[f4,a4,c5] [c4,e4,g4] [ab3,c4,eb4] [c4,f4,a4]>")
+    .s("gm_lead_1_square").attack(0.01).release(0.2).gain(0.4)
+).crush(8).pianoroll()
+```
+
 ## How to use these
 
 Pick the closest template, then mutate per the user's request:

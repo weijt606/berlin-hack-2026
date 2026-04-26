@@ -5,6 +5,7 @@ import {
   storePrebakeScript,
   setSettingsTab,
   setVibePttKey,
+  setVibeVoiceLang,
 } from '../../../settings.mjs';
 import { themes } from '@strudel/codemirror';
 import { PrebakeCodeMirror } from '../../../repl/prebakeCodeMirror.mjs';
@@ -191,6 +192,7 @@ function MainSettingsContent({ started }) {
     isBlockBasedEvalEnabled,
     vibePttKey,
     vibeAutoApply,
+    vibeVoiceLang,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
@@ -298,6 +300,14 @@ function MainSettingsContent({ started }) {
           onChange={(cbEvent) => settingsMap.setKey('vibeAutoApply', cbEvent.target.checked)}
           value={vibeAutoApply}
         />
+        <div className="flex items-center gap-2">
+          <span className="text-xs opacity-70">Voice language:</span>
+          <ButtonGroup
+            value={vibeVoiceLang}
+            onChange={setVibeVoiceLang}
+            items={{ 'en-US': 'English', 'zh-CN': '中文', auto: 'Browser' }}
+          />
+        </div>
       </FormItem>
       <FormItem label="More Settings">
         <Checkbox
