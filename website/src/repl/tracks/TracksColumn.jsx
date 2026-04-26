@@ -22,7 +22,7 @@ export function TracksColumn({ context }) {
   const onSelect = (id) => selectTrack(selectedTrackId === id ? null : id);
 
   return (
-    <div className="flex flex-col grow bg-background min-h-0">
+    <div className="flex flex-col grow bg-background min-h-0 min-w-0">
       <div className="shrink-0 flex items-stretch border-b border-muted">
         <button
           type="button"

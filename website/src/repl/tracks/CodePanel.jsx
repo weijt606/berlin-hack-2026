@@ -48,7 +48,7 @@ export function CodePanel({ context }) {
   return (
     <div
       className={cx(
-        'shrink-0 flex flex-col',
+        'shrink-0 flex flex-col min-w-0',
         'bg-background/95 border-t border-muted shadow-[0_-2px_8px_rgba(0,0,0,0.25)]',
       )}
     >
@@ -91,7 +91,7 @@ export function CodePanel({ context }) {
         )}
       >
         {selectedTrackId ? (
-          <div ref={hostRef} className="h-[50vh] overflow-auto" />
+          <div ref={hostRef} className="h-[50vh] w-full overflow-auto" />
         ) : (
           <div className="px-3 py-6 text-xs opacity-60">
             No track selected — pick one to see its code here.
