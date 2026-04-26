@@ -26,6 +26,7 @@ import {
 } from './vibe/vibeApi.mjs';
 import { Waveform } from './vibe/Waveform.jsx';
 import { Message } from './vibe/Message.jsx';
+import { dispatchMetaCommand } from './vibe/metaCommands.mjs';
 
 const FLUSH_KEY = 'strudel:vibe:silenceFlush';
 const SILENCE_MS_KEY = 'strudel:vibe:silenceMs';
@@ -301,11 +302,21 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
         signal: ctrl.signal,
       });
       if (Array.isArray(data.messages)) setMessages(data.messages);
-      const code = data.code || '';
-      // noChange: model couldn't turn the request into a pattern (see
-      // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
-      if (auto && code && !data.noChange) {
-        applyCodeToSelectedTrack(code, setError, { allowFix: true });
+      // Meta-command path: the LLM classified the prompt as a host
+      // control (play/pause/stop/new track/schedule_stop). Dispatch
+      // before the music-edit branch so we don't try to overwrite the
+      // currently-selected track — for new_track + seed code we *want*
+      // the code applied, but to the freshly-created track, which the
+      // dispatcher handles itself via whenEditorReady.
+      if (data.meta) {
+        dispatchMetaCommand(data.meta, { seedCode: data.code || '' });
+      } else {
+        const code = data.code || '';
+        // noChange: model couldn't turn the request into a pattern (see
+        // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
+        if (auto && code && !data.noChange) {
+          applyCodeToSelectedTrack(code, setError, { allowFix: true });
+        }
       }
     } catch (err) {
       if (err?.name === 'AbortError') {
