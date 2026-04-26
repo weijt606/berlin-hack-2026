@@ -71,6 +71,7 @@ export const defaultSettings = {
   settingsTab: 'settings',
   vibePttKey: 'Space',
   vibeAutoApply: true,
+  tracks: '[]',
 };
 
 let search = null;
