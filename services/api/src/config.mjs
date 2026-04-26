@@ -69,6 +69,14 @@ export function loadConfig() {
     sessions: {
       dir: process.env.API_SESSIONS_DIR || null,
     },
+    dump: {
+      // When enabled, writes raw.wav / enhanced.wav / raw.txt / enhanced.txt /
+      // final.txt / meta.json per voice take so we can A/B the AIC enhancer
+      // and diff transcripts offline. Off by default — recordings are PII and
+      // disk grows fast on a busy demo.
+      stages: /^(1|true|yes|on)$/i.test(process.env.API_DUMP_STAGES || ''),
+      dir: process.env.API_DUMP_DIR || null,
+    },
     transcript: {
       // LLM cleanup pass after Whisper. Catches recognition errors the static
       // dictionary in whisper-transcriber can't (artist names, half-heard

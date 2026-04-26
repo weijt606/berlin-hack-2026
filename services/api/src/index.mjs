@@ -9,6 +9,7 @@ import { createAicProcessor } from './infrastructure/aic-processor.mjs';
 import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.mjs';
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
 import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs';
+import { createStageDumpStore } from './infrastructure/stage-dump-store.mjs';
 import { makeGenerateStrudel } from './application/generate-strudel.mjs';
 import { makeValidateStrudel } from './application/validate-strudel.mjs';
 import { makeEnhanceAudio } from './application/enhance-audio.mjs';
@@ -86,6 +87,11 @@ const metricsStore = createFileMetricsStore({
     process.env.API_METRICS_FILE ||
     resolve(__dirname, '..', 'data', 'metrics', 'transcribe.jsonl'),
 });
+const stageDumpStore = createStageDumpStore({
+  enabled: config.dump.stages,
+  dir: config.dump.dir || resolve(__dirname, '..', 'data', 'stage-dumps'),
+});
+console.log(`[stage-dump] ${config.dump.stages ? `enabled → ${config.dump.dir || 'data/stage-dumps'}` : 'disabled'}`);
 
 // Optional post-STT LLM cleanup. Catches recognition errors the static
 // dictionary in whisper-transcriber can't (artist names, half-heard
@@ -102,6 +108,7 @@ const transcribeAudio = makeTranscribeAudio({
   transcriber,
   audioEnhancer,
   metricsStore,
+  stageDumpStore,
   transcriptNormalizer,
 });
 const validatePattern = makeValidateStrudel();

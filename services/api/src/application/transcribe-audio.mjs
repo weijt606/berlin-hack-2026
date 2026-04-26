@@ -19,6 +19,12 @@ import {
  *   transcriber: import('./ports.mjs').Transcriber | null,
  *   audioEnhancer: import('./ports.mjs').AudioEnhancer | null,
  *   metricsStore?: { append: (record: object) => Promise<void> } | null,
+ *   stageDumpStore?: { beginTake: (sessionId: string|null) => null | {
+ *     dir: string,
+ *     wav: (name: string, buf: Buffer) => void,
+ *     text: (name: string, str: string) => void,
+ *     json: (name: string, obj: object) => void,
+ *   } } | null,
  *   transcriptNormalizer?: { normalize: (raw: string) => Promise<string> } | null,
  * }} deps
  */
@@ -26,6 +32,7 @@ export function makeTranscribeAudio({
   transcriber,
   audioEnhancer,
   metricsStore = null,
+  stageDumpStore = null,
   transcriptNormalizer = null,
 }) {
   return async function transcribeAudio({ wavBuffer, compare = true, language, sessionId }) {
@@ -41,12 +48,16 @@ export function makeTranscribeAudio({
     }
 
     const startedAt = Date.now();
+    const take = stageDumpStore ? stageDumpStore.beginTake(sessionId ?? null) : null;
+    take?.wav('raw', wavBuffer);
+
     const decoded = wavToPcm16kMono(wavBuffer);
     const rawMetrics = computeAudioMetrics(decoded.pcm);
 
     const sttStartedAt = Date.now();
     const rawResult = await transcriber.transcribe(decoded.pcm, { language });
     const rawSttMs = Date.now() - sttStartedAt;
+    take?.text('raw', rawResult.text);
 
     const raw = {
       text: rawResult.text,
@@ -62,12 +73,14 @@ export function makeTranscribeAudio({
       const enhanceStartedAt = Date.now();
       const enhancedWav = await audioEnhancer.enhance(wavBuffer);
       const enhanceMs = Date.now() - enhanceStartedAt;
+      take?.wav('enhanced', enhancedWav);
       const decodedEnhanced = wavToPcm16kMono(enhancedWav);
       const enhancedMetrics = computeAudioMetrics(decodedEnhanced.pcm);
 
       const enhSttStartedAt = Date.now();
       const enhResult = await transcriber.transcribe(decodedEnhanced.pcm, { language });
       const enhSttMs = Date.now() - enhSttStartedAt;
+      take?.text('enhanced', enhResult.text);
 
       enhanced = {
         text: enhResult.text,
@@ -135,6 +148,11 @@ export function makeTranscribeAudio({
       metricsStore
         .append({ sessionId: sessionId ?? null, ...record })
         .catch((err) => console.error('metrics append failed:', err));
+    }
+
+    if (take) {
+      take.text('final', text);
+      take.json('meta', { sessionId: sessionId ?? null, ...record });
     }
 
     return record;
