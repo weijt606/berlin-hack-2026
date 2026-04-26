@@ -10,6 +10,7 @@ import {
   selectTrack,
 } from './tracksStore.mjs';
 import { setLatestCode } from '../../user_pattern_utils.mjs';
+import { spotlight as runSpotlight } from './spotlight.mjs';
 
 const EMPTY_STATE = { started: false, isDirty: false, error: null, activeCode: '', pending: false };
 
@@ -21,12 +22,12 @@ export function useTrackEditors() {
   const tracks = useStore($tracks);
   const selectedTrackId = useStore($selectedTrackId);
 
-  // On first mount, make sure there is at least one track and one is selected.
+  // On first mount, make sure there is at least one track. We deliberately
+  // do NOT auto-select it — the default state is "all collapsed", so users
+  // see the track list, not a code editor. They click a header to expand.
   useEffect(() => {
     const seedCode = settingsMap.get().latestCode || undefined;
-    const first = ensureInitialTrack(seedCode);
-    if (!$selectedTrackId.get()) selectTrack(first.id);
-    // intentionally one-shot
+    ensureInitialTrack(seedCode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -67,15 +68,17 @@ export function useTrackEditors() {
     });
   }, [tracks]);
 
-  // Called from each TrackCard's container ref. Idempotent: only the first
-  // call for a given trackId actually constructs a StrudelMirror.
+  // Called from each TrackCard once both the editor container and the
+  // visualizer canvas are mounted. Idempotent: only the first call for a
+  // given trackId actually constructs a StrudelMirror.
   const mountTrack = useCallback(
-    (trackId, container) => {
+    (trackId, container, drawContext) => {
       if (!container || editorsRef.current[trackId]) return;
       const track = $tracks.get().find((t) => t.id === trackId);
       const editor = createTrackEditor({
         trackId,
         container,
+        drawContext,
         initialCode: track?.code ?? '',
         isSyncEnabled,
         audioEngineTarget,
@@ -114,6 +117,19 @@ export function useTrackEditors() {
     ed.setCode(code);
   }, []);
 
+  const spotlight = useCallback(
+    (trackId, durationMs) => {
+      runSpotlight({
+        trackId,
+        allTrackIds: $tracks.get().map((t) => t.id),
+        getEditor,
+        getState,
+        durationMs,
+      });
+    },
+    [getEditor, getState],
+  );
+
   return {
     tracks,
     selectedTrackId,
@@ -125,5 +141,6 @@ export function useTrackEditors() {
     stopTrack,
     evaluateTrack,
     setCodeFor,
+    spotlight,
   };
 }

@@ -10,9 +10,13 @@ export function TracksColumn({ context }) {
     deleteTrack,
     renameTrack,
     togglePlayTrack,
+    spotlightTrack,
     mountTrack,
     getTrackState,
   } = context;
+
+  // Click a header to expand it. Click the already-expanded one to collapse.
+  const onSelect = (id) => selectTrack(selectedTrackId === id ? null : id);
 
   return (
     <div className="flex flex-col grow overflow-auto bg-background">
@@ -27,8 +31,9 @@ export function TracksColumn({ context }) {
           track={track}
           state={getTrackState(track.id)}
           isSelected={track.id === selectedTrackId}
-          onSelect={selectTrack}
+          onSelect={onSelect}
           onTogglePlay={togglePlayTrack}
+          onSpotlight={spotlightTrack}
           onRename={renameTrack}
           onDelete={deleteTrack}
           mountTrack={mountTrack}

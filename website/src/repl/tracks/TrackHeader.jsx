@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PlayIcon, StopIcon, TrashIcon } from '@heroicons/react/16/solid';
+import { PlayIcon, StopIcon, TrashIcon, SparklesIcon } from '@heroicons/react/16/solid';
 import cx from '@src/cx.mjs';
 
 export function TrackHeader({
@@ -9,6 +9,7 @@ export function TrackHeader({
   pending,
   onSelect,
   onTogglePlay,
+  onSpotlight,
   onRename,
   onDelete,
 }) {
@@ -89,6 +90,17 @@ export function TrackHeader({
           {name}
         </span>
       )}
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onSpotlight?.();
+        }}
+        title="Spotlight this track (fade out the rest)"
+        className="shrink-0 p-1 rounded hover:opacity-70 text-foreground opacity-60 hover:opacity-100"
+      >
+        <SparklesIcon className="w-4 h-4" />
+      </button>
 
       <button
         onClick={(e) => {

@@ -158,6 +158,7 @@ export function useReplContext() {
     stopTrack: editors.stopTrack,
     evaluateTrack: editors.evaluateTrack,
     getTrackState: editors.getState,
+    spotlightTrack: editors.spotlight,
     // back-compat shims so things that referenced editorRef/containerRef
     // don't crash. Code.jsx is no longer used; ReplEditor reads these but
     // the new TracksColumn doesn't need them.
