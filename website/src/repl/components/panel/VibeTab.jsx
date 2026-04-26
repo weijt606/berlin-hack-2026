@@ -510,18 +510,18 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
       <div
         ref={scrollRef}
         className="flex-1 overflow-auto p-3 space-y-3 min-h-0 relative"
-        style={
-          messages.length === 0
-            ? {
-                // Banner as empty-state hero. Disappears as soon as the
-                // first message arrives so the chat history stays readable.
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url('/viberave-bg.png')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-              }
-            : undefined
-        }
+        style={{
+          // Banner is now persistent across all states — same visual
+          // identity whether the chat is empty or full. The dim gradient
+          // overlay keeps message text legible; individual messages add
+          // their own backdrop-blur cards on top so the bg shows through
+          // without competing with the chat.
+          backgroundImage: `linear-gradient(rgba(0,0,0,${messages.length === 0 ? 0.55 : 0.7}), rgba(0,0,0,${messages.length === 0 ? 0.75 : 0.85})), url('/viberave-bg.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'local',
+        }}
       >
         {messages.length === 0 && (
           <div className="text-sm leading-relaxed text-white drop-shadow-lg flex flex-col h-full justify-end">
@@ -669,23 +669,6 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
                 </option>
               ))}
             </select>
-            <label
-              className="flex items-center gap-1 ml-2"
-              title="ai-coustics enhancement scene. Studio = light denoise for a close-talk mic; Open Air = aggressive denoise for windy / outdoor stages."
-            >
-              <span className="opacity-70">scene</span>
-              <select
-                value={aicScene}
-                onChange={(e) => setVibeAicScene(e.target.value)}
-                className="bg-background border border-muted rounded px-1 py-0.5 text-xs"
-              >
-                {VIBE_AIC_SCENES.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
           {loading ? (
             <button
@@ -707,6 +690,31 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
               Send (Enter)
             </button>
           )}
+        </div>
+        <div className="flex items-center justify-end gap-2 mt-2 text-xs">
+          <label
+            className="flex items-center gap-1.5"
+            title="ai-coustics enhancement scene. Studio = light denoise for a close-talk mic; Open Air = aggressive denoise for windy / outdoor stages."
+          >
+            <span className="opacity-70">scene</span>
+            <select
+              value={aicScene}
+              onChange={(e) => setVibeAicScene(e.target.value)}
+              className="bg-background border border-muted rounded px-1.5 py-0.5"
+            >
+              {VIBE_AIC_SCENES.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span
+            className="opacity-50 tracking-wide"
+            title="Speech enhancement is provided by ai-coustics Quail-VF"
+          >
+            powered by ai-coustics
+          </span>
         </div>
       </div>
     </div>
