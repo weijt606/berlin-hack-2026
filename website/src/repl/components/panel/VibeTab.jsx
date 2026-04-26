@@ -32,11 +32,21 @@ function getStrudelMirror() {
 // Live "update" — same path as the REPL's update button.
 // scheduler.setPattern just reassigns the pattern; if already playing,
 // the next cycle picks up the new pattern with no audible break.
-function hotSwap(code) {
+//
+// IMPORTANT: never call .stop() / .repl.stop() / .repl.pause() here. If
+// hotSwap fires while the new pattern has a runtime error, the scheduler
+// keeps its previous pattern slot — so awaiting evaluate and surfacing the
+// error preserves whatever was last good. Calling stop() in that path
+// produces the "music drops on every input" regression.
+async function hotSwap(code, onError) {
   const editor = getStrudelMirror();
   if (!editor || !code) return;
   editor.setCode(code);
-  editor.evaluate(true);
+  try {
+    await editor.evaluate(true);
+  } catch (err) {
+    onError?.(err?.message || String(err));
+  }
 }
 
 function readFlush() {
@@ -102,7 +112,7 @@ function isTextInput(target) {
 }
 
 export function VibeTab() {
-  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto } = useSettings();
+  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto, vibeVoiceLang } = useSettings();
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
@@ -113,12 +123,22 @@ export function VibeTab() {
   const [silenceMs, setSilenceMs] = useState(readSilenceMs);
   const [pttHint, setPttHint] = useState(false);
   const [sessionId] = useState(readOrCreateSessionId);
+  // Last STT transcript — pinned in the UI so it stays visible even after
+  // the textarea is cleared by send(). Cleared on next recording.
+  const [lastTranscript, setLastTranscript] = useState('');
 
   const recorderRef = useRef(null);
   const pttActiveRef = useRef(false);
   const pttKeyDownRef = useRef(false);
   const scrollRef = useRef(null);
   const sendRef = useRef(null);
+  // AbortController for the in-flight /generate fetch — lets the user
+  // cancel a slow LLM call (esp. local Ollama with cold prefill) and edit.
+  const abortRef = useRef(null);
+  // Pending auto-send timer. After STT lands we wait 2s before firing
+  // /generate so the user can read the transcript and optionally cancel
+  // by typing in the textarea.
+  const autoSendTimerRef = useRef(null);
   // mirror flush + silenceMs into refs so the active recorder closure
   // always reads the current toggle values
   const flushRef = useRef(flush);
@@ -215,11 +235,14 @@ export function VibeTab() {
     // returns the authoritative messages array, which we adopt below.
     setMessages((prev) => [...prev, { role: 'user', text, ts: 'pending' }]);
     setPrompt('');
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       const res = await fetch(`${API_URL}/generate`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ sessionId, prompt: text, currentCode }),
+        signal: ctrl.signal,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -232,12 +255,22 @@ export function VibeTab() {
       const code = data.code || '';
       // noChange: model couldn't turn the request into a pattern (see
       // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
-      if (auto && code && !data.noChange) hotSwap(code);
+      if (auto && code && !data.noChange) hotSwap(code, setError);
     } catch (err) {
-      setError(err.message || String(err));
+      if (err?.name === 'AbortError') {
+        // user cancelled — drop the optimistic bubble; input was already cleared
+        setMessages((prev) => prev.filter((msg) => msg.ts !== 'pending'));
+      } else {
+        setError(err.message || String(err));
+      }
     } finally {
+      abortRef.current = null;
       setLoading(false);
     }
+  }
+
+  function cancelSend() {
+    abortRef.current?.abort();
   }
 
   // keep a ref to the latest send so global key handlers always call the
@@ -250,6 +283,12 @@ export function VibeTab() {
   function startRecording({ ptt = false } = {}) {
     if (recorderRef.current) return;
     setError('');
+    // Reset banner + cancel any pending auto-send so a new take starts clean.
+    setLastTranscript('');
+    if (autoSendTimerRef.current) {
+      clearTimeout(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
     const recorder = createVoiceRecorder({
       silenceMs: ptt && flushRef.current ? silenceMsRef.current : 0,
       onSilence: handleSilenceFlush,
@@ -314,7 +353,11 @@ export function VibeTab() {
     if (!wavBlob || wavBlob.size < 2048) return; // skip empty / too-short takes
     setTranscribing(true);
     try {
-      const url = `${API_URL}/transcribe?sessionId=${encodeURIComponent(sessionId)}`;
+      const params = new URLSearchParams({ sessionId });
+      if (vibeVoiceLang && vibeVoiceLang !== 'auto') {
+        params.set('lang', vibeVoiceLang);
+      }
+      const url = `${API_URL}/transcribe?${params.toString()}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'content-type': 'audio/wav' },
@@ -328,7 +371,16 @@ export function VibeTab() {
       const text = (data.text || '').trim();
       if (!text) return;
       setPrompt(text);
-      await send(text);
+      // Pin a copy so the user sees what was heard even after send() clears
+      // the textarea — independent of textarea timing.
+      setLastTranscript(text);
+      // 2-second auto-send window: gives the user time to read the
+      // transcript and override (typing in textarea cancels the timer).
+      if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
+      autoSendTimerRef.current = setTimeout(() => {
+        autoSendTimerRef.current = null;
+        sendRef.current?.(text);
+      }, 2000);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -431,9 +483,28 @@ export function VibeTab() {
       </div>
 
       <div className="border-t border-muted p-3 space-y-2 shrink-0">
+        {lastTranscript && (
+          <div
+            className="text-xs px-2 py-1 rounded border border-muted opacity-80 truncate"
+            title={lastTranscript}
+          >
+            <span className="opacity-60">📝 heard:</span> {lastTranscript}
+            {autoSendTimerRef.current && (
+              <span className="opacity-60 ml-2">— auto-sending in 2s, type to cancel</span>
+            )}
+          </div>
+        )}
         <textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            // User edited — cancel any pending auto-send so the typed text
+            // isn't immediately blown away.
+            if (autoSendTimerRef.current) {
+              clearTimeout(autoSendTimerRef.current);
+              autoSendTimerRef.current = null;
+            }
+            setPrompt(e.target.value);
+          }}
           placeholder={
             listening
               ? pttHint
@@ -505,16 +576,26 @@ export function VibeTab() {
               ))}
             </select>
           </div>
-          <button
-            onClick={() => send()}
-            disabled={loading || !prompt.trim()}
-            className={cx(
-              'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
-              (loading || !prompt.trim()) && 'opacity-50 cursor-not-allowed',
-            )}
-          >
-            {loading ? 'Generating…' : 'Send (Enter)'}
-          </button>
+          {loading ? (
+            <button
+              onClick={cancelSend}
+              title="Cancel in-flight request and edit the prompt"
+              className="px-3 py-1 rounded-md border border-foreground text-foreground text-sm hover:opacity-80"
+            >
+              ✕ Cancel
+            </button>
+          ) : (
+            <button
+              onClick={() => send()}
+              disabled={!prompt.trim()}
+              className={cx(
+                'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
+                !prompt.trim() && 'opacity-50 cursor-not-allowed',
+              )}
+            >
+              Send (Enter)
+            </button>
+          )}
         </div>
       </div>
     </div>

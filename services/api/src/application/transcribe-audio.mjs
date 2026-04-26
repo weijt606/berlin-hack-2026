@@ -19,9 +19,15 @@ import {
  *   transcriber: import('./ports.mjs').Transcriber | null,
  *   audioEnhancer: import('./ports.mjs').AudioEnhancer | null,
  *   metricsStore?: { append: (record: object) => Promise<void> } | null,
+ *   transcriptNormalizer?: { normalize: (raw: string) => Promise<string> } | null,
  * }} deps
  */
-export function makeTranscribeAudio({ transcriber, audioEnhancer, metricsStore = null }) {
+export function makeTranscribeAudio({
+  transcriber,
+  audioEnhancer,
+  metricsStore = null,
+  transcriptNormalizer = null,
+}) {
   return async function transcribeAudio({ wavBuffer, compare = true, language, sessionId }) {
     if (!transcriber) {
       throw new ServiceUnavailable(
@@ -86,14 +92,33 @@ export function makeTranscribeAudio({ transcriber, audioEnhancer, metricsStore =
       };
     }
 
-    const text = enhanced?.text || raw.text;
+    const rawRecommended = enhanced?.text || raw.text;
+
+    // Optional: tiny LLM cleanup pass to fix STT errors that the static
+    // post-process dictionary in whisper-transcriber can't handle (artist
+    // names, half-heard phrases, fillers). On error or noop the normalizer
+    // returns the original text unchanged.
+    let text = rawRecommended;
+    let normalizeMs = null;
+    if (transcriptNormalizer && rawRecommended) {
+      const t0 = Date.now();
+      try {
+        text = await transcriptNormalizer.normalize(rawRecommended);
+      } catch (err) {
+        console.warn(`[transcribe] normalize threw: ${err.message}`);
+      }
+      normalizeMs = Date.now() - t0;
+    }
+
     const totalMs = Date.now() - startedAt;
 
     const record = {
       text,
+      rawText: rawRecommended,
       raw,
       enhanced,
       comparison,
+      normalizeMs,
       sttModel: transcriber.getModelId(),
       enhancerModel: audioEnhancer ? audioEnhancer.getModelId() : null,
       audio: {
