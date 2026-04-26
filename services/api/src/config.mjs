@@ -70,11 +70,12 @@ export function loadConfig() {
       dir: process.env.API_SESSIONS_DIR || null,
     },
     dump: {
-      // When enabled, writes raw.wav / enhanced.wav / raw.txt / enhanced.txt /
-      // final.txt / meta.json per voice take so we can A/B the AIC enhancer
-      // and diff transcripts offline. Off by default — recordings are PII and
-      // disk grows fast on a busy demo.
-      stages: /^(1|true|yes|on)$/i.test(process.env.API_DUMP_STAGES || ''),
+      // Writes raw.wav / enhanced.wav / raw.txt / enhanced.txt / final.txt /
+      // meta.json per voice take so we can A/B the AIC enhancer and diff
+      // transcripts offline. ON by default for hackathon analysis; set
+      // API_DUMP_STAGES=0 to disable. Recordings are PII and disk grows
+      // fast — purge data/stage-dumps/ before sharing the box.
+      stages: !/^(0|false|no|off)$/i.test(process.env.API_DUMP_STAGES || ''),
       dir: process.env.API_DUMP_DIR || null,
     },
     transcript: {
