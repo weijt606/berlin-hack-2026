@@ -105,6 +105,10 @@ name verified against `doc.json`)
 
 ## Architecture
 
+![VibeRave architecture — C4 system context + component view](docs/architecture.png)
+
+> Editable source: [`docs/architecture.excalidraw`](docs/architecture.excalidraw) — drag into [excalidraw.com](https://excalidraw.com) or open via the Excalidraw VS Code / Obsidian extension.
+
 ### Repository layout
 
 ```
