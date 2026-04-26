@@ -62,6 +62,11 @@ const options = {
 
 // https://astro.build/config
 export default defineConfig({
+  // Disable Astro's dev toolbar for the whole team. Equivalent to running
+  // `npx astro preferences disable devToolbar`, except that committed in
+  // astro.config.mjs is portable — `.astro/settings.json` is gitignored
+  // and would only apply to the developer who ran the CLI command.
+  devToolbar: { enabled: false },
   integrations: [
     react(),
     mdx(options),
