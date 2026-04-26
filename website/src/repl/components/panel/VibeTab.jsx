@@ -489,17 +489,36 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
         )}
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-auto p-3 space-y-3 min-h-0">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-auto p-3 space-y-3 min-h-0 relative"
+        style={
+          messages.length === 0
+            ? {
+                // Banner as empty-state hero. Disappears as soon as the
+                // first message arrives so the chat history stays readable.
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url('/viberave-bg.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }
+            : undefined
+        }
+      >
         {messages.length === 0 && (
-          <div className="text-sm opacity-60 leading-relaxed">
-            Describe a track or a change. Each turn iterates on whatever is currently in the editor — no need to repeat what's already there.
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>"lo-fi hip-hop at 80 bpm with a soft kick and rhodes chords"</li>
-              <li>"make the bass more dubby"</li>
-              <li>"swap the drums for a 909 kit and double the tempo"</li>
-            </ul>
-            <div className="mt-3 opacity-80">
-              Hold <kbd className="px-1 border border-muted rounded">{displayKey(pttKey)}</kbd> anywhere on the page to talk, release to send.
+          <div className="text-sm leading-relaxed text-white drop-shadow-lg flex flex-col h-full justify-end">
+            <div className="bg-black/55 rounded-lg p-4 backdrop-blur-sm border border-white/10">
+              <div className="opacity-90">
+                Describe a track or a change. Each turn iterates on whatever is currently in the editor — no need to repeat what's already there.
+              </div>
+              <ul className="list-disc list-inside mt-2 space-y-1 opacity-80">
+                <li>"lo-fi hip-hop at 80 bpm with a soft kick and rhodes chords"</li>
+                <li>"make the bass more dubby"</li>
+                <li>"swap the drums for a 909 kit and double the tempo"</li>
+              </ul>
+              <div className="mt-3 opacity-80">
+                Hold <kbd className="px-1 border border-white/30 rounded bg-black/40">{displayKey(pttKey)}</kbd> anywhere on the page to talk, release to send.
+              </div>
             </div>
           </div>
         )}

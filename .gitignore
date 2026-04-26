@@ -5,6 +5,9 @@ dist-*
 .env
 .env.local
 .env.*.local
+# Defensive: a typo'd `env` (no dot) is a common foot-gun — secrets file
+# without dot extension that wouldn't be picked up by .env* patterns.
+/env
 .claude/
 cabal-dev
 *.o

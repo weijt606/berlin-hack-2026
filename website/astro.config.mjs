@@ -106,10 +106,10 @@ export default defineConfig({
       },
       manifest: {
         includeAssets: ['favicon.ico', 'icons/apple-icon-180.png'],
-        name: 'Vibe Rave',
-        short_name: 'Vibe Rave',
+        name: 'VibeRave',
+        short_name: 'VibeRave',
         description:
-          'Vibe Rave — voice-driven live-coding music in the browser, built on Strudel.',
+          'VibeRave — voice-driven live-coding music in the browser, built on Strudel.',
         theme_color: '#222222',
         icons: [
           {

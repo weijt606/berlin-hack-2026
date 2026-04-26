@@ -1,7 +1,9 @@
-# Vibe Rave
+# VibeRave
+
+![VibeRave — voice → code → music](src-tauri/images/viberave-banner.png)
 
 **Vibe-code rave music with your voice.**
-Hold a key, speak a command — Vibe Rave hot-swaps the running pattern in
+Hold a key, speak a command — VibeRave hot-swaps the running pattern in
 the editor without breaking the beat.
 
 > Built for **Big Berlin Hack 2026 — Voice Interface in the Wild** (ai-coustics
