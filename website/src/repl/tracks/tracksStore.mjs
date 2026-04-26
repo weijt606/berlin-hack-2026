@@ -9,12 +9,24 @@ const SELECTED_KEY = 'selectedTrackId';
 
 const DEFAULT_CODE = '$: s("[bd <hh oh>]*2").bank("tr909").dec(.4)';
 
+// Fill in defaults for fields added after a track was first persisted —
+// keeps older saved tracks (and any LLM-stripped cases where viz came
+// back null) from leaking nulls into the editor.
+function normalizeTrack(t) {
+  if (!t) return t;
+  return {
+    ...t,
+    viz: t.viz || DEFAULT_VIZ,
+    volume: typeof t.volume === 'number' ? t.volume : 1,
+  };
+}
+
 function readTracks() {
   const raw = settingsMap.get()[TRACKS_KEY];
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : null;
+    return Array.isArray(parsed) ? parsed.map(normalizeTrack) : null;
   } catch {
     return null;
   }
