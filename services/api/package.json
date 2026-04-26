@@ -20,6 +20,7 @@
     "@strudel/transpiler": "workspace:*",
     "fastify": "^5.2.1",
     "smart-whisper": "^0.8.1",
+    "vosk-koffi": "^1.1.1",
     "wavefile": "^11.0.0"
   },
   "engines": {

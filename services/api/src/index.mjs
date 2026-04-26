@@ -8,6 +8,7 @@ import { createOllamaClient } from './infrastructure/ollama-client.mjs';
 import { createAicProcessor } from './infrastructure/aic-processor.mjs';
 import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.mjs';
 import { createGeminiStt } from './infrastructure/gemini-stt.mjs';
+import { createVoskTranscriber } from './infrastructure/vosk-transcriber.mjs';
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
 import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs';
 import { createStageDumpStore } from './infrastructure/stage-dump-store.mjs';
@@ -82,9 +83,20 @@ const audioEnhancer = createAicProcessor({
   ...config.audio,
   modelsDir: resolve(__dirname, '..', 'models'),
 });
-// STT_PROVIDER picks which transcriber to wire. Both expose the same
+// STT_PROVIDER picks which transcriber to wire. All conform to the same
 // Transcriber port (transcribe(pcm, {language, wavBuffer}) → {text}).
 function buildTranscriber(sttCfg) {
+  if (sttCfg.provider === 'vosk') {
+    const modelPath =
+      sttCfg.voskModelPath ||
+      resolve(__dirname, '..', 'models', 'vosk-model-small-en-us-0.15');
+    try {
+      return createVoskTranscriber({ modelPath });
+    } catch (err) {
+      console.warn(`[stt] STT_PROVIDER=vosk failed (${err.message}) — falling back to whisper`);
+      return createWhisperTranscriber(sttCfg);
+    }
+  }
   if (sttCfg.provider === 'gemini') {
     const t = createGeminiStt({
       apiKey: config.llm.gemini.apiKey,
