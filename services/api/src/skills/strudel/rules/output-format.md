@@ -43,7 +43,8 @@ Pick the viz that best fits the pattern:
 | `pitchwheel` | microtonal / EDO experiments, harmonic relationships |
 
 If you are unsure, omit the viz hint — the host will keep the user's
-current choice.
+current choice. Don't pick the same viz two turns in a row unless the
+music character genuinely demands it; see `rules/diversity.md`.
 
 ## Must not
 

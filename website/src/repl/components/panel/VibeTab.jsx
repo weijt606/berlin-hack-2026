@@ -15,6 +15,10 @@ const SILENCE_MS_KEY = 'strudel:vibe:silenceMs';
 const SILENCE_OPTIONS = [2000, 3000, 5000, 8000, 10000];
 const DEFAULT_SILENCE_MS = 5000;
 const WAVEFORM_BARS = 18;
+// Auto-send delay: STT lands → wait this long → fire /generate. Lets the
+// user read the transcript and override (typing in textarea cancels the
+// timer). 2s is short enough to feel responsive but long enough to react.
+const AUTO_SEND_DELAY_MS = 2000;
 
 // Re-export so existing settings UI that imports these from VibeTab keeps working.
 export { displayKey };
@@ -34,7 +38,12 @@ function readSilenceMs() {
 // Apply incoming code (and optional viz suggestion) to the *selected*
 // track: update the persisted store and hot-swap the live editor so
 // playback continues seamlessly.
-function applyCodeToSelectedTrack(code, viz) {
+//
+// IMPORTANT: never call .stop() / .repl.stop() on the editor here. If
+// the new pattern has a runtime error, the scheduler keeps its previous
+// pattern slot — calling stop in that path produces the "music drops on
+// every input" regression from the old code path.
+async function applyCodeToSelectedTrack(code, viz, onError) {
   if (!code) return;
   const id = $selectedTrackId.get();
   if (!id) return;
@@ -45,11 +54,15 @@ function applyCodeToSelectedTrack(code, viz) {
   const editor = window.strudelMirror;
   if (!editor) return;
   editor.setCode(code);
-  editor.evaluate(true);
+  try {
+    await editor.evaluate(true);
+  } catch (err) {
+    onError?.(err?.message || String(err));
+  }
 }
 
 export function VibeTab() {
-  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto } = useSettings();
+  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto, vibeVoiceLang } = useSettings();
   const selectedTrackId = useStore($selectedTrackId);
   const selectedTrack = useStore($selectedTrack);
 
@@ -70,12 +83,13 @@ export function VibeTab() {
       trackName={selectedTrack?.name || 'this track'}
       pttKey={pttKey}
       auto={auto}
+      voiceLang={vibeVoiceLang}
       fontFamily={fontFamily}
     />
   );
 }
 
-function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
+function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily }) {
   const sessionId = useMemo(() => readOrCreateSessionId(trackId), [trackId]);
 
   const [prompt, setPrompt] = useState('');
@@ -88,12 +102,23 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
   const [silenceMs, setSilenceMs] = useState(readSilenceMs);
   const [pttHint, setPttHint] = useState(false);
   const [waveform, setWaveform] = useState(() => new Array(WAVEFORM_BARS).fill(0));
+  // Last STT transcript — pinned in the UI so it stays visible even after
+  // the textarea is cleared by send(). Cleared on next recording.
+  const [lastTranscript, setLastTranscript] = useState('');
+  // Re-render trigger for the auto-send "2s remaining" hint — refs alone
+  // aren't reactive so we bump this when the timer is set/cleared.
+  const [autoSendArmed, setAutoSendArmed] = useState(false);
 
   const recorderRef = useRef(null);
   const pttActiveRef = useRef(false);
   const pttKeyDownRef = useRef(false);
   const scrollRef = useRef(null);
   const sendRef = useRef(null);
+  // AbortController for the in-flight /generate fetch — lets the user
+  // cancel a slow LLM call (esp. local Ollama with cold prefill) and edit.
+  const abortRef = useRef(null);
+  // Pending auto-send timer fired AUTO_SEND_DELAY_MS after STT lands.
+  const autoSendTimerRef = useRef(null);
   const flushRef = useRef(flush);
   const silenceMsRef = useRef(silenceMs);
   const levelBufferRef = useRef(new Array(WAVEFORM_BARS).fill(0));
@@ -153,9 +178,22 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
       const r = recorderRef.current;
       recorderRef.current = null;
       r?.stop().catch(() => {});
+      if (autoSendTimerRef.current) {
+        clearTimeout(autoSendTimerRef.current);
+        autoSendTimerRef.current = null;
+      }
+      abortRef.current?.abort();
     },
     [],
   );
+
+  function clearAutoSendTimer() {
+    if (autoSendTimerRef.current) {
+      clearTimeout(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+      setAutoSendArmed(false);
+    }
+  }
 
   async function send(textOverride) {
     const text = (textOverride ?? prompt).trim();
@@ -165,16 +203,37 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
     const currentCode = (typeof window !== 'undefined' && window.strudelMirror?.code) || '';
     setMessages((prev) => [...prev, { role: 'user', text, ts: 'pending' }]);
     setPrompt('');
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
-      const data = await postGenerate({ sessionId, prompt: text, currentCode });
+      const data = await postGenerate({
+        sessionId,
+        prompt: text,
+        currentCode,
+        signal: ctrl.signal,
+      });
       if (Array.isArray(data.messages)) setMessages(data.messages);
       const code = data.code || '';
-      if (auto && code && !data.noChange) applyCodeToSelectedTrack(code, data.viz);
+      // noChange: model couldn't turn the request into a pattern (see
+      // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
+      if (auto && code && !data.noChange) {
+        applyCodeToSelectedTrack(code, data.viz, setError);
+      }
     } catch (err) {
-      setError(err.message || String(err));
+      if (err?.name === 'AbortError') {
+        // user cancelled — drop the optimistic bubble; input was already cleared
+        setMessages((prev) => prev.filter((msg) => msg.ts !== 'pending'));
+      } else {
+        setError(err.message || String(err));
+      }
     } finally {
+      abortRef.current = null;
       setLoading(false);
     }
+  }
+
+  function cancelSend() {
+    abortRef.current?.abort();
   }
 
   sendRef.current = send;
@@ -182,6 +241,9 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
   function startRecording({ ptt = false } = {}) {
     if (recorderRef.current) return;
     setError('');
+    // Reset banner + cancel any pending auto-send so a new take starts clean.
+    setLastTranscript('');
+    clearAutoSendTimer();
     const recorder = createVoiceRecorder({
       silenceMs: ptt && flushRef.current ? silenceMsRef.current : 0,
       onSilence: handleSilenceFlush,
@@ -239,11 +301,22 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
     if (!wavBlob || wavBlob.size < 2048) return;
     setTranscribing(true);
     try {
-      const data = await postTranscribe({ sessionId, wavBlob });
+      const data = await postTranscribe({ sessionId, wavBlob, lang: voiceLang });
       const text = (data.text || '').trim();
       if (!text) return;
       setPrompt(text);
-      await send(text);
+      // Pin so the user sees what was heard even after send() clears
+      // the textarea. Independent of textarea timing.
+      setLastTranscript(text);
+      // Delayed auto-send: gives the user time to read and override.
+      // Typing in the textarea cancels the timer.
+      clearAutoSendTimer();
+      setAutoSendArmed(true);
+      autoSendTimerRef.current = setTimeout(() => {
+        autoSendTimerRef.current = null;
+        setAutoSendArmed(false);
+        sendRef.current?.(text);
+      }, AUTO_SEND_DELAY_MS);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -279,7 +352,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
   }, [pttKey]);
 
   function reuse(code, viz) {
-    applyCodeToSelectedTrack(code, viz);
+    applyCodeToSelectedTrack(code, viz, setError);
   }
 
   async function reset() {
@@ -337,9 +410,27 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
       </div>
 
       <div className="border-t border-muted p-3 space-y-2 shrink-0">
+        {lastTranscript && (
+          <div
+            className="text-xs px-2 py-1 rounded border border-muted opacity-80 truncate"
+            title={lastTranscript}
+          >
+            <span className="opacity-60">📝 heard:</span> {lastTranscript}
+            {autoSendArmed && (
+              <span className="opacity-60 ml-2">
+                — auto-sending in {AUTO_SEND_DELAY_MS / 1000}s, type to cancel
+              </span>
+            )}
+          </div>
+        )}
         <textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            // User edited — cancel any pending auto-send so the typed text
+            // isn't immediately blown away.
+            clearAutoSendTimer();
+            setPrompt(e.target.value);
+          }}
           placeholder={
             listening
               ? pttHint
@@ -409,16 +500,26 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
               ))}
             </select>
           </div>
-          <button
-            onClick={() => send()}
-            disabled={loading || !prompt.trim()}
-            className={cx(
-              'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
-              (loading || !prompt.trim()) && 'opacity-50 cursor-not-allowed',
-            )}
-          >
-            {loading ? 'Generating…' : 'Send (Enter)'}
-          </button>
+          {loading ? (
+            <button
+              onClick={cancelSend}
+              title="Cancel in-flight request and edit the prompt"
+              className="px-3 py-1 rounded-md border border-foreground text-foreground text-sm hover:opacity-80"
+            >
+              ✕ Cancel
+            </button>
+          ) : (
+            <button
+              onClick={() => send()}
+              disabled={!prompt.trim()}
+              className={cx(
+                'px-3 py-1 rounded-md border border-foreground text-foreground text-sm',
+                !prompt.trim() && 'opacity-50 cursor-not-allowed',
+              )}
+            >
+              Send (Enter)
+            </button>
+          )}
         </div>
       </div>
     </div>

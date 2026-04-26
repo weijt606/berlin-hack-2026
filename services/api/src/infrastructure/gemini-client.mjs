@@ -8,7 +8,7 @@ import { GoogleGenAI } from '@google/genai';
  * @param {{ apiKey: string | null, model: string, temperature?: number }} cfg
  * @returns {import('../application/ports.mjs').LlmClient | null}
  */
-export function createGeminiClient({ apiKey, model, temperature = 0.7 }) {
+export function createGeminiClient({ apiKey, model, temperature = 0.85 }) {
   if (!apiKey) return null;
   const genai = new GoogleGenAI({ apiKey });
 

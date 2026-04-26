@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { loadConfig } from './config.mjs';
 import { createGeminiClient } from './infrastructure/gemini-client.mjs';
+import { createOllamaClient } from './infrastructure/ollama-client.mjs';
 import { createAicProcessor } from './infrastructure/aic-processor.mjs';
 import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.mjs';
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
@@ -11,6 +12,7 @@ import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs'
 import { makeGenerateStrudel } from './application/generate-strudel.mjs';
 import { makeEnhanceAudio } from './application/enhance-audio.mjs';
 import { makeTranscribeAudio } from './application/transcribe-audio.mjs';
+import { makeTranscriptNormalizer } from './application/transcript-normalizer.mjs';
 import { makeChatSession } from './application/chat-session.mjs';
 import { createServer } from './interface/http/server.mjs';
 
@@ -28,6 +30,7 @@ const SKILL_ORDER = [
   'rules/output-format.md',
   'rules/iteration.md',
   'rules/host-controls.md',
+  'rules/diversity.md',
   'rules/uncertainty.md',
   'rules/cannot-handle.md',
   'reference/sounds.md',
@@ -56,7 +59,18 @@ const loadSystemPrompt = async () => {
 // during startup instead of on the first /generate request.
 await loadSystemPrompt();
 
-const llmClient = createGeminiClient(config.llm);
+// LLM_PROVIDER picks which backend to use:
+//   gemini → Google AI Studio (default; needs GEMINI_API_KEY)
+//   ollama → local Ollama daemon (needs the model already pulled)
+function buildLlmClient(llmCfg) {
+  if (llmCfg.provider === 'ollama') {
+    return createOllamaClient(llmCfg.ollama);
+  }
+  return createGeminiClient(llmCfg.gemini);
+}
+const llmClient = buildLlmClient(config.llm);
+console.log(`[llm] provider=${config.llm.provider}`);
+
 const audioEnhancer = createAicProcessor({
   ...config.audio,
   modelsDir: resolve(__dirname, '..', 'models'),
@@ -71,9 +85,23 @@ const metricsStore = createFileMetricsStore({
     resolve(__dirname, '..', 'data', 'metrics', 'transcribe.jsonl'),
 });
 
+// Optional post-STT LLM cleanup. Catches recognition errors the static
+// dictionary in whisper-transcriber can't (artist names, half-heard
+// phrases, fillers). Default ON; set LLM_CORRECT_TRANSCRIPT=false to
+// disable (saves one Gemini/Ollama call per voice take).
+const transcriptNormalizer = config.transcript.llmCorrect
+  ? makeTranscriptNormalizer({ llmClient })
+  : null;
+console.log(`[transcript-normalizer] ${transcriptNormalizer ? 'enabled' : 'disabled'}`);
+
 const generateStrudel = makeGenerateStrudel({ llmClient, loadSystemPrompt });
 const enhanceAudio = makeEnhanceAudio({ audioEnhancer });
-const transcribeAudio = makeTranscribeAudio({ transcriber, audioEnhancer, metricsStore });
+const transcribeAudio = makeTranscribeAudio({
+  transcriber,
+  audioEnhancer,
+  metricsStore,
+  transcriptNormalizer,
+});
 const chatSession = makeChatSession({ sessionStore, generateStrudel });
 
 const server = await createServer({

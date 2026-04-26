@@ -9,11 +9,14 @@ export async function fetchSessionMessages(sessionId) {
   return Array.isArray(data.messages) ? data.messages : [];
 }
 
-export async function postGenerate({ sessionId, prompt, currentCode }) {
+// `signal` (AbortSignal) lets callers cancel an in-flight request — the
+// VibeTab uses this to abort slow LLM calls without leaking handlers.
+export async function postGenerate({ sessionId, prompt, currentCode, signal }) {
   const res = await fetch(`${API_URL}/generate`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ sessionId, prompt, currentCode }),
+    signal,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -24,8 +27,12 @@ export async function postGenerate({ sessionId, prompt, currentCode }) {
   return data;
 }
 
-export async function postTranscribe({ sessionId, wavBlob }) {
-  const url = `${API_URL}/transcribe?sessionId=${encodeURIComponent(sessionId)}`;
+// `lang` is the speech-recognition language hint (e.g. 'en-US'). Omit or
+// pass 'auto' to let the backend fall back to its default detection.
+export async function postTranscribe({ sessionId, wavBlob, lang }) {
+  const params = new URLSearchParams({ sessionId });
+  if (lang && lang !== 'auto') params.set('lang', lang);
+  const url = `${API_URL}/transcribe?${params.toString()}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'audio/wav' },
