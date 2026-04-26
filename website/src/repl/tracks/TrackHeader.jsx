@@ -1,21 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { PlayIcon, StopIcon, TrashIcon, SparklesIcon } from '@heroicons/react/16/solid';
 import cx from '@src/cx.mjs';
-import { VIZ_KEYS, PAINTERS } from './painters.mjs';
-import { VizIcon } from './VizIcon.jsx';
-
-function nextViz(current) {
-  const idx = VIZ_KEYS.indexOf(current);
-  return VIZ_KEYS[(idx + 1) % VIZ_KEYS.length];
-}
 
 export function TrackHeader({
   name,
   isSelected,
   isPlaying,
   pending,
-  viz,
-  onVizChange,
   onSelect,
   onTogglePlay,
   onSpotlight,
@@ -66,12 +57,12 @@ export function TrackHeader({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onVizChange?.(nextViz(viz));
+          onSpotlight?.();
         }}
-        title={`Visualization: ${PAINTERS[viz]?.label || viz} — click to cycle`}
+        title="Spotlight this track (fade out the rest)"
         className="shrink-0 p-1 rounded hover:opacity-70 text-foreground opacity-70 hover:opacity-100"
       >
-        <VizIcon viz={viz} />
+        <SparklesIcon className="w-4 h-4" />
       </button>
 
       <div
@@ -117,17 +108,6 @@ export function TrackHeader({
           )}
         </div>
       )}
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onSpotlight?.();
-        }}
-        title="Spotlight this track (fade out the rest)"
-        className="shrink-0 p-1 rounded hover:opacity-70 text-foreground opacity-60 hover:opacity-100"
-      >
-        <SparklesIcon className="w-4 h-4" />
-      </button>
 
       <button
         onClick={(e) => {

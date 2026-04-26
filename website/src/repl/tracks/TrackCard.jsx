@@ -50,8 +50,6 @@ export function TrackCard({
         isSelected={isSelected}
         isPlaying={!!state?.started}
         pending={!!state?.pending}
-        viz={track.viz}
-        onVizChange={(v) => onVizChange(track.id, v)}
         onSelect={() => onSelect(track.id)}
         onTogglePlay={() => onTogglePlay(track.id)}
         onSpotlight={() => onSpotlight(track.id)}
@@ -62,8 +60,8 @@ export function TrackCard({
       {/* Always-visible per-track visualization */}
       <TrackVisualizer
         onCanvas={onCanvas}
-        isPlaying={!!state?.started}
         viz={track.viz}
+        onVizChange={(v) => onVizChange(track.id, v)}
       />
 
       {/* Collapsible code editor — expands when the track is selected */}

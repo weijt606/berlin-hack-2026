@@ -69,7 +69,7 @@ export const defaultSettings = {
   multiChannelOrbits: false,
   includePrebakeScriptInShare: true,
   settingsTab: 'settings',
-  vibePttKey: 'Alt+Space',
+  vibePttKey: 'Space',
   vibeAutoApply: true,
   // Speech recognition language hint sent to the backend on /transcribe.
   // 'auto' uses navigator.language — but on Chinese-locale browsers that's

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { TrackVizPicker } from './TrackVizPicker.jsx';
 import { getShape } from './painters.mjs';
 
 // A per-track canvas. The actual painting is done by the editor (chosen
 // painter from painters.mjs); this component just owns the DOM element
 // and exposes its 2d context to the editor via the `onCanvas` callback
-// (called once the element mounts). The viz selector itself lives in
-// TrackHeader as an icon-cycle button next to play/stop.
+// (called once the element mounts). The viz picker is a small dropdown
+// pinned to the top-right of the canvas area.
 //
 // The canvas backing store is sized at CSS-pixels × devicePixelRatio so
 // the painters draw at full hi-DPI resolution and the browser scales the
@@ -15,7 +16,7 @@ import { getShape } from './painters.mjs';
 
 const SQUARE_SIDE = 160; // px — square viz fits this width × height
 
-export function TrackVisualizer({ onCanvas, viz }) {
+export function TrackVisualizer({ onCanvas, viz, onVizChange }) {
   const ref = useRef(null);
   const shape = getShape(viz);
 
@@ -46,6 +47,9 @@ export function TrackVisualizer({ onCanvas, viz }) {
 
   return (
     <div className="px-3 py-2">
+      <div className="flex items-center justify-end mb-1">
+        <TrackVizPicker value={viz} onChange={onVizChange} />
+      </div>
       <canvas
         ref={ref}
         className="block rounded border border-muted bg-background/40 mx-auto"

@@ -185,6 +185,10 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
   const recorderRef = useRef(null);
   const pttActiveRef = useRef(false);
   const pttKeyDownRef = useRef(false);
+  // Tracks press-and-hold via pointer (mouse / touch) on the mic pill —
+  // separate from the keyboard ref so a stray keyup doesn't end a
+  // pointer-driven recording.
+  const pttPointerActiveRef = useRef(false);
   const scrollRef = useRef(null);
   const sendRef = useRef(null);
   // AbortController for the in-flight /generate fetch — lets the user
@@ -534,25 +538,49 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <div
-              title={`Hold ${displayKey(pttKey)} anywhere on the page to record, release to send. Change the key in Settings.`}
+              role="button"
+              tabIndex={-1}
+              title={`Press and hold to record (or hold ${displayKey(pttKey)} anywhere on the page). Release to send.`}
+              onPointerDown={(e) => {
+                if (e.button !== undefined && e.button !== 0) return; // primary button only
+                if (recorderRef.current) return;
+                e.preventDefault(); // suppress focus / text-selection while held
+                e.currentTarget.setPointerCapture?.(e.pointerId);
+                pttPointerActiveRef.current = true;
+                setPttHint(true);
+                startRecording({ ptt: true });
+              }}
+              onPointerUp={(e) => {
+                if (!pttPointerActiveRef.current) return;
+                pttPointerActiveRef.current = false;
+                setPttHint(false);
+                e.currentTarget.releasePointerCapture?.(e.pointerId);
+                if (recorderRef.current && pttActiveRef.current) stopRecording();
+              }}
+              onPointerCancel={() => {
+                if (!pttPointerActiveRef.current) return;
+                pttPointerActiveRef.current = false;
+                setPttHint(false);
+                if (recorderRef.current && pttActiveRef.current) stopRecording();
+              }}
               className={cx(
-                'px-3 py-1 rounded-md border text-sm flex items-center gap-2 select-none',
+                'px-3 py-1 rounded-md border text-sm flex items-center gap-2 select-none cursor-pointer touch-none',
                 listening
                   ? 'border-foreground bg-foreground text-background'
                   : transcribing
                     ? 'border-foreground text-foreground opacity-70'
-                    : 'border-muted text-foreground',
+                    : 'border-muted text-foreground hover:border-foreground/60',
               )}
             >
               {listening ? (
                 <>
                   <Waveform levels={waveform} />
-                  <span className="tabular-nums">release {displayKey(pttKey)}</span>
+                  <span className="tabular-nums">release to send</span>
                 </>
               ) : transcribing ? (
                 '… Transcribing'
               ) : (
-                `🎤 Voice input (${displayKey(pttKey)})`
+                `🎤 Hold to talk (${displayKey(pttKey)})`
               )}
             </div>
             <label
