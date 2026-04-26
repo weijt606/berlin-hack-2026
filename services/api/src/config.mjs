@@ -83,6 +83,15 @@ export function loadConfig() {
       // dictionary in whisper-transcriber can't (artist names, half-heard
       // phrases, fillers). Default ON; set LLM_CORRECT_TRANSCRIPT=false to
       // disable (saves one Gemini call per voice prompt).
+      //
+      // Hackathon demo note: we ran with this OFF on demo day. Stage-dump
+      // audit showed the normalizer's wins (e.g. "Hall's music" → "House
+      // music") were mostly handled downstream by the code-gen Gemini
+      // anyway, while its failure modes — proper-noun fabrication
+      // ("Ben Thede" → "Ben Benda", "Elite phase" → "Aliased phase") and
+      // a 500-2000ms tail on the hot path — hurt live use. The static
+      // post-process dict stays on either way. Flip back to true for
+      // offline WER experiments.
       llmCorrect: !/^(0|false|no|off)$/i.test(process.env.LLM_CORRECT_TRANSCRIPT || ''),
     },
     pioneer: {
