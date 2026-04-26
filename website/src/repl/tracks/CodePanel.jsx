@@ -48,8 +48,8 @@ export function CodePanel({ context }) {
   return (
     <div
       className={cx(
-        'fixed bottom-0 left-0 right-0 z-30 flex flex-col',
-        'bg-background/95 backdrop-blur-sm border-t border-muted shadow-lg',
+        'shrink-0 flex flex-col',
+        'bg-background/95 border-t border-muted shadow-[0_-2px_8px_rgba(0,0,0,0.25)]',
       )}
     >
       <div className="flex items-stretch">

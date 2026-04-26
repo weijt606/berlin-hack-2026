@@ -2,7 +2,6 @@ import Loader from '@src/repl/components/Loader';
 import { BottomPanel, MainPanel, RightPanel } from '@src/repl/components/panel/Panel';
 import UserFacingErrorMessage from '@src/repl/components/UserFacingErrorMessage';
 import { TracksColumn } from '@src/repl/tracks/TracksColumn.jsx';
-import { CodePanel } from '@src/repl/tracks/CodePanel.jsx';
 import { useSettings } from '@src/settings.mjs';
 
 export default function ReplEditor(Props) {
@@ -24,7 +23,6 @@ export default function ReplEditor(Props) {
       </div>
       <UserFacingErrorMessage error={error} />
       {!isZen && panelPosition === 'bottom' && <BottomPanel context={context} />}
-      {!isZen && <CodePanel context={context} />}
     </div>
   );
 }

@@ -158,6 +158,7 @@ export function useReplContext() {
     getEditorRoot: editors.getEditorRoot,
     togglePlayTrack: editors.togglePlay,
     stopTrack: editors.stopTrack,
+    stopAllTracks: editors.stopAllTracks,
     evaluateTrack: editors.evaluateTrack,
     getTrackState: editors.getState,
     spotlightTrack: editors.spotlight,

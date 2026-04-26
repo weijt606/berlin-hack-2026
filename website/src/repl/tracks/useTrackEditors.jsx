@@ -142,6 +142,16 @@ export function useTrackEditors() {
   const stopTrack = useCallback((trackId) => {
     editorsRef.current[trackId]?.stop();
   }, []);
+  // Panic stop: kills every editor's scheduler. Used by the global Stop
+  // button so a runaway live set can be silenced in one click without
+  // hunting down each track header.
+  const stopAllTracks = useCallback(() => {
+    Object.values(editorsRef.current).forEach((ed) => {
+      try {
+        ed?.stop?.();
+      } catch {}
+    });
+  }, []);
   const evaluateTrack = useCallback((trackId) => {
     editorsRef.current[trackId]?.evaluate();
   }, []);
@@ -174,6 +184,7 @@ export function useTrackEditors() {
     getState,
     togglePlay,
     stopTrack,
+    stopAllTracks,
     evaluateTrack,
     setCodeFor,
     spotlight,
