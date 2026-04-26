@@ -7,6 +7,7 @@ import { createGeminiClient } from './infrastructure/gemini-client.mjs';
 import { createOllamaClient } from './infrastructure/ollama-client.mjs';
 import { createAicProcessor } from './infrastructure/aic-processor.mjs';
 import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.mjs';
+import { createGeminiStt } from './infrastructure/gemini-stt.mjs';
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
 import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs';
 import { createStageDumpStore } from './infrastructure/stage-dump-store.mjs';
@@ -81,7 +82,25 @@ const audioEnhancer = createAicProcessor({
   ...config.audio,
   modelsDir: resolve(__dirname, '..', 'models'),
 });
-const transcriber = createWhisperTranscriber(config.stt);
+// STT_PROVIDER picks which transcriber to wire. Both expose the same
+// Transcriber port (transcribe(pcm, {language, wavBuffer}) → {text}).
+function buildTranscriber(sttCfg) {
+  if (sttCfg.provider === 'gemini') {
+    const t = createGeminiStt({
+      apiKey: config.llm.gemini.apiKey,
+      model: sttCfg.geminiModel,
+      language: sttCfg.language,
+    });
+    if (!t) {
+      console.warn('[stt] STT_PROVIDER=gemini but GEMINI_API_KEY is missing — falling back to whisper');
+      return createWhisperTranscriber(sttCfg);
+    }
+    return t;
+  }
+  return createWhisperTranscriber(sttCfg);
+}
+const transcriber = buildTranscriber(config.stt);
+console.log(`[stt] provider=${config.stt.provider} model=${transcriber.getModelId()}`);
 const sessionStore = createFileSessionStore({
   dir: config.sessions.dir || resolve(__dirname, '..', 'data', 'sessions'),
 });

@@ -103,7 +103,10 @@ export function makeTranscribeAudio({
     const rawMetrics = computeAudioMetrics(decoded.pcm);
 
     const sttStartedAt = Date.now();
-    const rawResult = await transcriber.transcribe(decoded.pcm, { language });
+    const rawResult = await transcriber.transcribe(decoded.pcm, {
+      language,
+      wavBuffer,
+    });
     const rawSttMs = Date.now() - sttStartedAt;
     take?.text('raw', rawResult.text);
 
@@ -128,7 +131,10 @@ export function makeTranscribeAudio({
       const enhancedMetrics = computeAudioMetrics(decodedEnhanced.pcm);
 
       const enhSttStartedAt = Date.now();
-      const enhResult = await transcriber.transcribe(decodedEnhanced.pcm, { language });
+      const enhResult = await transcriber.transcribe(decodedEnhanced.pcm, {
+        language,
+        wavBuffer: enhancedWav,
+      });
       const enhSttMs = Date.now() - enhSttStartedAt;
       take?.text('enhanced', enhResult.text);
 
