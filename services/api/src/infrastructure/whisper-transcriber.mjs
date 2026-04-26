@@ -39,17 +39,20 @@ const DJ_VOCAB = (() => {
 //   "arp/arpeggio" → "arp egg" / "harp"
 //   "sidechain" → "side chain"
 function buildBiasingPrompt(vocab) {
-  // Anchor: proper-noun + jargon biasing. Always present, placed LAST so
-  // it survives any front-truncation by whisper.
+  // Anchor: proper-noun + jargon + transport biasing. Always present, placed
+  // LAST so it survives any front-truncation by whisper. The transport phrases
+  // ("open a new track", "stop all", "play", "pause") are the canonical META
+  // commands and are critical for the demo — keep them in the survive zone.
   const anchor = [
     'Strudel live coding for a DJ in a noisy rave. Genres: techno, house,',
     'deep house, lo-fi, dub, dubby, drum and bass, ambient, acid, trance,',
     'breakbeat, chiptune, drone, jazz, disco, trap, IDM, hyperpop. Berghain',
     '(Berlin techno club): in the Berghain style, Berghain bass. Drum',
-    'machines: RolandTR909, RolandTR808, LinnDrum, AkaiMPC60. Synths:',
-    'sawtooth, square, triangle, sine, Rhodes piano, sub bass, acid bass,',
+    'machines: RolandTR909 (909 kick), RolandTR808 (808 kick), LinnDrum.',
+    'Synths: sawtooth, square, sine, Rhodes piano, sub bass, acid bass,',
     'lead, pad, arp, arpeggio. Effects: lpf, hpf, reverb, delay, echo,',
-    'sidechain ducking, crush, distortion, phaser, vowel filter.',
+    'sidechain ducking, crush, distortion. Transport: open a new track,',
+    'stop all, play, pause, restart, harder kick, make it dubby.',
   ].join(' ');
 
   // Command bias: only the multi-word command shapes whisper might mis-segment
@@ -72,7 +75,7 @@ function buildBiasingPrompt(vocab) {
   const cmdBlock = `Commands: ${distinctive.join(', ')}.`;
 
   // Order: commands first (less critical), anchor LAST (must survive).
-  // Total budget ≈ 200 tokens, well under whisper's 224 cap.
+  // Total budget ≈ 210 tokens, under whisper's 224 cap.
   return `${cmdBlock} ${anchor}`;
 }
 
@@ -104,8 +107,25 @@ const POST_PROCESS_FIXES = [
   [/\b(amen|amid|a man|a-man|amon)\s+(break|brake)\b/gi, 'Amen break'],
   [/\bdrum\s*&\s*bass\b/gi, 'drum and bass'],
   [/\bdnb\b/gi, 'drum and bass'],
+  [/\bd\s*&\s*b\b/gi, 'drum and bass'],
+  // Demo META: the exact phrases the demo script uses. Whisper sometimes
+  // hears "open and new track" / "open new track" / "opening a new track"
+  // — normalise to the canonical form so the meta-commands rule fires
+  // reliably without depending on Gemini's wiggle room.
+  [/\bopen(?:ing|ed)?\s+(?:a\s+|an\s+|the\s+|and\s+)?new\s+track\b/gi, 'open a new track'],
+  [/\bstart(?:s|ed)?\s+a\s+new\s+track\b/gi, 'open a new track'],
+  // "stop all" / "stop everything" / "kill it" canonicalisation — keeps
+  // the panic command robust to phrasing.
+  [/\bstop\s+(?:all|everything|every\s*thing)\b/gi, 'stop all'],
+  [/\bkill\s+(?:it|all|everything)\b/gi, 'stop all'],
+  // Demo digit drumbox: "more 909" / "harder 909" → "more 909 kick".
+  // Without the kick noun the LLM sometimes interprets "909" as a BPM.
+  [/\b(more|add|harder|louder)\s+9\s*0\s*9\b(?!\s*(kick|drum))/gi, '$1 909 kick'],
+  [/\b(more|add|harder|louder)\s+8\s*0\s*8\b(?!\s*(kick|drum|bass))/gi, '$1 808 kick'],
   // bpm number → digits + lowercase unit
   [/(\d+)\s*BPM\b/g, '$1 bpm'],
+  // "at 80 bee P M" / "at 80 beats per minute" → "at 80 bpm"
+  [/\b(\d+)\s+beats\s+per\s+minute\b/gi, '$1 bpm'],
 ];
 
 // Whisper's medium.en model carries a handful of training-data fillers that
