@@ -96,6 +96,9 @@ const POST_PROCESS_FIXES = [
   [/\bduck on the base\b/gi, 'duck on the bass'],
   [/\b(drop|cut|kill|boost|bring back) the base\b/gi, '$1 the bass'],
   [/\bbase ?line\b/gi, 'bassline'],
+  // Standalone "{verb} base" — covers "more base", "less base", "add base",
+  // "deeper base", etc. Demo command #2 ("More bass") goes through this.
+  [/\b(more|less|add|mute|cut|kill|boost|deeper|softer|louder|harder)\s+base\b/gi, '$1 bass'],
   // lo-fi normalisation
   [/\blow[ -]?fi\b/gi, 'lo-fi'],
   // Rhodes proper noun
@@ -126,6 +129,24 @@ const POST_PROCESS_FIXES = [
   [/(\d+)\s*BPM\b/g, '$1 bpm'],
   // "at 80 bee P M" / "at 80 beats per minute" → "at 80 bpm"
   [/\b(\d+)\s+beats\s+per\s+minute\b/gi, '$1 bpm'],
+  // Spoken BPM numbers → digits. Demo says "one thirty-eight" /
+  // "one seventy-four" — whisper sometimes transcribes them as words
+  // even with the BPM context. ORDER MATTERS: longer / compound forms
+  // must run before their prefixes ("one thirty-eight" before
+  // "one thirty"), otherwise the short rule eats the digit.
+  [/\bone[\s-]twenty[\s-]eight\b/gi, '128'],
+  [/\bone[\s-]thirty[\s-]eight\b/gi, '138'],
+  [/\bone[\s-]seventy[\s-]four\b/gi, '174'],
+  [/\bone hundred\b/gi, '100'],
+  [/\bone[\s-]ten\b/gi, '110'],
+  [/\bone[\s-]twenty\b/gi, '120'],
+  [/\bone[\s-]thirty\b/gi, '130'],
+  [/\bone[\s-]forty\b/gi, '140'],
+  [/\bone[\s-]fifty\b/gi, '150'],
+  [/\bone[\s-]sixty\b/gi, '160'],
+  [/\bone[\s-]seventy\b/gi, '170'],
+  [/\beighty\b/gi, '80'],
+  [/\bninety\b/gi, '90'],
 ];
 
 // Whisper's medium.en model carries a handful of training-data fillers that
