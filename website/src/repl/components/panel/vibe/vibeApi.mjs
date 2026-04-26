@@ -29,9 +29,16 @@ export async function postGenerate({ sessionId, prompt, currentCode, signal }) {
 
 // `lang` is the speech-recognition language hint (e.g. 'en-US'). Omit or
 // pass 'auto' to let the backend fall back to its default detection.
-export async function postTranscribe({ sessionId, wavBlob, lang }) {
+// `aicLevel` (0-1) overrides the server's AIC enhancement level for this
+// take; `aicScene` is the scene id used to pick the level (logged for
+// later A/B). Omit either to let the backend use its env default.
+export async function postTranscribe({ sessionId, wavBlob, lang, aicLevel, aicScene }) {
   const params = new URLSearchParams({ sessionId });
   if (lang && lang !== 'auto') params.set('lang', lang);
+  if (typeof aicLevel === 'number' && Number.isFinite(aicLevel)) {
+    params.set('level', String(aicLevel));
+  }
+  if (aicScene) params.set('scene', aicScene);
   const url = `${API_URL}/transcribe?${params.toString()}`;
   const res = await fetch(url, {
     method: 'POST',

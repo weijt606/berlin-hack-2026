@@ -42,14 +42,27 @@ export function createAicProcessor({ licenseKey, modelId, modelsDir, enhancement
     processor
       .getProcessorContext()
       .setParameter(ProcessorParameter.EnhancementLevel, enhancementLevel);
-    cached = { processor, numFrames };
+    // Track the level currently set on this native processor so the
+    // per-call override in enhance() only re-issues setParameter when
+    // it actually changes (the SDK call traverses an FFI boundary).
+    cached = { processor, numFrames, currentLevel: enhancementLevel };
     processorCache.set(key, cached);
     return cached;
   }
 
+  function clamp01(n) {
+    if (!Number.isFinite(n)) return null;
+    return Math.max(0, Math.min(1, n));
+  }
+
   return {
     getModelId: () => model.getId(),
-    async enhance(wavBuffer) {
+    /**
+     * @param {Buffer} wavBuffer
+     * @param {{ level?: number }} [opts]  per-call override; falls back to the
+     *                                     constructor-time `enhancementLevel`
+     */
+    async enhance(wavBuffer, opts = {}) {
       const wav = new WaveFile(wavBuffer);
       wav.toBitDepth('32f');
 
@@ -57,7 +70,21 @@ export function createAicProcessor({ licenseKey, modelId, modelsDir, enhancement
       const numChannels = wav.fmt.numChannels;
       const samples = wav.getSamples(true, Float32Array);
 
-      const { processor, numFrames } = getProcessor(sampleRate, numChannels);
+      const cached = getProcessor(sampleRate, numChannels);
+      const { processor, numFrames } = cached;
+
+      // Apply a per-call level override if provided. Same processor is
+      // reused across requests, so only push the parameter through the
+      // FFI when it actually changes — saves a few microseconds and
+      // avoids the SDK re-initialising any internal state.
+      const requestedLevel = clamp01(opts?.level);
+      const effectiveLevel = requestedLevel ?? enhancementLevel;
+      if (effectiveLevel !== cached.currentLevel) {
+        processor
+          .getProcessorContext()
+          .setParameter(ProcessorParameter.EnhancementLevel, effectiveLevel);
+        cached.currentLevel = effectiveLevel;
+      }
 
       const chunkSize = numChannels * numFrames;
       for (let i = 0; i < samples.length; i += chunkSize) {

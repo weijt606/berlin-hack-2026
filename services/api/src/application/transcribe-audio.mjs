@@ -61,7 +61,14 @@ export function makeTranscribeAudio({
   stageDumpStore = null,
   transcriptNormalizer = null,
 }) {
-  return async function transcribeAudio({ wavBuffer, compare = true, language, sessionId }) {
+  return async function transcribeAudio({
+    wavBuffer,
+    compare = true,
+    language,
+    sessionId,
+    enhancementLevel,
+    enhancementScene,
+  }) {
     if (!transcriber) {
       throw new ServiceUnavailable(
         'Whisper is not initialised. Check WHISPER_MODEL and that the model can be downloaded.',
@@ -97,7 +104,9 @@ export function makeTranscribeAudio({
     const wantEnhanced = compare && audioEnhancer;
     if (wantEnhanced) {
       const enhanceStartedAt = Date.now();
-      const enhancedWav = await audioEnhancer.enhance(wavBuffer);
+      const enhancedWav = await audioEnhancer.enhance(wavBuffer, {
+        level: enhancementLevel,
+      });
       const enhanceMs = Date.now() - enhanceStartedAt;
       take?.wav('enhanced', enhancedWav);
       const decodedEnhanced = wavToPcm16kMono(enhancedWav);
@@ -156,6 +165,8 @@ export function makeTranscribeAudio({
       text,
       rawText: rawRecommended,
       pickSource,
+      enhancementLevel: typeof enhancementLevel === 'number' ? enhancementLevel : null,
+      enhancementScene: enhancementScene || null,
       raw,
       enhanced,
       comparison,
