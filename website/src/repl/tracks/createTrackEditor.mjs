@@ -7,14 +7,12 @@ import {
 import { superdirtOutput } from '@strudel/osc/superdirtoutput';
 import { StrudelMirror } from '@strudel/codemirror';
 import { clearHydra } from '@strudel/hydra';
-import { getPunchcardPainter } from '@strudel/draw';
 import { setInterval, clearInterval } from 'worker-timers';
 import { audioEngineTargets } from '../../settings.mjs';
 import {
   getAudioReady,
   getModulesLoading,
   getPresetsLoading,
-  getSharedDrawContext,
 } from './strudelGlobalInit.mjs';
 import { setTrackCode } from './tracksStore.mjs';
 import { makeTrackOutput } from './trackVolume.mjs';
@@ -33,8 +31,12 @@ export function createTrackEditor({
   audioEngineTarget,
   prebakeScript,
   onUpdateState,
-  drawContext, // optional per-track 2d ctx; falls back to the shared one
+  drawContext, // initial per-track 2d ctx
 }) {
+  // Ref-based ctx so the host can swap in a new canvas after a remount
+  // (HMR, viz layout change, container resize) without rebuilding the
+  // editor — the next animation frame paints into the new canvas.
+  const drawContextRef = { current: drawContext || null };
   const shouldUseWebaudio = audioEngineTarget !== audioEngineTargets.osc;
   const baseOutput = shouldUseWebaudio ? webaudioOutput : superdirtOutput;
   const getTime = shouldUseWebaudio ? getAudioContextCurrentTime : getPerformanceTimeSeconds;
@@ -52,16 +54,13 @@ export function createTrackEditor({
   // .scope() / .pianoroll() in the user's code still work alongside.
   const vizRef = { current: initialViz || DEFAULT_VIZ };
   const onDraw = (haps, time, painters) => {
-    const ctx = drawContext;
-    if (ctx) {
-      // Clear the per-track canvas before each frame.
-      const c = ctx.canvas;
-      const ratio = window.devicePixelRatio || 1;
-      ctx.clearRect(0, 0, c.width / ratio, c.height / ratio);
-      try {
-        getPainter(vizRef.current)(ctx, time, haps, drawTime);
-      } catch {}
-    }
+    const ctx = drawContextRef.current;
+    if (!ctx) return;
+    const c = ctx.canvas;
+    ctx.clearRect(0, 0, c.width, c.height);
+    try {
+      getPainter(vizRef.current)(ctx, time, haps, drawTime);
+    } catch {}
     painters?.forEach?.((painter) => {
       try {
         painter(ctx, time, haps, drawTime);
@@ -82,7 +81,7 @@ export function createTrackEditor({
     initialCode: initialCode ?? '',
     pattern: silence,
     drawTime,
-    drawContext: drawContext || getSharedDrawContext(),
+    drawContext,
     onDraw,
     solo: false,
     prebake: async () => {
@@ -106,5 +105,6 @@ export function createTrackEditor({
   // Expose the live refs so the hook can update them at runtime.
   editor.volumeRef = volumeRef;
   editor.vizRef = vizRef;
+  editor.drawContextRef = drawContextRef;
   return editor;
 }

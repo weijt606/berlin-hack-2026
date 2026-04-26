@@ -26,7 +26,7 @@ turns in the chat history):
    `.iter(N)`, `.swing(N)`, `.palindrome()`, `.ply("<1 2 3>")`,
    `.degradeBy(0.2)`, `.mask("<1 [0 1]>")`, `.struct("x ~ x ~")`.
 5. **Don't always pick the obvious sound.** "Lo-fi" doesn't HAVE to be
-   `gm_rhodes_ep` — sometimes try `gm_celesta`, `gm_vibraphone`, or a
+   `gm_epiano2` — sometimes try `gm_celesta`, `gm_vibraphone`, or a
    bandpass-filtered `triangle`.
 
 ## Choosing visualizer by character

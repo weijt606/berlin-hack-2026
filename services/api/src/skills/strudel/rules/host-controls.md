@@ -56,7 +56,7 @@ You should:
   - Same drum kit (`.bank(...)`).
   - Same key / scale (read from `note(...)` / `.scale(...)` in current).
   - Same instrument family for melody/bass (e.g. if current uses
-    `gm_rhodes_ep`, keep electric piano family).
+    `gm_epiano2`, keep electric piano family).
   - Similar density (drum hits per cycle within ±50%).
   - Similar effect envelope (room/delay amount roughly preserved).
 - **Vary** along ONE dimension to keep the set evolving. Pick one of:

@@ -45,7 +45,7 @@ note("c3 e3 g3 c4").attack(0.05).release(0.4)
 | `.delayfeedback(0..0.99)` | — | Delay feedback. **Cap at 0.95 to avoid runaway.** |
 
 ```js
-note("<c3 eb3 g3 bb3>").s("gm_pad_2_warm").room(0.9).delay(0.3).delaytime(0.375).delayfeedback(0.5)
+note("<c3 eb3 g3 bb3>").s("gm_pad_warm").room(0.9).delay(0.3).delaytime(0.375).delayfeedback(0.5)
 ```
 
 ## Distortion / shaping
@@ -98,7 +98,7 @@ duck a pad. All four exist in `doc.json`. Typical recipe:
 ```js
 stack(
   s("bd*4").bank("RolandTR909"),
-  note("<c3 eb3 g3 bb3>").s("gm_pad_2_warm").room(0.6).duckdepth(0.6).duckattack(0.05)
+  note("<c3 eb3 g3 bb3>").s("gm_pad_warm").room(0.6).duckdepth(0.6).duckattack(0.05)
 )
 ```
 

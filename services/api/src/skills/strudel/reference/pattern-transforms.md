@@ -25,7 +25,7 @@ These are chained methods on a `Pattern`. All examples are verified against
 | `.fast(N)` | Cram N copies into one cycle. | `s("bd").fast(4)` |
 | `.late(N)` | Delay events by N cycles. | `s("bd*4").late(0.125)` |
 | `.early(N)` | Pull events earlier. | — |
-| `.iter(N)` | Rotate — start each cycle one Nth later. | `n("0 1 2 3").scale("A:minor").iter(4).note()` |
+| `.iter(N)` | Rotate — start each cycle one Nth later. | `n("0 1 2 3").scale("A:minor").iter(4)` |
 | `.swing(N)` | Shorthand for `swingBy(1/3, N)` — adds 1/3 swing every N steps. | `s("hh*8").swing(4)` |
 | `.press` / `.press()` | Syncopate by shifting each event halfway into its slot. | `stack(s("hh*4"), s("bd mt sd ht").every(4, press))` |
 
@@ -54,8 +54,7 @@ These are chained methods on a `Pattern`. All examples are verified against
 | `.add(n)` | Add to numeric values. | `n("0 2 4".add("<0 3>"))` |
 | `.sub(n)` | Subtract. | `n("0 2 4").sub("<0 1 2 3>").scale("C4:minor")` |
 | `.scale("C:minor")` | Quantize / project numbers onto a scale. | `n("0 2 4 6 4 2").scale("C:major")` |
-| `.transpose(n)` | Shift in semitones (or scale steps when used with `.scale`). | `"c2 c3".fast(2).transpose("<0 -2 5 3>".slow(2)).note()` |
-| `.note()` | Convert numeric pattern to notes (after `.scale`). | — |
+| `.transpose(n)` | Shift in semitones (or scale steps when used with `.scale`). | `note("c2 c3").fast(2).transpose("<0 -2 5 3>".slow(2))` |
 | `.rev()` | Reverse each cycle. | `note("c d e g").rev()` |
 | `.palindrome()` | Forward, then backward, then forward... | `note("c d e g").palindrome()` |
 | `.arp("0 1 2")` | Pick indices from chords inside the pattern. | `note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>").arp("0 [0,2] 1 [0,2]")` |
@@ -65,9 +64,9 @@ These are chained methods on a `Pattern`. All examples are verified against
 | Method | Behaviour | Example |
 | --- | --- | --- |
 | `.ply(n)` | Repeat each event `n` times within its slot. | `s("bd ~ sd cp").ply("<1 2 3>")` |
-| `.chunk(N, fn)` | Split into N parts, apply `fn` to one chunk per cycle. | `"0 1 2 3".chunk(4, x=>x.add(7)).scale("A:minor").note()` |
+| `.chunk(N, fn)` | Split into N parts, apply `fn` to one chunk per cycle. | `"0 1 2 3".chunk(4, x=>x.add(7)).scale("A:minor")` |
 | `.jux(fn)` | Apply `fn` only to the right channel — instant stereo width. | `s("bd lt [~ ht] mt cp ~ bd hh").jux(rev)` |
-| `.off(t, fn)` | Superimpose `fn(self)` delayed by `t` cycles. | `"c3 eb3 g3".off(1/8, x=>x.add(7)).note()` |
+| `.off(t, fn)` | Superimpose `fn(self)` delayed by `t` cycles. | `note("c3 eb3 g3").off(1/8, x=>x.add(7))` |
 | `.euclid(P, S)` | Euclidean rhythm: P pulses spread over S steps. | `note("c3").euclid(3, 8)` (Cuban tresillo) |
 | `.euclidRot(P, S, R)` | Euclidean with rotation `R`. | `note("c3").euclidRot(3, 16, 14)` |
 
@@ -79,17 +78,19 @@ These are chained methods on a `Pattern`. All examples are verified against
 | `wchoose([a, w], [b, w])` | Weighted random pick. | `note("c2 d2").s(wchoose(["sine",10], ["triangle",1]))` |
 | `pick(table, idx)` | Index into a list — also works as a chainable `.pick`. | `note("<0 1 2!2 3>".pick(["g a", "e f", "f g f g", "g c d"]))` |
 | `rand` | Continuous random (0..1). | `s("hh*8").gain(rand)` |
-| `irand(N)` | Integer 0..N-1, randomized per cycle. | `n(irand(8)).scale("C:minor").note()` |
+| `irand(N)` | Integer 0..N-1, randomized per cycle. | `n(irand(8)).scale("C:minor")` |
 
 ## Building a melody from numbers
 
-The idiomatic Strudel melody uses `n(...)` (numeric) → `.scale(...)` → `.note()`:
+The idiomatic Strudel melody uses `n(...)` (numeric) → `.scale(...)`:
 
 ```js
-n("0 2 4 7 4 2".add("<0 3>")).scale("C4:minor").note().s("triangle")
+n("0 2 4 7 4 2".add("<0 3>")).scale("C4:minor").s("triangle")
 ```
 
-This is more flexible than typing notes directly because it lets you transpose,
+`.scale(...)` already produces playable notes — do **not** chain `.note()` after it (that double-wraps the note value into an object and the audio engine throws `unexpected "note" type "object"`). Use `.note(...)` only to set notes directly from a string, e.g. `note("c d e f").s("piano")`.
+
+This style is more flexible than typing notes directly because it lets you transpose,
 permute, and scale-shift with `.add`, `.transpose`, `.scale`.
 
 ## Common chains
@@ -105,5 +106,5 @@ note("c2*8".add("<0 7 5 3>")).s("sawtooth").lpf(sine.range(400,1800).slow(4)).lp
 note("<[c3,eb3,g3] [bb2,d3,f3] [ab2,c3,eb3] [g2,b2,d3]>").s("gm_synth_strings_1").attack(0.05).release(0.4).room(0.5)
 
 // Arpeggio with humanisation
-note("<[c,eb,g]!2 [c,f,ab]>").arp("0 1 2 1").s("gm_rhodes_ep").sometimes(x=>x.add(12)).room(0.4)
+note("<[c,eb,g]!2 [c,f,ab]>").arp("0 1 2 1").s("gm_epiano2").sometimes(x=>x.add(12)).room(0.4)
 ```

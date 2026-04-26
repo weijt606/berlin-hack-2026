@@ -6,7 +6,13 @@ import { $selectedTrackId, $selectedTrack, setTrackCode, setTrackViz } from '../
 import { createVoiceRecorder } from './voice-recorder.mjs';
 import { displayKey, isTextInput } from './vibe/keyHelpers.mjs';
 import { readOrCreateSessionId, clearSessionId } from './vibe/sessionId.mjs';
-import { fetchSessionMessages, postGenerate, postTranscribe, deleteSession } from './vibe/vibeApi.mjs';
+import {
+  fetchSessionMessages,
+  postGenerate,
+  postGenerateFix,
+  postTranscribe,
+  deleteSession,
+} from './vibe/vibeApi.mjs';
 import { Waveform } from './vibe/Waveform.jsx';
 import { Message } from './vibe/Message.jsx';
 
@@ -35,15 +41,57 @@ function readSilenceMs() {
   return SILENCE_OPTIONS.includes(n) ? n : DEFAULT_SILENCE_MS;
 }
 
+// How long to listen for runtime errors after a hot-swap before deciding
+// the new code is fine. The scheduler emits `getTrigger error: ...` log
+// events as soon as a hap with a bad sound/value tries to play, which is
+// usually within the first cycle.
+const RUNTIME_ERROR_WINDOW_MS = 1500;
+// Logger events (see packages/core/logger.mjs) we treat as runtime errors
+// worth asking the LLM to fix.
+const RUNTIME_ERROR_PREFIX_RE = /^\[(getTrigger|cyclist|repl)\]\s*error:\s*(.+)$/i;
+
+// Watch the global logger event bus for `[getTrigger] error: ...` style
+// messages for a short window, returning the first error or null. Used by
+// the runtime-fix loop to detect "the swap looked fine to evaluate() but
+// the scheduler fails on every cycle" regressions (e.g. NaN AudioParam,
+// `unexpected "note" type "object"`, missing soundfont).
+function watchForRuntimeError(ms = RUNTIME_ERROR_WINDOW_MS) {
+  if (typeof document === 'undefined') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      document.removeEventListener('strudel.log', onLog);
+      clearTimeout(timer);
+      resolve(value);
+    };
+    const onLog = (e) => {
+      const msg = e?.detail?.message;
+      if (typeof msg !== 'string') return;
+      const m = msg.match(RUNTIME_ERROR_PREFIX_RE);
+      if (m) finish(m[2].trim());
+    };
+    document.addEventListener('strudel.log', onLog);
+    const timer = setTimeout(() => finish(null), ms);
+  });
+}
+
 // Apply incoming code (and optional viz suggestion) to the *selected*
 // track: update the persisted store and hot-swap the live editor so
 // playback continues seamlessly.
+//
+// When `allowFix` is true, we also listen for runtime errors from the
+// scheduler for ~1.5s after the swap; if any fire, we POST the failing
+// code + first error to /generate/fix and re-apply the corrected version
+// once. The recursive call is gated to one retry so a model that keeps
+// regenerating bad code can't melt the API.
 //
 // IMPORTANT: never call .stop() / .repl.stop() on the editor here. If
 // the new pattern has a runtime error, the scheduler keeps its previous
 // pattern slot — calling stop in that path produces the "music drops on
 // every input" regression from the old code path.
-async function applyCodeToSelectedTrack(code, viz, onError) {
+async function applyCodeToSelectedTrack(code, viz, onError, { allowFix = false } = {}) {
   if (!code) return;
   const id = $selectedTrackId.get();
   if (!id) return;
@@ -54,10 +102,29 @@ async function applyCodeToSelectedTrack(code, viz, onError) {
   const editor = window.strudelMirror;
   if (!editor) return;
   editor.setCode(code);
+  // Arm the runtime-error watcher *before* awaiting evaluate so we don't
+  // miss errors emitted between the eval finishing and the next tick.
+  const watcher = allowFix ? watchForRuntimeError() : null;
   try {
     await editor.evaluate(true);
   } catch (err) {
     onError?.(err?.message || String(err));
+    return;
+  }
+  if (!watcher) return;
+  const runtimeError = await watcher;
+  if (!runtimeError) return;
+  try {
+    const fix = await postGenerateFix({ currentCode: code, error: runtimeError });
+    if (fix?.code && !fix.noChange) {
+      // One-shot retry. allowFix:false prevents an infinite loop if the
+      // fix itself is broken — surface the original error instead.
+      await applyCodeToSelectedTrack(fix.code, fix.viz, onError, { allowFix: false });
+    } else {
+      onError?.(`runtime error: ${runtimeError}`);
+    }
+  } catch (err) {
+    onError?.(`runtime error: ${runtimeError} (auto-fix failed: ${err?.message || err})`);
   }
 }
 
@@ -217,7 +284,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
       // noChange: model couldn't turn the request into a pattern (see
       // skills/strudel/rules/cannot-handle.md). Don't overwrite the editor.
       if (auto && code && !data.noChange) {
-        applyCodeToSelectedTrack(code, data.viz, setError);
+        applyCodeToSelectedTrack(code, data.viz, setError, { allowFix: true });
       }
     } catch (err) {
       if (err?.name === 'AbortError') {
@@ -352,7 +419,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
   }, [pttKey]);
 
   function reuse(code, viz) {
-    applyCodeToSelectedTrack(code, viz, setError);
+    applyCodeToSelectedTrack(code, viz, setError, { allowFix: true });
   }
 
   async function reset() {

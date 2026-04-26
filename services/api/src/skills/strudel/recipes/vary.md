@@ -54,7 +54,7 @@ s("bd*4, {~ cp}%3, hh*8").bank("RolandTR909")
 note("c2*8".add("<0 7 5 3>")).s("sawtooth").lpf(800)
 
 // Mode change — minor → phrygian
-n("0 2 3 5".add("<0 7 5 3>")).scale("C2:phrygian").note().s("sawtooth").lpf(800)
+n("0 2 3 5".add("<0 7 5 3>")).scale("C2:phrygian").s("sawtooth").lpf(800)
 
 // Octave wider — add 12 sometimes
 note("c2*8".add("<0 7 5 3>")).s("sawtooth").lpf(800).sometimes(x=>x.add(12))
@@ -77,7 +77,7 @@ note("c2*8".add("<0 7 5 3>")).s("sawtooth").lpf(800).transpose("<0 -2 -5 -3>".sl
 .s("gm_synth_bass_1") // smoother soundfont
 
 // Swap pad
-.s("gm_pad_3_polysynth")
+.s("gm_pad_poly")
 .s("gm_string_ensemble_1").attack(0.5).release(1)
 ```
 

@@ -41,10 +41,10 @@ the fallback when iterating but the `<current>` block is empty.
 | "lo-fi" | LinnDrum bank + slow + side-chain pad + small reverb |
 | "house" | RolandTR909 + 4-on-floor + acid bass with `lpf(sine.range(...))` + chord stab |
 | "techno" | RolandTR909 + `bd*4, [~ cp]*2, hh*8` + acid line + crush/distort |
-| "ambient" | gm_pad_2_warm + long attack/release + room(0.9) + slow(4..8) |
+| "ambient" | gm_pad_warm + long attack/release + room(0.9) + slow(4..8) |
 | "acid" | sawtooth + `.lpf(sine.range(200,2000))` + `.lpq(20)` |
 | "DnB" | breakbeat (`s("bd ~ ~ sd, hh*8?")` + `setcps(174/60/4)`) |
-| "jazz / chill" | gm_rhodes_ep + `.scale("...:minor7")` + .swing(4) |
+| "jazz / chill" | gm_epiano2 + `.scale("...:minor7")` + .swing(4) |
 | "8-bit / chiptune" | square / triangle + .crush(8) |
 | "darker / brooding" | minor scale, lpf low, more reverb, slower |
 | "more energy" | fast(2), add hh*16 layer, raise lpf |
@@ -71,7 +71,7 @@ Slots:
 - Tempo: 90 BPM 4/4 → `setcps(90/60/4)`
 - Drums: brushes feel — use `LinnDrum` or default with low gain hh
 - Bass: walking, `gm_acoustic_bass`, scalar
-- Chords: `gm_rhodes_ep`, c minor 7
+- Chords: `gm_epiano2`, c minor 7
 - FX: small room
 
 Output:
@@ -80,8 +80,8 @@ Output:
 setcps(90/60/4)
 stack(
   s("bd ~ ~ ~, ~ ~ sd ~, hh*8").bank("LinnDrum").gain("0.7 0.6 0.7 0.6"),
-  n("0 2 4 5".add("<0 7 5 -2>")).scale("C2:minor").note().s("gm_acoustic_bass").gain(0.7),
-  note("<[c3,eb3,g3,bb3] [f2,ab2,c3,eb3] [g2,bb2,d3,f3] [c3,eb3,g3,bb3]>").s("gm_rhodes_ep").attack(0.05).release(0.6).room(0.4).gain(0.5)
+  n("0 2 4 5".add("<0 7 5 -2>")).scale("C2:minor").s("gm_acoustic_bass").gain(0.7),
+  note("<[c3,eb3,g3,bb3] [f2,ab2,c3,eb3] [g2,bb2,d3,f3] [c3,eb3,g3,bb3]>").s("gm_epiano2").attack(0.05).release(0.6).room(0.4).gain(0.5)
 ).slow(2).scope()
 ```
 

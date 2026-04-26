@@ -27,7 +27,7 @@ import {
   setTrackCode,
   setTrackViz as setTrackVizInStore,
 } from './tracks/tracksStore.mjs';
-import { clearCanvas, getModule } from './tracks/strudelGlobalInit.mjs';
+import { getModule } from './tracks/strudelGlobalInit.mjs';
 
 if (typeof window !== 'undefined') {
   window.debugAudiograph = debugAudiograph;
@@ -54,7 +54,6 @@ export function useReplContext() {
     (await getModule('@strudel/tonal'))?.resetVoicings();
     resetDefaults();
     resetGlobalEffects();
-    clearCanvas();
     clearHydra();
     resetLoadedSounds();
     const ed = getEditor(selectedTrackId);

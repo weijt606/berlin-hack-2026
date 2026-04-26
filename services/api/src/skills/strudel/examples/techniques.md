@@ -42,7 +42,7 @@ Cycle through chord voicings:
 ```js
 note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>")
   .arp("0 [0,2] 1 [0,2]")
-  .s("gm_rhodes_ep")
+  .s("gm_epiano2")
   .room(0.4)
 ```
 
@@ -68,7 +68,7 @@ For a smoother, ear-friendly sweep, use `rangex`:
 stack(
   s("bd*4").bank("RolandTR909"),
   note("<c3 eb3 g3 bb3>")
-    .s("gm_pad_2_warm")
+    .s("gm_pad_warm")
     .room(0.7)
     .duckdepth(0.7).duckattack(0.05)
 )

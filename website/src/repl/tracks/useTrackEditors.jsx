@@ -85,7 +85,16 @@ export function useTrackEditors() {
   // given trackId actually constructs a StrudelMirror.
   const mountTrack = useCallback(
     (trackId, container, drawContext) => {
-      if (!container || editorsRef.current[trackId]) return;
+      if (!container) return;
+      // Idempotent: if the editor already exists, just hot-swap its ctx so
+      // a remounted canvas (HMR, viz layout change) keeps painting.
+      const existing = editorsRef.current[trackId];
+      if (existing) {
+        if (existing.drawContextRef && drawContext) {
+          existing.drawContextRef.current = drawContext;
+        }
+        return;
+      }
       const track = $tracks.get().find((t) => t.id === trackId);
       const editor = createTrackEditor({
         trackId,

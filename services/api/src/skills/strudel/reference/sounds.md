@@ -74,7 +74,7 @@ note("c3 e3 g3 c4").s("piano").room(0.4)
 Auto-registered. Use them with `s("gm_<name>")`. Verified-useful list:
 
 ```
-gm_acoustic_grand_piano   gm_electric_piano_1   gm_rhodes_ep
+gm_piano   gm_epiano1   gm_epiano2
 gm_celesta                gm_xylophone          gm_marimba
 gm_vibraphone
 
@@ -84,7 +84,7 @@ gm_electric_bass_pick     gm_synth_bass_1       gm_synth_bass_2
 gm_violin     gm_cello    gm_string_ensemble_1
 gm_synth_strings_1
 
-gm_pad_2_warm   gm_pad_3_polysynth
+gm_pad_warm   gm_pad_poly
 gm_lead_1_square   gm_lead_2_sawtooth
 
 gm_choir_aahs   gm_voice_oohs
@@ -95,7 +95,7 @@ gm_overdriven_guitar   gm_distortion_guitar   gm_acoustic_guitar_steel
 ```
 
 ```js
-note("c3 g3 c4 g3").s("gm_rhodes_ep").room(0.6)
+note("c3 g3 c4 g3").s("gm_epiano2").room(0.6)
 note("c2 c2 g1 c2").s("gm_synth_bass_1")
 ```
 
@@ -131,7 +131,7 @@ If the user says "make a vibey 808 bass", `s("808")` is **not** a sound. Build:
 note("c2*8".add("<0 7 5 3>")).s("sawtooth").lpf(sine.range(400,1800).slow(4)).lpq(15).gain(0.6)
 ```
 
-If the user says "soft pad", combine `gm_pad_2_warm` (or `triangle` + long
+If the user says "soft pad", combine `gm_pad_warm` (or `triangle` + long
 attack/release + reverb) — see `examples/genres.md` "Ambient pad".
 
 ## Anti-patterns (don't do these)

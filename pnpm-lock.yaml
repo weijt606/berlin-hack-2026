@@ -662,6 +662,21 @@ importers:
       '@google/genai':
         specifier: ^0.7.0
         version: 0.7.0(encoding@0.1.13)
+      '@strudel/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@strudel/draw':
+        specifier: workspace:*
+        version: link:../../packages/draw
+      '@strudel/mini':
+        specifier: workspace:*
+        version: link:../../packages/mini
+      '@strudel/tonal':
+        specifier: workspace:*
+        version: link:../../packages/tonal
+      '@strudel/transpiler':
+        specifier: workspace:*
+        version: link:../../packages/transpiler
       fastify:
         specifier: ^5.2.1
         version: 5.8.5

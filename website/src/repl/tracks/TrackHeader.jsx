@@ -79,16 +79,23 @@ export function TrackHeader({
           className="flex-1 min-w-0 bg-background border border-muted rounded px-1 text-sm text-foreground"
         />
       ) : (
-        <span
-          className="flex-1 min-w-0 truncate text-sm text-foreground"
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            setEditing(true);
-          }}
-          title="Double-click to rename"
-        >
-          {name}
-        </span>
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span
+            className="min-w-0 truncate text-sm text-foreground"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditing(true);
+            }}
+            title="Double-click to rename"
+          >
+            {name}
+          </span>
+          {isSelected && (
+            <span className="shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-foreground/15 text-foreground">
+              Active
+            </span>
+          )}
+        </div>
       )}
 
       <button

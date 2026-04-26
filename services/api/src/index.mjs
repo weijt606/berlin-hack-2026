@@ -10,6 +10,7 @@ import { createWhisperTranscriber } from './infrastructure/whisper-transcriber.m
 import { createFileSessionStore } from './infrastructure/file-session-store.mjs';
 import { createFileMetricsStore } from './infrastructure/file-metrics-store.mjs';
 import { makeGenerateStrudel } from './application/generate-strudel.mjs';
+import { makeValidateStrudel } from './application/validate-strudel.mjs';
 import { makeEnhanceAudio } from './application/enhance-audio.mjs';
 import { makeTranscribeAudio } from './application/transcribe-audio.mjs';
 import { makeTranscriptNormalizer } from './application/transcript-normalizer.mjs';
@@ -33,6 +34,7 @@ const SKILL_ORDER = [
   'rules/diversity.md',
   'rules/uncertainty.md',
   'rules/cannot-handle.md',
+  'rules/error-recovery.md',
   'reference/sounds.md',
   'reference/mini-notation.md',
   'reference/pattern-transforms.md',
@@ -102,7 +104,8 @@ const transcribeAudio = makeTranscribeAudio({
   metricsStore,
   transcriptNormalizer,
 });
-const chatSession = makeChatSession({ sessionStore, generateStrudel });
+const validatePattern = makeValidateStrudel();
+const chatSession = makeChatSession({ sessionStore, generateStrudel, validatePattern });
 
 const server = await createServer({
   config,

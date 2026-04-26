@@ -15,18 +15,15 @@ export function TrackCard({
   onDelete,
   mountTrack,
 }) {
-  // We need both the StrudelMirror's container element AND the visualizer
-  // canvas's 2d context before constructing the editor (so the per-track
-  // pianoroll has somewhere to paint). Hold both and call mountTrack only
-  // when both have arrived. Mount happens at most once per track.
+  // The StrudelMirror needs an editor container element AND a 2d ctx for
+  // per-track painting. Hold both refs; mountTrack itself is idempotent —
+  // first call constructs the editor, later calls just swap the ctx so a
+  // remounted canvas (HMR / layout change) keeps painting.
   const containerRef = useRef(null);
   const ctxRef = useRef(null);
-  const mountedRef = useRef(false);
 
   const tryMount = useCallback(() => {
-    if (mountedRef.current) return;
     if (!containerRef.current || !ctxRef.current) return;
-    mountedRef.current = true;
     mountTrack(track.id, containerRef.current, ctxRef.current);
   }, [track.id, mountTrack]);
 
@@ -47,7 +44,7 @@ export function TrackCard({
   );
 
   return (
-    <div className={cx('flex flex-col', isSelected && 'border-l-2 border-foreground')}>
+    <div className="flex flex-col">
       <TrackHeader
         name={track.name}
         isSelected={isSelected}

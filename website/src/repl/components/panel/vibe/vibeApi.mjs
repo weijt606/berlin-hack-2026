@@ -50,3 +50,23 @@ export async function postTranscribe({ sessionId, wavBlob, lang }) {
 export async function deleteSession(sessionId) {
   await fetch(`${API_URL}/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
 }
+
+// Stateless one-shot fix: no session history, no chat-log mutation. Used
+// when the in-browser scheduler emits runtime errors (sound not loaded,
+// NaN AudioParam, wrong-typed control) — we ship the failing code + first
+// error back and apply whatever the model returns.
+export async function postGenerateFix({ currentCode, error, signal }) {
+  const res = await fetch(`${API_URL}/generate/fix`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ currentCode, error }),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data?.error || `HTTP ${res.status}`);
+    err.data = data;
+    throw err;
+  }
+  return data;
+}

@@ -112,7 +112,7 @@ A more involved example:
 
 ```js
 note("<[c3,eb3,g3]@3 [bb2,d3,f3]>")     // alternating chord, first one held longer
-  .s("gm_rhodes_ep")
+  .s("gm_epiano2")
   .room(0.5)
 ```
 

@@ -22,9 +22,27 @@ function getDrawOptions(drawTime, options = {}) {
 // Punchcard = pianoroll(fold:1) — chunky bars, our default.
 const punchcard = getPunchcardPainter({});
 
-// Plain pianoroll (no folding) — thinner notes per midi value.
+// Pianoroll with proper midi spacing — autorange so the bars fill the
+// canvas vertically (default minMidi=10..maxMidi=90 makes 80 slots, which
+// flattens to ~1px-tall notes on an 80px canvas). Solid fill, dim inactive
+// vs bright active so you can read the playhead at a glance.
 const pianoroll = (ctx, time, haps, drawTime) =>
-  __pianoroll({ ctx, time, haps, ...getDrawOptions(drawTime, { fold: 0 }) });
+  __pianoroll({
+    ctx,
+    time,
+    haps,
+    ...getDrawOptions(drawTime, {
+      fold: 0,
+      autorange: 1,
+      fill: 1,
+      fillActive: 1,
+      stroke: 0,
+      strokeActive: 0,
+      inactive: 'rgba(180,210,255,0.45)',
+      active: '#ffffff',
+      playheadColor: 'rgba(255,255,255,0.6)',
+    }),
+  });
 
 // Wordfall = vertical pianoroll with labels.
 const wordfall = (ctx, time, haps, drawTime) =>
@@ -48,12 +66,15 @@ const spiral = (ctx, time, haps, drawTime) =>
 const pitchwheelPainter = (ctx, time, haps, _drawTime) =>
   pitchwheel({ ctx, time, haps });
 
+// `shape` tells the host how to size the canvas:
+//   'wide'   — short horizontal bar (time axis runs left↔right)
+//   'square' — radial / vertical viz that wants ~equal width and height
 export const PAINTERS = {
-  punchcard: { label: 'Punchcard', paint: punchcard },
-  pianoroll: { label: 'Pianoroll', paint: pianoroll },
-  wordfall: { label: 'Wordfall', paint: wordfall },
-  spiral: { label: 'Spiral', paint: spiral },
-  pitchwheel: { label: 'Pitch wheel', paint: pitchwheelPainter },
+  punchcard: { label: 'Punchcard', paint: punchcard, shape: 'wide' },
+  pianoroll: { label: 'Pianoroll', paint: pianoroll, shape: 'wide' },
+  wordfall: { label: 'Wordfall', paint: wordfall, shape: 'square' },
+  spiral: { label: 'Spiral', paint: spiral, shape: 'square' },
+  pitchwheel: { label: 'Pitch wheel', paint: pitchwheelPainter, shape: 'square' },
 };
 
 export const VIZ_KEYS = Object.keys(PAINTERS);
@@ -61,4 +82,8 @@ export const DEFAULT_VIZ = 'punchcard';
 
 export function getPainter(viz) {
   return PAINTERS[viz]?.paint || PAINTERS[DEFAULT_VIZ].paint;
+}
+
+export function getShape(viz) {
+  return PAINTERS[viz]?.shape || PAINTERS[DEFAULT_VIZ].shape;
 }

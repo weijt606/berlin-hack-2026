@@ -13,6 +13,11 @@
     "@ai-coustics/aic-sdk": "^0.17.0",
     "@fastify/cors": "^10.0.2",
     "@google/genai": "^0.7.0",
+    "@strudel/core": "workspace:*",
+    "@strudel/draw": "workspace:*",
+    "@strudel/mini": "workspace:*",
+    "@strudel/tonal": "workspace:*",
+    "@strudel/transpiler": "workspace:*",
     "fastify": "^5.2.1",
     "smart-whisper": "^0.8.1",
     "wavefile": "^11.0.0"

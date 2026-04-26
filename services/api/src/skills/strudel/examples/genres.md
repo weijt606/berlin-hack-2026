@@ -12,7 +12,7 @@ setcps(80/60/4)
 stack(
   s("bd ~ ~ bd, ~ ~ sd ~, hh*8?").bank("LinnDrum"),
   note("<c2 g1 a1 e1>").s("sawtooth").lpf(400).gain(0.6),
-  note("<c4 eb4 g4 bb4>").s("gm_rhodes_ep").room(0.6).gain(0.4)
+  note("<c4 eb4 g4 bb4>").s("gm_epiano2").room(0.6).gain(0.4)
 ).slow(2).scope()
 ```
 
@@ -42,7 +42,7 @@ stack(
 
 ```js
 note("<c3 eb3 g3 bb3>")
-  .s("gm_pad_2_warm")
+  .s("gm_pad_warm")
   .lpf(sine.range(400,2000).slow(8))
   .room(0.9).gain(0.5).slow(4).scope()
 ```
@@ -51,7 +51,7 @@ Layered version with subtle motion:
 
 ```js
 stack(
-  note("<c3 eb3 g3 bb3>").s("gm_pad_2_warm").lpf(sine.range(400,2000).slow(8)).room(0.9).gain(0.5),
+  note("<c3 eb3 g3 bb3>").s("gm_pad_warm").lpf(sine.range(400,2000).slow(8)).room(0.9).gain(0.5),
   note("<c5 ~ eb5 ~ g5 ~ bb5 ~>").s("triangle").attack(0.5).release(1.2).gain(0.3).room(0.8).delay(0.4).delaytime(0.5)
 ).slow(4).scope()
 ```
@@ -78,7 +78,7 @@ setcps(174/60/4)
 stack(
   s("bd ~ ~ sd ~ bd ~ sd, hh*16?").bank("AkaiMPC60").gain(0.85),
   note("c2 ~ ~ ~ eb2 ~ g1 ~").s("sawtooth").lpf(sine.range(200,1500).slow(8)).lpq(15).gain(0.7),
-  note("<[c4,eb4,g4] ~ [bb3,d4,f4] ~>").s("gm_pad_3_polysynth").room(0.6).gain(0.35)
+  note("<[c4,eb4,g4] ~ [bb3,d4,f4] ~>").s("gm_pad_poly").room(0.6).gain(0.35)
 ).scope()
 ```
 
@@ -107,9 +107,9 @@ note("c2,g2,c3,eb3,g3")
 setcps(90/60/4)
 stack(
   s("bd ~ ~ ~, ~ ~ sd ~, hh*8").bank("LinnDrum").gain("0.8 0.6 0.8 0.6").swing(4),
-  n("0 2 4 5".add("<0 7 5 -2>")).scale("C2:minor").note().s("gm_acoustic_bass").gain(0.7),
+  n("0 2 4 5".add("<0 7 5 -2>")).scale("C2:minor").s("gm_acoustic_bass").gain(0.7),
   note("<[c3,eb3,g3,bb3] [f2,ab2,c3,eb3] [g2,bb2,d3,f3] [c3,eb3,g3,bb3]>")
-    .s("gm_rhodes_ep").attack(0.05).release(0.6).room(0.4).gain(0.5)
+    .s("gm_epiano2").attack(0.05).release(0.6).room(0.4).gain(0.5)
 ).slow(2).scope()
 ```
 
@@ -155,7 +155,7 @@ stack(
 stack(
   s("bd*4").bank("AkaiMPC60").chunk(4, x=>x.fast(2)).sometimes(rev),
   s("hh*16").bank("AkaiMPC60").gain(perlin.range(0.2, 0.9)).degradeBy(0.3),
-  n("0 4 7 5 0 7 4 2".add("<0 5 -3>")).scale("D:dorian").note().s("triangle")
+  n("0 4 7 5 0 7 4 2".add("<0 5 -3>")).scale("D:dorian").s("triangle")
     .lpf(sine.range(400,3000).slow(7)).every(3, x=>x.add(12)),
   note("d2 ~ a1 ~ d2 ~ ~ a1").s("gm_synth_bass_1").gain(0.6)
 ).fscope()
@@ -167,7 +167,7 @@ stack(
 setcps(160/60/4)
 stack(
   s("bd*4, ~ cp, hh*8").bank("RolandTR909").gain(0.9),
-  n("0 5 7 12 7 5 0 -3".add("<0 5 7 3>")).scale("F:major").note().s("square")
+  n("0 5 7 12 7 5 0 -3".add("<0 5 7 3>")).scale("F:major").s("square")
     .gain(0.5).lpf(4000),
   note("<f2 c2 ab1 c2>").s("triangle").lpf(800).gain(0.7).fast(2),
   note("<[f4,a4,c5] [c4,e4,g4] [ab3,c4,eb4] [c4,f4,a4]>")
@@ -180,6 +180,6 @@ stack(
 Pick the closest template, then mutate per the user's request:
 
 - "Make it darker" → drop `lpf` to ~600, raise `room`, replace soundfont with
-  a darker one (`gm_pad_2_warm` instead of `gm_synth_strings_1`).
+  a darker one (`gm_pad_warm` instead of `gm_synth_strings_1`).
 - "More energetic" → `.fast(2)`, raise `setcps`, add `hh*16` layer.
 - "More minimal" → strip the chord/pad layer, keep drums + bass only.
