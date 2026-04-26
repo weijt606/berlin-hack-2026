@@ -152,3 +152,4 @@ fabric.properties
 samples/*
 !samples/README.md
 .idea/
+.entire/
