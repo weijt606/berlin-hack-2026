@@ -21,6 +21,7 @@ export function TracksColumn({ context }) {
 
   return (
     <div className="flex flex-col grow overflow-auto bg-background">
+      <NewTrackButton onAdd={addTrack} />
       {tracks.length === 0 && (
         <div className="px-4 py-6 text-sm opacity-60">
           No tracks yet — add one to start.
@@ -41,7 +42,6 @@ export function TracksColumn({ context }) {
           mountTrack={mountTrack}
         />
       ))}
-      <NewTrackButton onAdd={addTrack} />
     </div>
   );
 }

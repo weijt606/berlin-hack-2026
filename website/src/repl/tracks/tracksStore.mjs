@@ -107,7 +107,10 @@ export function addTrack(partial = {}) {
   const list = $tracks.get();
   const idx = list.length + 1;
   const t = makeTrack({ name: partial.name || `Track ${idx}`, code: partial.code });
-  const next = [...list, t];
+  // Prepend: new tracks land right under the "+ New track" button at
+  // the top of the column so the user sees what they just created
+  // without having to scroll past existing tracks.
+  const next = [t, ...list];
   writeTracks(next);
   $tracks.set(next);
   return t;
