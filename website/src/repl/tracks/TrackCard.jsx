@@ -1,5 +1,4 @@
-import { useCallback, useRef } from 'react';
-import cx from '@src/cx.mjs';
+import { useCallback } from 'react';
 import { TrackHeader } from './TrackHeader.jsx';
 import { TrackVisualizer } from './TrackVisualizer.jsx';
 
@@ -15,32 +14,14 @@ export function TrackCard({
   onDelete,
   mountTrack,
 }) {
-  // The StrudelMirror needs an editor container element AND a 2d ctx for
-  // per-track painting. Hold both refs; mountTrack itself is idempotent —
-  // first call constructs the editor, later calls just swap the ctx so a
-  // remounted canvas (HMR / layout change) keeps painting.
-  const containerRef = useRef(null);
-  const ctxRef = useRef(null);
-
-  const tryMount = useCallback(() => {
-    if (!containerRef.current || !ctxRef.current) return;
-    mountTrack(track.id, containerRef.current, ctxRef.current);
-  }, [track.id, mountTrack]);
-
-  const setContainerRef = useCallback(
-    (el) => {
-      containerRef.current = el || null;
-      if (el) tryMount();
-    },
-    [tryMount],
-  );
-
+  // The visualizer canvas is the only mount point now — the editor's
+  // CodeMirror root lives in a detached <div> owned by useTrackEditors,
+  // grafted into the bottom CodePanel when this track is selected.
   const onCanvas = useCallback(
-    (canvas, ctx) => {
-      ctxRef.current = ctx;
-      tryMount();
+    (_canvas, ctx) => {
+      mountTrack(track.id, ctx);
     },
-    [tryMount],
+    [track.id, mountTrack],
   );
 
   return (
@@ -56,28 +37,12 @@ export function TrackCard({
         onRename={(name) => onRename(track.id, name)}
         onDelete={() => onDelete(track.id)}
       />
-
-      {/* Always-visible per-track visualization */}
       <TrackVisualizer
         trackId={track.id}
         onCanvas={onCanvas}
         viz={track.viz}
         onVizChange={(v) => onVizChange(track.id, v)}
       />
-
-      {/* Collapsible code editor — expands when the track is selected */}
-      <div
-        className={cx(
-          'overflow-hidden transition-[max-height] duration-150 border-t border-muted',
-          isSelected ? 'max-h-[60vh]' : 'max-h-0',
-        )}
-      >
-        <section
-          ref={setContainerRef}
-          className="code-container text-gray-100 cursor-text overflow-auto"
-          style={{ minHeight: isSelected ? '160px' : '0' }}
-        />
-      </div>
     </div>
   );
 }

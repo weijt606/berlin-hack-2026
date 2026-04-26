@@ -155,6 +155,7 @@ export function useReplContext() {
     renameTrack: renameTrackInStore,
     setTrackViz: setTrackVizInStore,
     mountTrack: editors.mountTrack,
+    getEditorRoot: editors.getEditorRoot,
     togglePlayTrack: editors.togglePlay,
     stopTrack: editors.stopTrack,
     evaluateTrack: editors.evaluateTrack,

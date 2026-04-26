@@ -82,14 +82,17 @@ export function useTrackEditors() {
     });
   }, [tracks]);
 
-  // Called from each TrackCard once both the editor container and the
-  // visualizer canvas are mounted. Idempotent: only the first call for a
-  // given trackId actually constructs a StrudelMirror.
+  // Called from each TrackCard's TrackVisualizer once the canvas is mounted.
+  // Idempotent: only the first call for a given trackId actually constructs
+  // a StrudelMirror — later calls just hot-swap the draw ctx so a remounted
+  // canvas (HMR, viz layout change) keeps painting.
+  //
+  // The editor's CodeMirror root is a detached <div> we create here. The
+  // bottom CodePanel grafts whichever root belongs to the selected track
+  // into its host, so the editor instance (cursor, history, scheduler)
+  // persists when selection changes — only its DOM parent moves.
   const mountTrack = useCallback(
-    (trackId, container, drawContext) => {
-      if (!container) return;
-      // Idempotent: if the editor already exists, just hot-swap its ctx so
-      // a remounted canvas (HMR, viz layout change) keeps painting.
+    (trackId, drawContext) => {
       const existing = editorsRef.current[trackId];
       if (existing) {
         if (existing.drawContextRef && drawContext) {
@@ -98,9 +101,11 @@ export function useTrackEditors() {
         return;
       }
       const track = $tracks.get().find((t) => t.id === trackId);
+      const root = document.createElement('div');
+      root.className = 'code-container text-gray-100 cursor-text overflow-auto h-full';
       const editor = createTrackEditor({
         trackId,
-        container,
+        container: root,
         drawContext,
         initialCode: track?.code ?? '',
         initialViz: track?.viz || DEFAULT_VIZ,
@@ -115,6 +120,7 @@ export function useTrackEditors() {
         },
       });
       editor.setCode(track?.code ?? '');
+      editor.editorRoot = root;
       editorsRef.current[trackId] = editor;
       if (typeof window !== 'undefined' && trackId === $selectedTrackId.get()) {
         window.strudelMirror = editor;
@@ -124,6 +130,10 @@ export function useTrackEditors() {
   );
 
   const getEditor = useCallback((trackId) => editorsRef.current[trackId] || null, []);
+  const getEditorRoot = useCallback(
+    (trackId) => editorsRef.current[trackId]?.editorRoot || null,
+    [],
+  );
   const getState = useCallback((trackId) => editorStates[trackId] || EMPTY_STATE, [editorStates]);
 
   const togglePlay = useCallback((trackId) => {
@@ -160,6 +170,7 @@ export function useTrackEditors() {
     editorStates,
     mountTrack,
     getEditor,
+    getEditorRoot,
     getState,
     togglePlay,
     stopTrack,
