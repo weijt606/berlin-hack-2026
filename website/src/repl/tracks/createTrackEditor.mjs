@@ -18,6 +18,7 @@ import {
 } from './strudelGlobalInit.mjs';
 import { setTrackCode } from './tracksStore.mjs';
 import { makeTrackOutput } from './trackVolume.mjs';
+import { getPainter, DEFAULT_VIZ } from './painters.mjs';
 
 // Build a StrudelMirror bound to a single track. Each editor runs its own
 // scheduler so multiple tracks can play in parallel — we pass solo:false to
@@ -27,6 +28,7 @@ export function createTrackEditor({
   container,
   initialCode,
   initialVolume = 1,
+  initialViz = DEFAULT_VIZ,
   isSyncEnabled,
   audioEngineTarget,
   prebakeScript,
@@ -44,10 +46,11 @@ export function createTrackEditor({
   const volumeRef = { current: typeof initialVolume === 'number' ? initialVolume : 1 };
   const defaultOutput = makeTrackOutput(baseOutput, volumeRef);
 
-  // Always paint a punchcard-style pianoroll into the per-track canvas,
-  // even if the user's pattern doesn't call .pianoroll() / .punchcard().
-  // Also forwards to any user-set painters so .scope() etc. still work.
-  const punchcard = getPunchcardPainter({});
+  // Live ref for the chosen viz key — the onDraw closure reads this every
+  // frame so switching viz at runtime doesn't require a re-eval or a
+  // new editor instance. Also forwards to any user-set painters so
+  // .scope() / .pianoroll() in the user's code still work alongside.
+  const vizRef = { current: initialViz || DEFAULT_VIZ };
   const onDraw = (haps, time, painters) => {
     const ctx = drawContext;
     if (ctx) {
@@ -56,7 +59,7 @@ export function createTrackEditor({
       const ratio = window.devicePixelRatio || 1;
       ctx.clearRect(0, 0, c.width / ratio, c.height / ratio);
       try {
-        punchcard(ctx, time, haps, drawTime);
+        getPainter(vizRef.current)(ctx, time, haps, drawTime);
       } catch {}
     }
     painters?.forEach?.((painter) => {
@@ -100,7 +103,8 @@ export function createTrackEditor({
     bgFill: false,
   });
 
-  // Expose the live volume ref so the hook can update it for fades.
+  // Expose the live refs so the hook can update them at runtime.
   editor.volumeRef = volumeRef;
+  editor.vizRef = vizRef;
   return editor;
 }

@@ -70,12 +70,15 @@ export function makeChatSession({ sessionStore, generateStrudel }) {
           ts,
         });
       } else {
-        record.messages.push({ role: 'assistant', code: result.code, ts });
+        const msg = { role: 'assistant', code: result.code, ts };
+        if (result.viz) msg.viz = result.viz;
+        record.messages.push(msg);
       }
       await sessionStore.save(record);
 
       return {
         code: result.code,
+        viz: result.viz,
         message: result.message,
         noChange: !!result.noChange,
         model: result.model,

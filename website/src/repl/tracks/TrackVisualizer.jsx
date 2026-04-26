@@ -1,14 +1,16 @@
 import { useEffect, useRef } from 'react';
+import { TrackVizPicker } from './TrackVizPicker.jsx';
 
-// A per-track canvas. The actual painting is done by Strudel — this
-// component just owns the DOM element and exposes its 2d context to the
-// editor via the `onCanvas` callback (called once the element mounts).
+// A per-track canvas. The actual painting is done by the editor (chosen
+// painter from painters.mjs); this component just owns the DOM element
+// and exposes its 2d context to the editor via the `onCanvas` callback
+// (called once the element mounts). Also renders the viz picker.
 //
-// Sized in CSS pixels; the editor's draw loop will paint relative to
-// these dimensions. We also tracker the device pixel ratio so the
-// pianoroll stays crisp on high-DPI displays.
+// Sized in CSS pixels; the editor's draw loop paints relative to these
+// dimensions. We track devicePixelRatio so the pianoroll stays crisp on
+// high-DPI displays.
 
-export function TrackVisualizer({ onCanvas, isPlaying }) {
+export function TrackVisualizer({ onCanvas, isPlaying, viz, onVizChange }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -26,14 +28,17 @@ export function TrackVisualizer({ onCanvas, isPlaying }) {
 
   return (
     <div className="px-3 py-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] opacity-50">
+          {isPlaying ? '▶ playing' : 'idle'}
+        </span>
+        <TrackVizPicker value={viz} onChange={onVizChange} />
+      </div>
       <canvas
         ref={ref}
         className="block w-full rounded border border-muted bg-background/40"
         style={{ height: 80 }}
       />
-      <div className="text-[10px] opacity-50 mt-1">
-        {isPlaying ? '▶ playing' : 'idle — start to see the pianoroll'}
-      </div>
     </div>
   );
 }

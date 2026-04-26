@@ -11,6 +11,7 @@ export function TracksColumn({ context }) {
     renameTrack,
     togglePlayTrack,
     spotlightTrack,
+    setTrackViz,
     mountTrack,
     getTrackState,
   } = context;
@@ -34,6 +35,7 @@ export function TracksColumn({ context }) {
           onSelect={onSelect}
           onTogglePlay={togglePlayTrack}
           onSpotlight={spotlightTrack}
+          onVizChange={setTrackViz}
           onRename={renameTrack}
           onDelete={deleteTrack}
           mountTrack={mountTrack}

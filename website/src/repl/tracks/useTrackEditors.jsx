@@ -8,7 +8,9 @@ import {
   $selectedTrackId,
   ensureInitialTrack,
   selectTrack,
+  setTrackViz,
 } from './tracksStore.mjs';
+import { DEFAULT_VIZ } from './painters.mjs';
 import { setLatestCode } from '../../user_pattern_utils.mjs';
 import { spotlight as runSpotlight } from './spotlight.mjs';
 
@@ -49,6 +51,16 @@ export function useTrackEditors() {
     if (ed) window.strudelMirror = ed;
   }, [selectedTrackId, editorStates]);
 
+  // Push live viz changes from the store into each editor's vizRef so
+  // switching is instant — the next animation frame paints with the new
+  // painter, no editor rebuild needed.
+  useEffect(() => {
+    for (const t of tracks) {
+      const ed = editorsRef.current[t.id];
+      if (ed?.vizRef) ed.vizRef.current = t.viz || DEFAULT_VIZ;
+    }
+  }, [tracks]);
+
   // When the user deletes a track, dispose its editor.
   useEffect(() => {
     const liveIds = new Set(tracks.map((t) => t.id));
@@ -80,6 +92,7 @@ export function useTrackEditors() {
         container,
         drawContext,
         initialCode: track?.code ?? '',
+        initialViz: track?.viz || DEFAULT_VIZ,
         isSyncEnabled,
         audioEngineTarget,
         prebakeScript,

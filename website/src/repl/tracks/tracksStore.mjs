@@ -2,6 +2,7 @@ import { atom, computed } from 'nanostores';
 import { useStore } from '@nanostores/react';
 import { nanoid } from 'nanoid';
 import { settingsMap } from '../../settings.mjs';
+import { DEFAULT_VIZ } from './painters.mjs';
 
 const TRACKS_KEY = 'tracks';
 const SELECTED_KEY = 'selectedTrackId';
@@ -27,11 +28,12 @@ export function createTrackId() {
   return nanoid(10);
 }
 
-export function makeTrack({ name, code } = {}) {
+export function makeTrack({ name, code, viz } = {}) {
   return {
     id: createTrackId(),
     name: name || 'Untitled track',
     code: code ?? DEFAULT_CODE,
+    viz: viz || DEFAULT_VIZ,
     createdAt: Date.now(),
   };
 }
@@ -111,7 +113,10 @@ export function updateTrack(id, patch) {
   const next = list.map((t) => {
     if (t.id !== id) return t;
     const merged = { ...t, ...patch };
-    if (merged.code === t.code && merged.name === t.name) return t;
+    // Detect a real change across any field in the patch — important so
+    // viz / volume / future settings aren't silently dropped.
+    const anyDiff = Object.keys(patch).some((k) => merged[k] !== t[k]);
+    if (!anyDiff) return t;
     changed = true;
     return merged;
   });
@@ -126,6 +131,10 @@ export function setTrackCode(id, code) {
 
 export function renameTrack(id, name) {
   updateTrack(id, { name });
+}
+
+export function setTrackViz(id, viz) {
+  updateTrack(id, { viz });
 }
 
 export function getTrack(id) {

@@ -25,6 +25,7 @@ import {
   deleteTrack as deleteTrackFromStore,
   renameTrack as renameTrackInStore,
   setTrackCode,
+  setTrackViz as setTrackVizInStore,
 } from './tracks/tracksStore.mjs';
 import { clearCanvas, getModule } from './tracks/strudelGlobalInit.mjs';
 
@@ -153,6 +154,7 @@ export function useReplContext() {
     addTrack,
     deleteTrack,
     renameTrack: renameTrackInStore,
+    setTrackViz: setTrackVizInStore,
     mountTrack: editors.mountTrack,
     togglePlayTrack: editors.togglePlay,
     stopTrack: editors.stopTrack,

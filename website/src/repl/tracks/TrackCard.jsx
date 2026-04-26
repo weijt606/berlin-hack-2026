@@ -10,6 +10,7 @@ export function TrackCard({
   onSelect,
   onTogglePlay,
   onSpotlight,
+  onVizChange,
   onRename,
   onDelete,
   mountTrack,
@@ -59,8 +60,13 @@ export function TrackCard({
         onDelete={() => onDelete(track.id)}
       />
 
-      {/* Always-visible per-track pianoroll */}
-      <TrackVisualizer onCanvas={onCanvas} isPlaying={!!state?.started} />
+      {/* Always-visible per-track visualization */}
+      <TrackVisualizer
+        onCanvas={onCanvas}
+        isPlaying={!!state?.started}
+        viz={track.viz}
+        onVizChange={(v) => onVizChange(track.id, v)}
+      />
 
       {/* Collapsible code editor — expands when the track is selected */}
       <div

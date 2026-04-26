@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import cx from '@src/cx.mjs';
 import { useSettings } from '../../../settings.mjs';
 import { useStore } from '@nanostores/react';
-import { $selectedTrackId, $selectedTrack, setTrackCode } from '../../tracks/tracksStore.mjs';
+import { $selectedTrackId, $selectedTrack, setTrackCode, setTrackViz } from '../../tracks/tracksStore.mjs';
 import { createVoiceRecorder } from './voice-recorder.mjs';
 import { displayKey, isTextInput } from './vibe/keyHelpers.mjs';
 import { readOrCreateSessionId, clearSessionId } from './vibe/sessionId.mjs';
@@ -31,13 +31,15 @@ function readSilenceMs() {
   return SILENCE_OPTIONS.includes(n) ? n : DEFAULT_SILENCE_MS;
 }
 
-// Apply incoming code to the *selected* track: update the persisted store
-// and hot-swap the live editor so playback continues seamlessly.
-function applyCodeToSelectedTrack(code) {
+// Apply incoming code (and optional viz suggestion) to the *selected*
+// track: update the persisted store and hot-swap the live editor so
+// playback continues seamlessly.
+function applyCodeToSelectedTrack(code, viz) {
   if (!code) return;
   const id = $selectedTrackId.get();
   if (!id) return;
   setTrackCode(id, code);
+  if (viz) setTrackViz(id, viz);
   if (typeof window === 'undefined') return;
   // window.strudelMirror always points at the selected track's editor.
   const editor = window.strudelMirror;
@@ -167,7 +169,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
       const data = await postGenerate({ sessionId, prompt: text, currentCode });
       if (Array.isArray(data.messages)) setMessages(data.messages);
       const code = data.code || '';
-      if (auto && code && !data.noChange) applyCodeToSelectedTrack(code);
+      if (auto && code && !data.noChange) applyCodeToSelectedTrack(code, data.viz);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -276,8 +278,8 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, fontFamily }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pttKey]);
 
-  function reuse(code) {
-    applyCodeToSelectedTrack(code);
+  function reuse(code, viz) {
+    applyCodeToSelectedTrack(code, viz);
   }
 
   async function reset() {

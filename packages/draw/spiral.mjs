@@ -50,7 +50,7 @@ function spiralSegment(options) {
   ctx.stroke();
 }
 
-function drawSpiral(options) {
+export function drawSpiral(options) {
   let {
     stretch = 1,
     size = 80,
