@@ -39,20 +39,17 @@ const DJ_VOCAB = (() => {
 //   "arp/arpeggio" → "arp egg" / "harp"
 //   "sidechain" → "side chain"
 function buildBiasingPrompt(vocab) {
-  // Anchor: proper-noun + jargon + transport biasing. Always present, placed
-  // LAST so it survives any front-truncation by whisper. The transport phrases
-  // ("open a new track", "stop all", "play", "pause") are the canonical META
-  // commands and are critical for the demo — keep them in the survive zone.
+  // Anchor: proper-noun + jargon biasing. Always present, placed LAST so
+  // it survives any front-truncation by whisper.
   const anchor = [
     'Strudel live coding for a DJ in a noisy rave. Genres: techno, house,',
     'deep house, lo-fi, dub, dubby, drum and bass, ambient, acid, trance,',
     'breakbeat, chiptune, drone, jazz, disco, trap, IDM, hyperpop. Berghain',
     '(Berlin techno club): in the Berghain style, Berghain bass. Drum',
-    'machines: RolandTR909 (909 kick), RolandTR808 (808 kick), LinnDrum.',
-    'Synths: sawtooth, square, sine, Rhodes piano, sub bass, acid bass,',
+    'machines: RolandTR909, RolandTR808, LinnDrum, AkaiMPC60. Synths:',
+    'sawtooth, square, triangle, sine, Rhodes piano, sub bass, acid bass,',
     'lead, pad, arp, arpeggio. Effects: lpf, hpf, reverb, delay, echo,',
-    'sidechain ducking, crush, distortion. Transport: open a new track,',
-    'stop all, play, pause, restart, harder kick, make it dubby.',
+    'sidechain ducking, crush, distortion, phaser, vowel filter.',
   ].join(' ');
 
   // Command bias: only the multi-word command shapes whisper might mis-segment
@@ -96,57 +93,13 @@ const POST_PROCESS_FIXES = [
   [/\bduck on the base\b/gi, 'duck on the bass'],
   [/\b(drop|cut|kill|boost|bring back) the base\b/gi, '$1 the bass'],
   [/\bbase ?line\b/gi, 'bassline'],
-  // Standalone "{verb} base" — covers "more base", "less base", "add base",
-  // "deeper base", etc. Demo command #2 ("More bass") goes through this.
-  [/\b(more|less|add|mute|cut|kill|boost|deeper|softer|louder|harder)\s+base\b/gi, '$1 bass'],
   // lo-fi normalisation
   [/\blow[ -]?fi\b/gi, 'lo-fi'],
   // Rhodes proper noun
   [/\broad piano\b/gi, 'Rhodes piano'],
   [/\broads piano\b/gi, 'Rhodes piano'],
-  // Demo vocabulary: drum-and-bass classics + common digit-only BPM patterns.
-  // The Amen break is iconic in jungle / DnB; medium.en routinely splits it
-  // ("amid break", "a man break", "amen brake").
-  [/\b(amen|amid|a man|a-man|amon)\s+(break|brake)\b/gi, 'Amen break'],
-  [/\bdrum\s*&\s*bass\b/gi, 'drum and bass'],
-  [/\bdnb\b/gi, 'drum and bass'],
-  [/\bd\s*&\s*b\b/gi, 'drum and bass'],
-  // Demo META: the exact phrases the demo script uses. Whisper sometimes
-  // hears "open and new track" / "open new track" / "opening a new track"
-  // — normalise to the canonical form so the meta-commands rule fires
-  // reliably without depending on Gemini's wiggle room.
-  [/\bopen(?:ing|ed)?\s+(?:a\s+|an\s+|the\s+|and\s+)?new\s+track\b/gi, 'open a new track'],
-  [/\bstart(?:s|ed)?\s+a\s+new\s+track\b/gi, 'open a new track'],
-  // "stop all" / "stop everything" / "kill it" canonicalisation — keeps
-  // the panic command robust to phrasing.
-  [/\bstop\s+(?:all|everything|every\s*thing)\b/gi, 'stop all'],
-  [/\bkill\s+(?:it|all|everything)\b/gi, 'stop all'],
-  // Demo digit drumbox: "more 909" / "harder 909" → "more 909 kick".
-  // Without the kick noun the LLM sometimes interprets "909" as a BPM.
-  [/\b(more|add|harder|louder)\s+9\s*0\s*9\b(?!\s*(kick|drum))/gi, '$1 909 kick'],
-  [/\b(more|add|harder|louder)\s+8\s*0\s*8\b(?!\s*(kick|drum|bass))/gi, '$1 808 kick'],
   // bpm number → digits + lowercase unit
   [/(\d+)\s*BPM\b/g, '$1 bpm'],
-  // "at 80 bee P M" / "at 80 beats per minute" → "at 80 bpm"
-  [/\b(\d+)\s+beats\s+per\s+minute\b/gi, '$1 bpm'],
-  // Spoken BPM numbers → digits. Demo says "one thirty-eight" /
-  // "one seventy-four" — whisper sometimes transcribes them as words
-  // even with the BPM context. ORDER MATTERS: longer / compound forms
-  // must run before their prefixes ("one thirty-eight" before
-  // "one thirty"), otherwise the short rule eats the digit.
-  [/\bone[\s-]twenty[\s-]eight\b/gi, '128'],
-  [/\bone[\s-]thirty[\s-]eight\b/gi, '138'],
-  [/\bone[\s-]seventy[\s-]four\b/gi, '174'],
-  [/\bone hundred\b/gi, '100'],
-  [/\bone[\s-]ten\b/gi, '110'],
-  [/\bone[\s-]twenty\b/gi, '120'],
-  [/\bone[\s-]thirty\b/gi, '130'],
-  [/\bone[\s-]forty\b/gi, '140'],
-  [/\bone[\s-]fifty\b/gi, '150'],
-  [/\bone[\s-]sixty\b/gi, '160'],
-  [/\bone[\s-]seventy\b/gi, '170'],
-  [/\beighty\b/gi, '80'],
-  [/\bninety\b/gi, '90'],
 ];
 
 // Whisper's medium.en model carries a handful of training-data fillers that

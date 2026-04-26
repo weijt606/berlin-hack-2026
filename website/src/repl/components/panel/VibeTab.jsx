@@ -43,6 +43,25 @@ const WAVEFORM_BARS = 18;
 // timer). 2s is short enough to feel responsive but long enough to react.
 const AUTO_SEND_DELAY_MS = 2000;
 
+// One-click prompt suggestions — appear as chips above the textarea so
+// the user has a deterministic fallback when STT is flaky. Click fills
+// the prompt textarea (does not auto-send), so they can still edit /
+// combine before hitting Send. Chosen mix: 4 generation seeds, 4 stem /
+// effect edits, 2 META commands. Keep this list short — anything past
+// ~10 chips fights the chat for vertical space.
+const PROMPT_CHIPS = [
+  'lo-fi beat',
+  'Berghain techno',
+  'drum and bass',
+  'acid bass',
+  'add hi-hat',
+  'add reverb',
+  'more bass',
+  'double drums',
+  'open a new track',
+  'stop all',
+];
+
 // Re-export so existing settings UI that imports these from VibeTab keeps working.
 export { displayKey };
 export { NON_PTT_CODES } from './vibe/keyHelpers.mjs';
@@ -569,6 +588,24 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
             )}
           </div>
         )}
+        <div
+          className="flex flex-wrap gap-1 mb-1.5"
+          title="Click a chip to fill the prompt — useful when STT is unreliable. You can still edit before sending."
+        >
+          {PROMPT_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => {
+                clearAutoSendTimer();
+                setPrompt(chip);
+              }}
+              className="px-2 py-0.5 text-xs rounded-full border border-muted text-foreground/80 hover:border-foreground hover:text-foreground bg-background/60 backdrop-blur-sm transition-colors"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
         <textarea
           value={prompt}
           onChange={(e) => {
