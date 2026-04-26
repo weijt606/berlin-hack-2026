@@ -1,31 +1,82 @@
 import { Whisper, manager } from 'smart-whisper';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// DJ command dictionary — single source of truth, JSON sibling file. Used
+// to build the whisper initial_prompt below; can also be reused by the
+// frontend (autocomplete) and by future fuzzy-match post-processing.
+const DJ_VOCAB = (() => {
+  try {
+    return JSON.parse(readFileSync(resolve(__dirname, 'dj-vocabulary.json'), 'utf8'));
+  } catch (err) {
+    console.warn(`[whisper-transcriber] failed to load dj-vocabulary.json: ${err.message}`);
+    return {};
+  }
+})();
 
 // Domain-specific biasing prompt fed to whisper as `initial_prompt`. The
-// decoder uses this as recent-context, so words that appear here are far
-// more likely to be picked over phonetic neighbours. Sentence-like prose
-// works better than a comma list — and for tricky proper nouns (Berghain),
-// repetition helps the model lock onto the exact spelling.
+// decoder uses this as recent-context, so words appearing here are picked
+// over phonetic neighbours.
 //
-// Mishears we're specifically targeting:
+// Whisper's prompt window is 224 tokens. We DON'T dump the whole DJ
+// dictionary in — that would blow the budget and front-truncate the
+// Berghain bias we need most. Instead we hand-pick the high-value
+// fragments: distinctive multi-word phrases, technical jargon, proper
+// nouns. Common single-word verbs ("start", "stop", "play", "louder",
+// "faster") are dropped because whisper already handles them fine.
+//
+// Mishears we're specifically targeting (keep these prominent):
 //   "berghain" → "Burgaine" / "Burgane" / "berg high"
 //   "lo-fi"    → "low-fi"
 //   "dubby"    → "doubty"
 //   "Rhodes"   → "roads"
 //   "bass"     → "base"     (homophone — also handled by post-process)
-const DEFAULT_DJ_VOCAB =
-  'This is a live coding session with Strudel. The user is a DJ giving ' +
-  'commands to vibe code rave music. Genres include techno, house, deep ' +
-  'house, lo-fi, dub, dubby, drum and bass, ambient, acid, breakbeat, ' +
-  'chiptune, drone, jazz, disco. The DJ often references Berghain, the ' +
-  'famous Berlin techno club — make it sound like Berghain, in the ' +
-  'Berghain style, Berghain bass. Drum machines used: RolandTR909, ' +
-  'RolandTR808, LinnDrum, AkaiMPC60. Drum hits: kick, snare, hi-hat, ' +
-  'open hat, clap, cowbell, ride, rim, tom. Synths: sawtooth, square, ' +
-  'triangle, sine, Rhodes piano, sub bass, acid bass, lead, pad. ' +
-  'Effects: lpf, hpf, reverb, room, delay, sidechain ducking, crush, ' +
-  'distortion, phaser, vowel filter. Tempo: 80 bpm, 124 bpm, 140 bpm, ' +
-  '174 bpm. Actions: drop the bass, half time, double time, build up, ' +
-  'bring back the kick.';
+//   "hi hat"   → "high hat" / "hihat"
+//   "lpf/hpf"  → "L P F" / "low-pass filter"
+//   "arp/arpeggio" → "arp egg" / "harp"
+//   "sidechain" → "side chain"
+function buildBiasingPrompt(vocab) {
+  // Anchor: proper-noun + jargon biasing. Always present, placed LAST so
+  // it survives any front-truncation by whisper.
+  const anchor = [
+    'Strudel live coding for a DJ in a noisy rave. Genres: techno, house,',
+    'deep house, lo-fi, dub, dubby, drum and bass, ambient, acid, trance,',
+    'breakbeat, chiptune, drone, jazz, disco, trap, IDM, hyperpop. Berghain',
+    '(Berlin techno club): in the Berghain style, Berghain bass. Drum',
+    'machines: RolandTR909, RolandTR808, LinnDrum, AkaiMPC60. Synths:',
+    'sawtooth, square, triangle, sine, Rhodes piano, sub bass, acid bass,',
+    'lead, pad, arp, arpeggio. Effects: lpf, hpf, reverb, delay, echo,',
+    'sidechain ducking, crush, distortion, phaser, vowel filter.',
+  ].join(' ');
+
+  // Command bias: only the multi-word command shapes whisper might mis-segment
+  // (e.g. "hi hat" → "hihat"; "build up" → "buildup"; "low pass" → "lowpass").
+  // Single-word verbs ("start", "stop", "louder", "faster") are dropped — whisper
+  // gets those right unaided. Trimmed hard to keep total prompt under whisper's
+  // 224-token window.
+  const distinctive = [
+    'next pattern', 'switch pattern', 'drop the beat', 'build up',
+    'hold tension', 'breakdown',
+    'add kick', 'mute kick', 'add hi hat', 'open hi hat', 'add snare',
+    'add clap', 'only drums',
+    'add bass', 'mute bass', 'more bass', 'deeper bass',
+    'add lead', 'add melody', 'add pad', 'add arp',
+    'open filter', 'close filter', 'more low pass', 'more high pass',
+    'add delay', 'more reverb', 'add echo', 'add distortion',
+    'show waveform', 'show piano roll', 'show pitch wheel',
+    'mute all', 'bring everything back',
+  ];
+  const cmdBlock = `Commands: ${distinctive.join(', ')}.`;
+
+  // Order: commands first (less critical), anchor LAST (must survive).
+  // Total budget ≈ 200 tokens, well under whisper's 224 cap.
+  return `${cmdBlock} ${anchor}`;
+}
+
+const DEFAULT_DJ_VOCAB = buildBiasingPrompt(DJ_VOCAB);
 
 // Post-process replacement table. Whisper consistently makes these errors
 // even with biasing — handle them deterministically. Order matters: more
@@ -98,6 +149,16 @@ export function createWhisperTranscriber({
   let whisper = null;
   let loadPromise = null;
   const biasingPrompt = initialPrompt || DEFAULT_DJ_VOCAB;
+  // Token estimate: whisper's BPE averages ~1.3 tokens/word for English.
+  // Hard ceiling is 224; warn if we're flirting with truncation so the
+  // boot log makes the cause obvious instead of silently dropping the
+  // Berghain bias from the front of the prompt.
+  const wordCount = biasingPrompt.split(/\s+/).filter(Boolean).length;
+  const estTokens = Math.round(wordCount * 1.3);
+  console.log(
+    `[whisper-transcriber] biasing prompt: ${wordCount} words, ~${estTokens} tokens` +
+      (estTokens > 220 ? ' ⚠ exceeds whisper 224-token window — front will be truncated' : ''),
+  );
 
   async function ensureModel() {
     if (whisper) return whisper;
