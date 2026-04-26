@@ -6,7 +6,7 @@ export function registerHealth(fastify, { llmClient, audioEnhancer, config }) {
       : config.llm.gemini.model;
     return {
       ok: true,
-      service: 'vibe-rave-api',
+      service: 'viberave-api',
       llm: {
         ready: Boolean(llmClient),
         provider,

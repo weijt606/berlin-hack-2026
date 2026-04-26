@@ -86,13 +86,13 @@ export function MainPanel({ context, isEmbedded = false, className }) {
           >
             <LogoButton context={context} isEmbedded={isEmbedded} />
             {!isZen && (
-              <div className="space-x-2 flex items-baseline">
-                <span className="hidden sm:block">Vibe Rave</span>
+              <div className="space-x-3 flex items-center">
+                <span className="vr-logo hidden sm:inline-block">VIBERAVE</span>
                 {!hot ? (
-                  <span className="text-sm font-medium hidden sm:block">({ver})</span>
+                  <span className="vr-version hidden sm:inline-block">{ver}</span>
                 ) : (
-                  <a className="hover:opacity-50" href={pr} target="_blank">
-                    <span className="text-sm font-medium hidden sm:block">({ver})</span>
+                  <a className="hover:opacity-80" href={pr} target="_blank">
+                    <span className="vr-version hidden sm:inline-block">{ver}</span>
                   </a>
                 )}
               </div>
