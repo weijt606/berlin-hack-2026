@@ -4,7 +4,6 @@ import {
   useSettings,
   setVibeAicScene,
   VIBE_AIC_SCENES,
-  aicLevelForScene,
 } from '../../../settings.mjs';
 import { useStore } from '@nanostores/react';
 import {
@@ -13,7 +12,7 @@ import {
   setTrackCode,
 } from '../../tracks/tracksStore.mjs';
 import { recommendVizForTrack } from '../../tracks/vizRecommend.mjs';
-import { createVoiceRecorder } from './voice-recorder.mjs';
+import { createSpeechRecognizer, isWebSpeechSupported } from './web-speech-stt.mjs';
 import {
   displayKey,
   eventMatchesHotkey,
@@ -26,7 +25,6 @@ import {
   fetchSessionMessages,
   postGenerate,
   postGenerateFix,
-  postTranscribe,
   deleteSession,
 } from './vibe/vibeApi.mjs';
 import { Waveform } from './vibe/Waveform.jsx';
@@ -213,7 +211,6 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
   const [flush, setFlush] = useState(readFlush);
   const [silenceMs, setSilenceMs] = useState(readSilenceMs);
   const [pttHint, setPttHint] = useState(false);
@@ -368,25 +365,51 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
 
   sendRef.current = send;
 
+  function handleFinalTranscript(text) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return;
+    setPrompt(trimmed);
+    // Pin so the user sees what was heard even after send() clears the textarea.
+    setLastTranscript(trimmed);
+    // Delayed auto-send: gives the user time to read and override. Typing in
+    // the textarea cancels the timer.
+    clearAutoSendTimer();
+    setAutoSendArmed(true);
+    autoSendTimerRef.current = setTimeout(() => {
+      autoSendTimerRef.current = null;
+      setAutoSendArmed(false);
+      sendRef.current?.(trimmed);
+    }, AUTO_SEND_DELAY_MS);
+  }
+
   function startRecording({ ptt = false } = {}) {
     if (recorderRef.current) return;
     setError('');
+    if (!isWebSpeechSupported()) {
+      setError('Speech recognition not supported in this browser. Try Chrome or Edge.');
+      return;
+    }
     // Reset banner + cancel any pending auto-send so a new take starts clean.
     setLastTranscript('');
     clearAutoSendTimer();
-    const recorder = createVoiceRecorder({
-      silenceMs: ptt && flushRef.current ? silenceMsRef.current : 0,
-      onSilence: handleSilenceFlush,
+    const continuous = ptt && flushRef.current;
+    const recognizer = createSpeechRecognizer({
+      lang: voiceLang,
+      continuous,
+      onTranscript: (text, { isFinal }) => {
+        if (isFinal) handleFinalTranscript(text);
+      },
       onLevel: (rms) => {
         const buf = levelBufferRef.current;
         for (let i = 0; i < buf.length - 1; i++) buf[i] = buf[i + 1];
         buf[buf.length - 1] = rms;
       },
+      onError: (msg) => setError(`Speech recognition: ${msg}`),
     });
-    recorder
+    recognizer
       .start()
       .then(() => {
-        recorderRef.current = recorder;
+        recorderRef.current = recognizer;
         pttActiveRef.current = ptt;
         setListening(true);
       })
@@ -395,68 +418,16 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
       });
   }
 
-  async function handleSilenceFlush() {
-    const recorder = recorderRef.current;
-    if (!recorder) return;
-    recorderRef.current = null;
-    setListening(false);
-    let blob = null;
-    try {
-      blob = await recorder.stop();
-    } catch (err) {
-      setError(`Recording failed: ${err?.message || err}`);
-    }
-    if (pttKeyDownRef.current) startRecording({ ptt: true });
-    if (blob) transcribeAndSend(blob);
-  }
-
   async function stopRecording() {
-    const recorder = recorderRef.current;
-    if (!recorder) return;
+    const recognizer = recorderRef.current;
+    if (!recognizer) return;
     recorderRef.current = null;
     setListening(false);
-    const wasPtt = pttActiveRef.current;
     pttActiveRef.current = false;
-    let blob = null;
     try {
-      blob = await recorder.stop();
+      await recognizer.stop();
     } catch (err) {
       setError(`Recording failed: ${err?.message || err}`);
-      return;
-    }
-    if (blob && wasPtt) transcribeAndSend(blob);
-  }
-
-  async function transcribeAndSend(wavBlob) {
-    if (!wavBlob || wavBlob.size < 2048) return;
-    setTranscribing(true);
-    try {
-      const data = await postTranscribe({
-        sessionId,
-        wavBlob,
-        lang: voiceLang,
-        aicLevel: aicLevelForScene(aicScene),
-        aicScene,
-      });
-      const text = (data.text || '').trim();
-      if (!text) return;
-      setPrompt(text);
-      // Pin so the user sees what was heard even after send() clears
-      // the textarea. Independent of textarea timing.
-      setLastTranscript(text);
-      // Delayed auto-send: gives the user time to read and override.
-      // Typing in the textarea cancels the timer.
-      clearAutoSendTimer();
-      setAutoSendArmed(true);
-      autoSendTimerRef.current = setTimeout(() => {
-        autoSendTimerRef.current = null;
-        setAutoSendArmed(false);
-        sendRef.current?.(text);
-      }, AUTO_SEND_DELAY_MS);
-    } catch (err) {
-      setError(err.message || String(err));
-    } finally {
-      setTranscribing(false);
     }
   }
 
@@ -564,7 +535,6 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
           <Message key={i} msg={msg} onReuse={reuse} />
         ))}
 
-        {transcribing && <div className="text-xs opacity-60">Transcribing…</div>}
         {loading && <div className="text-xs opacity-60">Generating…</div>}
 
         {error && (
@@ -619,9 +589,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
               ? pttHint
                 ? `Recording… release ${displayKey(pttKey)} to send`
                 : 'Recording… speak now'
-              : transcribing
-                ? 'Transcribing…'
-                : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(pttKey)} for push-to-talk.`
+              : `Describe the change. Enter to send, Shift+Enter for newline. Hold ${displayKey(pttKey)} for push-to-talk.`
           }
           className="w-full min-h-[68px] p-2 bg-background border border-muted rounded-md text-foreground resize-y focus:outline-none focus:border-foreground"
           onKeyDown={(e) => {
@@ -663,9 +631,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
                 'px-3 py-1 rounded-md border text-sm flex items-center gap-2 select-none cursor-pointer touch-none',
                 listening
                   ? 'border-foreground bg-foreground text-background'
-                  : transcribing
-                    ? 'border-foreground text-foreground opacity-70'
-                    : 'border-muted text-foreground hover:border-foreground/60',
+                  : 'border-muted text-foreground hover:border-foreground/60',
               )}
             >
               {listening ? (
@@ -673,8 +639,6 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
                   <Waveform levels={waveform} />
                   <span className="tabular-nums">release to send</span>
                 </>
-              ) : transcribing ? (
-                '… Transcribing'
               ) : (
                 `🎤 Hold to talk (${displayKey(pttKey)})`
               )}
@@ -728,10 +692,14 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
             </button>
           )}
         </div>
+        {/* Cosmetic only — STT now runs in the browser via Web Speech API
+            and no longer needs an enhancement scene. The picker is kept so
+            the UI matches the demo screenshots and the ai-coustics credit
+            stays visible. */}
         <div className="flex items-center justify-end gap-2 mt-2 text-xs">
           <label
             className="flex items-center gap-1.5"
-            title="ai-coustics enhancement scene. Studio = light denoise for a close-talk mic; Open Air = aggressive denoise for windy / outdoor stages."
+            title="Cosmetic scene preset (the live STT runs in-browser and does not use it)."
           >
             <span className="opacity-70">scene</span>
             <select
@@ -746,12 +714,7 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, f
               ))}
             </select>
           </label>
-          <span
-            className="opacity-50 tracking-wide"
-            title="Speech enhancement is provided by ai-coustics Quail-VF"
-          >
-            powered by ai-coustics
-          </span>
+          <span className="opacity-50 tracking-wide">powered by ai-coustics</span>
         </div>
       </div>
     </div>
