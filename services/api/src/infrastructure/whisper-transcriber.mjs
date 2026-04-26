@@ -117,6 +117,31 @@ export function createWhisperTranscriber({
     }
   }
 
+  // Fire-and-forget pre-warm. offload: 86400 keeps the model resident BETWEEN
+  // requests, but the FIRST request after boot still pays the cold load
+  // (~1-5s for base.en, ~5-10s+ for medium.en — disk → RAM, plus the Metal
+  // kernel warm-up on the inaugural inference). This kick at construction
+  // time moves both costs to boot so the user's first PTT is on the warm
+  // path. Errors are non-fatal — they'd surface on the first real request
+  // anyway. Doesn't block server.listen because we don't await the promise.
+  (async () => {
+    const t0 = Date.now();
+    const w = await ensureModel();
+    const silentPcm = new Float32Array(16000); // 1s of silence at 16 kHz
+    const task = await w.transcribe(silentPcm, {
+      language: 'en',
+      format: 'simple',
+      no_timestamps: true,
+      no_context: true,
+      temperature: 0,
+      temperature_inc: 0,
+    });
+    await task.result;
+    console.log(`[whisper-transcriber] pre-warm complete model=${modelName} took=${Date.now() - t0}ms`);
+  })().catch((err) => {
+    console.warn(`[whisper-transcriber] pre-warm failed: ${err?.message || err}`);
+  });
+
   return {
     getModelId: () => modelName,
     async transcribe(pcm, opts = {}) {
