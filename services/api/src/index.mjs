@@ -37,6 +37,7 @@ const SKILL_ORDER = [
   'rules/diversity.md',
   'rules/uncertainty.md',
   'rules/cannot-handle.md',
+  'rules/meta-commands.md',
   'rules/error-recovery.md',
   'reference/sounds.md',
   'reference/mini-notation.md',

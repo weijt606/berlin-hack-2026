@@ -51,6 +51,31 @@ export function useTrackEditors() {
     if (ed) window.strudelMirror = ed;
   }, [selectedTrackId, editorStates]);
 
+  // Expose a stable controls handle for non-React callers (the vibe
+  // meta-command dispatcher). The function bodies close over the live
+  // refs so even though this object is set once, the calls always hit
+  // the current editors / state. We intentionally do NOT overwrite this
+  // on every render — installing on mount and clearing on unmount keeps
+  // listeners that grabbed the reference from going stale.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.strudelTracks = {
+      togglePlay: (trackId) => editorsRef.current[trackId]?.toggle(),
+      stopTrack: (trackId) => editorsRef.current[trackId]?.stop(),
+      stopAllTracks: () => {
+        Object.values(editorsRef.current).forEach((ed) => {
+          try { ed?.stop?.(); } catch {}
+        });
+      },
+      // Pulled from the latest closure, so callers see fresh state even
+      // though this controls object is installed once.
+      isStarted: (trackId) => !!editorsRef.current[trackId]?.repl?.scheduler?.started,
+    };
+    return () => {
+      if (window.strudelTracks) delete window.strudelTracks;
+    };
+  }, []);
+
   // Push live viz changes from the store into each editor's vizRef so
   // switching is instant — the next animation frame paints with the new
   // painter, no editor rebuild needed.
