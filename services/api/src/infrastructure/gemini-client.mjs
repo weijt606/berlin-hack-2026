@@ -13,7 +13,7 @@ export function createGeminiClient({ apiKey, model, temperature = 0.85 }) {
   const genai = new GoogleGenAI({ apiKey });
 
   return {
-    async complete({ systemPrompt, userMessage, history = [] }) {
+    async complete({ systemPrompt, userMessage, history = [], temperature: tempOverride } = {}) {
       const contents = history.map((turn) => ({
         role: turn.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: turn.text }],
@@ -23,7 +23,12 @@ export function createGeminiClient({ apiKey, model, temperature = 0.85 }) {
       const response = await genai.models.generateContent({
         model,
         contents,
-        config: { systemInstruction: systemPrompt, temperature },
+        config: {
+          systemInstruction: systemPrompt,
+          // Per-call override lets the transcript normalizer go deterministic
+          // (temp 0) while code-gen keeps the configured diversity (0.85).
+          temperature: typeof tempOverride === 'number' ? tempOverride : temperature,
+        },
       });
       return { text: response.text ?? '', model };
     },

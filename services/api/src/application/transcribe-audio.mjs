@@ -5,6 +5,32 @@ import {
   computeAudioMetrics,
 } from '../infrastructure/audio-metrics.mjs';
 
+// Fall back to raw if the enhancer over-suppressed the input. We've seen
+// AIC at level 0.8 mute close-talk speech on short / quiet utterances —
+// noise floor pinned at -120dB and rms dropping 30-90dB — at which point
+// whisper hallucinates a one-word filler ("Done.", "You.", "AppleTron.").
+// Heuristics: if enhanced collapsed loudness OR shrank to a fraction of
+// the raw text, the raw decode is almost always closer to truth.
+function wordCount(s) {
+  return (s || '').trim().split(/\s+/).filter(Boolean).length;
+}
+export function pickBetterTranscript(raw, enhanced) {
+  if (!enhanced) return { text: raw.text || '', source: 'raw' };
+  if (!raw) return { text: enhanced.text || '', source: 'enhanced' };
+  const rWords = wordCount(raw.text);
+  const eWords = wordCount(enhanced.text);
+  // Empty enhanced + non-trivial raw → keep raw.
+  if (!eWords && rWords > 0) return { text: raw.text, source: 'raw-enh-empty' };
+  // Enhancer collapsed loudness (rms dropped >20dB) AND shortened the text
+  // by >50% — strong "the enhancer ate the signal" signature.
+  const rmsDrop = (raw.metrics?.rmsDb ?? 0) - (enhanced.metrics?.rmsDb ?? 0);
+  if (rmsDrop > 20 && eWords < rWords * 0.5) {
+    return { text: raw.text, source: 'raw-enh-collapsed' };
+  }
+  // Default: prefer enhanced (the original pre-fix behaviour).
+  return { text: enhanced.text || raw.text || '', source: 'enhanced' };
+}
+
 /**
  * Use case: transcribe an uploaded WAV. When the AIC enhancer is configured
  * and `compare` is requested (default), runs Whisper twice — once on the
@@ -105,7 +131,8 @@ export function makeTranscribeAudio({
       };
     }
 
-    const rawRecommended = enhanced?.text || raw.text;
+    const { text: rawRecommended, source: pickSource } = pickBetterTranscript(raw, enhanced);
+    take?.text('picked', `${pickSource}: ${rawRecommended}`);
 
     // Optional: tiny LLM cleanup pass to fix STT errors that the static
     // post-process dictionary in whisper-transcriber can't handle (artist
@@ -128,6 +155,7 @@ export function makeTranscribeAudio({
     const record = {
       text,
       rawText: rawRecommended,
+      pickSource,
       raw,
       enhanced,
       comparison,

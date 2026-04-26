@@ -12,6 +12,7 @@
  * @property {string} systemPrompt
  * @property {string} userMessage  message for this turn (may embed <current> code)
  * @property {ChatTurn[]} [history] prior conversation turns in chronological order
+ * @property {number} [temperature] per-call override; falls back to client default when omitted
  *
  * @typedef {Object} LlmClient
  * @property {(args: LlmCompleteArgs) => Promise<LlmCompletion>} complete

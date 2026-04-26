@@ -27,7 +27,7 @@ export function createOllamaClient({
   const url = `${baseUrl.replace(/\/+$/, '')}/api/chat`;
 
   return {
-    async complete({ systemPrompt, userMessage, history = [] }) {
+    async complete({ systemPrompt, userMessage, history = [], temperature: tempOverride } = {}) {
       const messages = [
         { role: 'system', content: systemPrompt },
         ...history.map((turn) => ({
@@ -43,7 +43,7 @@ export function createOllamaClient({
         stream: false,
         think,
         options: {
-          temperature,
+          temperature: typeof tempOverride === 'number' ? tempOverride : temperature,
           ...(numCtx ? { num_ctx: numCtx } : {}),
         },
       };

@@ -23,6 +23,9 @@ export function makeTranscriptNormalizer({ llmClient }) {
     '',
     'Rules:',
     '- NEVER paraphrase or rewrite. Only fix recognition errors.',
+    '- DO NOT invent or change proper nouns. If the input contains a name you',
+    '  do not recognise (artist, label, place), keep it EXACTLY as written.',
+    '  Do not "correct" unfamiliar names to ones you know.',
     '- Preserve DJ / techno jargon: Berghain, Bicep, Aphex Twin, lo-fi, dub,',
     '  dubby, four-on-the-floor, sidechain, ducking, BPM, breakbeat, IDM,',
     '  hyperpop, trap, drum and bass, scale names (C minor, A dorian, D phrygian),',
@@ -49,6 +52,11 @@ export function makeTranscriptNormalizer({ llmClient }) {
           systemPrompt: SYSTEM,
           userMessage: trimmed,
           history: [],
+          // Force deterministic decoding for transcript fixing — the global
+          // GEMINI_TEMPERATURE (0.85) is tuned for code-gen diversity and
+          // makes this step fabricate ("Elite phase" → "Aliased phase",
+          // "Ben Thede" → "Ben Benda"). Cleanup wants the most-likely token.
+          temperature: 0,
         });
         let cleaned = String(result.text ?? '').trim();
         // Strip wrap quotes the model occasionally adds despite the contract.
