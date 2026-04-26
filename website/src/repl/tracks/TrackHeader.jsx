@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PlayIcon, StopIcon, TrashIcon, SparklesIcon } from '@heroicons/react/16/solid';
+import { PlayIcon, StopIcon, TrashIcon, BoltIcon } from '@heroicons/react/16/solid';
 import cx from '@src/cx.mjs';
 
 export function TrackHeader({
@@ -35,11 +35,16 @@ export function TrackHeader({
     else setDraft(name);
   }
 
+  // When selected, the row goes full hazard-tape: bright yellow background +
+  // pure black text/icons. Loud on purpose so the active track is unmissable
+  // at a glance during a live set.
+  const textCx = isSelected ? 'text-black' : 'text-foreground';
+
   return (
     <div
       className={cx(
         'flex items-center gap-2 px-3 py-2 cursor-pointer select-none border-b border-muted',
-        isSelected ? 'bg-lineHighlight' : 'hover:bg-lineHighlight/40',
+        isSelected ? 'bg-yellow-400 text-black' : 'hover:bg-lineHighlight/40',
       )}
       onClick={onSelect}
     >
@@ -49,7 +54,7 @@ export function TrackHeader({
           onTogglePlay?.();
         }}
         title={isPlaying ? 'stop' : 'play'}
-        className="shrink-0 p-1 rounded hover:opacity-70 text-foreground"
+        className={cx('shrink-0 p-1 rounded hover:opacity-70', textCx)}
       >
         {isPlaying ? <StopIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4" />}
       </button>
@@ -59,16 +64,22 @@ export function TrackHeader({
           e.stopPropagation();
           onSpotlight?.();
         }}
-        title="Spotlight this track (fade out the rest)"
-        className="shrink-0 p-1 rounded hover:opacity-70 text-foreground opacity-70 hover:opacity-100"
+        title="Cut to this track (fade out the rest)"
+        className={cx('shrink-0 p-1 rounded hover:opacity-70 opacity-70 hover:opacity-100', textCx)}
       >
-        <SparklesIcon className="w-4 h-4" />
+        <BoltIcon className="w-4 h-4" />
       </button>
 
       <div
         className={cx(
           'shrink-0 w-1.5 h-1.5 rounded-full',
-          isPlaying ? 'bg-green-500 animate-pulse' : pending ? 'bg-yellow-500' : 'bg-muted',
+          isPlaying
+            ? 'bg-green-500 animate-pulse'
+            : pending
+              ? 'bg-yellow-500'
+              : isSelected
+                ? 'bg-black/40'
+                : 'bg-muted',
         )}
         aria-hidden
       />
@@ -92,7 +103,7 @@ export function TrackHeader({
       ) : (
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <span
-            className="min-w-0 truncate text-sm text-foreground"
+            className={cx('min-w-0 truncate text-sm font-medium', textCx)}
             onDoubleClick={(e) => {
               e.stopPropagation();
               setEditing(true);
@@ -102,7 +113,7 @@ export function TrackHeader({
             {name}
           </span>
           {isSelected && (
-            <span className="shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-foreground/15 text-foreground">
+            <span className="shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-black text-yellow-400 font-bold">
               Active
             </span>
           )}
@@ -115,7 +126,7 @@ export function TrackHeader({
           if (window.confirm(`Delete "${name}"?`)) onDelete?.();
         }}
         title="delete track"
-        className="shrink-0 p-1 rounded hover:opacity-70 text-foreground opacity-50 hover:opacity-100"
+        className={cx('shrink-0 p-1 rounded hover:opacity-70 opacity-50 hover:opacity-100', textCx)}
       >
         <TrashIcon className="w-4 h-4" />
       </button>
