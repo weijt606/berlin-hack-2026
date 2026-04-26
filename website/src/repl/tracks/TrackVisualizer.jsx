@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { TrackVizPicker } from './TrackVizPicker.jsx';
 import { getShape } from './painters.mjs';
 
 // A per-track canvas. The actual painting is done by the editor (chosen
 // painter from painters.mjs); this component just owns the DOM element
 // and exposes its 2d context to the editor via the `onCanvas` callback
-// (called once the element mounts). Also renders the viz picker.
+// (called once the element mounts). The viz selector itself lives in
+// TrackHeader as an icon-cycle button next to play/stop.
 //
 // The canvas backing store is sized at CSS-pixels × devicePixelRatio so
 // the painters draw at full hi-DPI resolution and the browser scales the
@@ -15,7 +15,7 @@ import { getShape } from './painters.mjs';
 
 const SQUARE_SIDE = 160; // px — square viz fits this width × height
 
-export function TrackVisualizer({ onCanvas, isPlaying, viz, onVizChange }) {
+export function TrackVisualizer({ onCanvas, viz }) {
   const ref = useRef(null);
   const shape = getShape(viz);
 
@@ -38,20 +38,14 @@ export function TrackVisualizer({ onCanvas, isPlaying, viz, onVizChange }) {
   }, [onCanvas]);
 
   // CSS box: wide viz fills the row at 80px high; square viz is a 160px
-  // box centered horizontally. Both reuse the same canvas element so
-  // switching viz at runtime doesn't remount and lose the editor's ctx.
+  // box centered horizontally. Same canvas element across viz switches
+  // so the editor's ctx ref stays valid.
   const canvasStyle = shape === 'square'
     ? { width: SQUARE_SIDE, height: SQUARE_SIDE }
     : { width: '100%', height: 80 };
 
   return (
     <div className="px-3 py-2">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] opacity-50">
-          {isPlaying ? '▶ playing' : 'idle'}
-        </span>
-        <TrackVizPicker value={viz} onChange={onVizChange} />
-      </div>
       <canvas
         ref={ref}
         className="block rounded border border-muted bg-background/40 mx-auto"

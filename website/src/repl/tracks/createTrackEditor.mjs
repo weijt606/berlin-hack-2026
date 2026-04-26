@@ -46,20 +46,25 @@ export function createTrackEditor({
   // slider and the spotlight fade engine. Stays attached to the editor
   // so callers can update it without a re-render or re-evaluation.
   const volumeRef = { current: typeof initialVolume === 'number' ? initialVolume : 1 };
-  const defaultOutput = makeTrackOutput(baseOutput, volumeRef);
+  // Stable analyser id per track — superdough lazily creates an
+  // AnalyserNode on this id when the first hap with `analyze: <id>` plays,
+  // and the audio-driven painters (waveform, spectrum) read from it.
+  const analyzerId = `track-${trackId}`;
+  const defaultOutput = makeTrackOutput(baseOutput, volumeRef, analyzerId);
 
   // Live ref for the chosen viz key — the onDraw closure reads this every
   // frame so switching viz at runtime doesn't require a re-eval or a
   // new editor instance. Also forwards to any user-set painters so
   // .scope() / .pianoroll() in the user's code still work alongside.
   const vizRef = { current: initialViz || DEFAULT_VIZ };
+  const painterOpts = { trackId, analyzerId };
   const onDraw = (haps, time, painters) => {
     const ctx = drawContextRef.current;
     if (!ctx) return;
     const c = ctx.canvas;
     ctx.clearRect(0, 0, c.width, c.height);
     try {
-      getPainter(vizRef.current)(ctx, time, haps, drawTime);
+      getPainter(vizRef.current)(ctx, time, haps, drawTime, painterOpts);
     } catch {}
     painters?.forEach?.((painter) => {
       try {
@@ -106,5 +111,6 @@ export function createTrackEditor({
   editor.volumeRef = volumeRef;
   editor.vizRef = vizRef;
   editor.drawContextRef = drawContextRef;
+  editor.analyzerId = analyzerId;
   return editor;
 }

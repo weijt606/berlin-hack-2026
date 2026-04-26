@@ -7,7 +7,7 @@ const FENCE_RE = /^```(?:javascript|js|strudel)?\n([\s\S]*?)\n```$/;
 // the response so the frontend can switch the per-track visualization.
 // See skills/strudel/rules/output-format.md for the contract.
 const VIZ_HINT_RE = /^\s*\/\/\s*viz\s*:\s*([a-zA-Z_-]+)\s*\r?\n/;
-const ALLOWED_VIZ = new Set(['punchcard', 'pianoroll', 'wordfall', 'spiral', 'pitchwheel']);
+const ALLOWED_VIZ = new Set(['pianoroll', 'waveform', 'spectrum', 'scope', 'spiral']);
 
 function extractVizHint(text) {
   const m = text.match(VIZ_HINT_RE);

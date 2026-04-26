@@ -28,7 +28,7 @@ expression. Instead, recommend a viz by emitting **exactly one comment
 on the very first line** of your response:
 
 ```
-// viz: <one of: punchcard | pianoroll | wordfall | spiral | pitchwheel>
+// viz: <one of: pianoroll | waveform | spectrum | scope | spiral>
 <your code>
 ```
 
@@ -36,11 +36,11 @@ Pick the viz that best fits the pattern:
 
 | viz | best for |
 | --- | --- |
-| `punchcard` | drum machines, percussion, dense rhythms (default) |
-| `pianoroll` | melodic / harmonic content with distinct pitches |
-| `wordfall` | spoken-word, sample-trigger heavy patterns, chord names |
+| `pianoroll` | melodic / harmonic content with distinct pitches (default) |
+| `waveform` | bass / drums / anything with strong dynamics — DAW-style scrolling peak envelope |
+| `spectrum` | textural / pad / FX / filter sweeps — scrolling log-frequency spectrogram |
+| `scope` | resonant / monophonic / synth leads — single-snapshot zero-aligned oscilloscope |
 | `spiral` | ambient, slow / cyclic patterns where periodicity matters |
-| `pitchwheel` | microtonal / EDO experiments, harmonic relationships |
 
 If you are unsure, omit the viz hint — the host will keep the user's
 current choice. Don't pick the same viz two turns in a row unless the
@@ -75,7 +75,7 @@ A response is one of:
 For example:
 
 ```
-// viz: punchcard
+// viz: pianoroll
 stack(
   s("bd ~ ~ bd, ~ ~ sd ~, hh*8").bank("RolandTR909"),
   note("<c2 g1 a1 e1>").s("sawtooth").lpf(800).gain(0.6)
@@ -97,7 +97,7 @@ these means re-emit, do not ship.
 | **Method names verified** | Every `.foo(...)` after a pattern is in `reference/effects.md` / `reference/pattern-transforms.md` / `reference/visualization.md`. No `.resonance`, `.reverb`, `.legato`, `.feel`. |
 | **Sound names verified** | Every `s("...")` argument decomposes into names from `reference/sounds.md` (drum aliases, GM names, waveform names). No `s("bass")` / `s("kick")` / `s("synth")`. |
 | **No forbidden tokens** | No `import`, `require`, `console`, `return`, `await`, `Tone`, `AudioContext`, `document`, `window`. |
-| **Viz hint (optional)** | If present, it is the only thing on the very first line and matches `// viz: <key>` where `<key>` is one of `punchcard | pianoroll | wordfall | spiral | pitchwheel`. |
+| **Viz hint (optional)** | If present, it is the only thing on the very first line and matches `// viz: <key>` where `<key>` is one of `pianoroll | waveform | spectrum | scope | spiral`. |
 | **No prose / no fences** | Output starts directly with the code. Output ends with `)` (or `;` or a method call). No leading or trailing whitespace lines except a single newline. |
 
 If any cell answers "no", fix and re-check the whole list — do not ship a

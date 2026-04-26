@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { PlayIcon, StopIcon, TrashIcon, SparklesIcon } from '@heroicons/react/16/solid';
 import cx from '@src/cx.mjs';
+import { VIZ_KEYS, PAINTERS } from './painters.mjs';
+import { VizIcon } from './VizIcon.jsx';
+
+function nextViz(current) {
+  const idx = VIZ_KEYS.indexOf(current);
+  return VIZ_KEYS[(idx + 1) % VIZ_KEYS.length];
+}
 
 export function TrackHeader({
   name,
   isSelected,
   isPlaying,
   pending,
+  viz,
+  onVizChange,
   onSelect,
   onTogglePlay,
   onSpotlight,
@@ -52,6 +61,17 @@ export function TrackHeader({
         className="shrink-0 p-1 rounded hover:opacity-70 text-foreground"
       >
         {isPlaying ? <StopIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4" />}
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onVizChange?.(nextViz(viz));
+        }}
+        title={`Visualization: ${PAINTERS[viz]?.label || viz} — click to cycle`}
+        className="shrink-0 p-1 rounded hover:opacity-70 text-foreground opacity-70 hover:opacity-100"
+      >
+        <VizIcon viz={viz} />
       </button>
 
       <div

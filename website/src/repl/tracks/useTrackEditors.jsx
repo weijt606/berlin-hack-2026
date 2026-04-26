@@ -10,7 +10,7 @@ import {
   selectTrack,
   setTrackViz,
 } from './tracksStore.mjs';
-import { DEFAULT_VIZ } from './painters.mjs';
+import { DEFAULT_VIZ, disposeAnalyzerArtifacts } from './painters.mjs';
 import { setLatestCode } from '../../user_pattern_utils.mjs';
 import { spotlight as runSpotlight } from './spotlight.mjs';
 
@@ -66,9 +66,11 @@ export function useTrackEditors() {
     const liveIds = new Set(tracks.map((t) => t.id));
     Object.keys(editorsRef.current).forEach((id) => {
       if (!liveIds.has(id)) {
+        const ed = editorsRef.current[id];
         try {
-          editorsRef.current[id]?.stop?.();
+          ed?.stop?.();
         } catch {}
+        if (ed?.analyzerId) disposeAnalyzerArtifacts(ed.analyzerId);
         delete editorsRef.current[id];
         setEditorStates((prev) => {
           if (!(id in prev)) return prev;

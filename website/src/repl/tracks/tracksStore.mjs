@@ -2,7 +2,7 @@ import { atom, computed } from 'nanostores';
 import { useStore } from '@nanostores/react';
 import { nanoid } from 'nanoid';
 import { settingsMap } from '../../settings.mjs';
-import { DEFAULT_VIZ } from './painters.mjs';
+import { DEFAULT_VIZ, PAINTERS } from './painters.mjs';
 
 const TRACKS_KEY = 'tracks';
 const SELECTED_KEY = 'selectedTrackId';
@@ -14,9 +14,13 @@ const DEFAULT_CODE = '$: s("[bd <hh oh>]*2").bank("tr909").dec(.4)';
 // back null) from leaking nulls into the editor.
 function normalizeTrack(t) {
   if (!t) return t;
+  // Drop any viz key that no longer exists in the registry (e.g. old
+  // `punchcard` / `wordfall` / `pitchwheel` saves) so the picker doesn't
+  // sit on a value it can't render.
+  const validViz = t.viz && PAINTERS[t.viz] ? t.viz : DEFAULT_VIZ;
   return {
     ...t,
-    viz: t.viz || DEFAULT_VIZ,
+    viz: validViz,
     volume: typeof t.volume === 'number' ? t.volume : 1,
   };
 }

@@ -13,8 +13,8 @@ turns in the chat history):
    `RolandTR909`, this turn pick `RolandTR808`, `LinnDrum`, `AkaiMPC60`,
    `OberheimDMX`, etc. unless the user explicitly said "keep the kit".
 2. **Don't reuse the same visualizer two turns in a row.** Pick a different
-   `// viz: <key>` than last turn — cycle through `punchcard`, `pianoroll`,
-   `wordfall`, `spiral`, `pitchwheel` based on musical character (see the
+   `// viz: <key>` than last turn — cycle through `pianoroll`, `waveform`,
+   `spectrum`, `scope`, `spiral` based on musical character (see the
    table below and `rules/output-format.md`).
 3. **Vary the structure idiom.** If last turn was `stack(drums, bass, chord)`,
    this turn try one of:
@@ -33,14 +33,14 @@ turns in the chat history):
 
 | Music character | Default `// viz:` |
 | --- | --- |
-| Beat-driven, percussive (techno, house, dnb) | `punchcard` |
 | Melodic / chord-heavy (jazz, lo-fi, ambient) | `pianoroll` |
-| Spoken-word, sample-trigger heavy, chord names | `wordfall` |
-| Looping arp / cyclic patterns | `spiral` |
-| Microtonal / pitch-bending content | `pitchwheel` |
+| Beat / bass-driven (techno, house, dnb, dubstep) | `waveform` |
+| Textural / pad / FX / filter sweeps | `spectrum` |
+| Resonant mono lead / synth solo | `scope` |
+| Looping arp / cyclic / ambient patterns | `spiral` |
 
-If you've used `punchcard` two turns in a row, **rotate** to whichever option
-above isn't `punchcard` — even if `punchcard` would technically fit.
+If you've used `pianoroll` two turns in a row, **rotate** to whichever option
+above isn't `pianoroll` — even if `pianoroll` would technically fit.
 
 ## Don't pretend to randomize
 
