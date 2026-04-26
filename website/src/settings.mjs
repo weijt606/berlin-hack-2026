@@ -76,6 +76,12 @@ export const defaultSettings = {
   // zh-CN, which butchers English prompts via the wrong phonetic model.
   // Defaulting to en-US matches the demo language.
   vibeVoiceLang: 'en-US',
+  // ai-coustics enhancement scene. The frontend maps the picked scene to
+  // a numeric AIC enhancement level (see VIBE_AIC_SCENES below) and sends
+  // it to the backend on each /transcribe request. 'studio' = light denoise
+  // for a close-talk mic; intensity climbs through 'liveHouse' → 'arena' →
+  // 'openAir' for progressively noisier environments.
+  vibeAicScene: 'studio',
   // Persisted multi-track state.
   tracks: '[]',
 };
@@ -141,6 +147,22 @@ export const setActiveFooter = (tab) => settingsMap.setKey('activeFooter', tab);
 export const setVibePttKey = (code) => settingsMap.setKey('vibePttKey', code);
 export const setVibeAutoApply = (bool) => settingsMap.setKey('vibeAutoApply', !!bool);
 export const setVibeVoiceLang = (lang) => settingsMap.setKey('vibeVoiceLang', lang);
+export const setVibeAicScene = (scene) => settingsMap.setKey('vibeAicScene', scene);
+
+// AIC enhancement levels per scene. Studio is intentionally low — at 0.8 the
+// enhancer over-suppressed close-talk speech (whisper hallucinated "Done!" /
+// "You" on full sentences). Live House / Arena / Open Air progressively
+// crank up the denoise budget for noisier rooms. Keep these in sync with
+// the picker UI in VibeTab.jsx.
+export const VIBE_AIC_SCENES = [
+  { id: 'studio', label: 'Studio', level: 0.3 },
+  { id: 'liveHouse', label: 'Live House', level: 0.55 },
+  { id: 'arena', label: 'Arena', level: 0.75 },
+  { id: 'openAir', label: 'Open Air', level: 0.9 },
+];
+export function aicLevelForScene(sceneId) {
+  return (VIBE_AIC_SCENES.find((s) => s.id === sceneId) ?? VIBE_AIC_SCENES[0]).level;
+}
 export const setPanelPinned = (bool) => settingsMap.setKey('isPanelPinned', bool);
 export const setIsPanelOpened = (bool) => settingsMap.setKey('isPanelOpen', bool);
 export const setSettingsTab = (tab) => settingsMap.setKey('settingsTab', tab);

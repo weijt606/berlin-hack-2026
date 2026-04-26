@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import cx from '@src/cx.mjs';
-import { useSettings } from '../../../settings.mjs';
+import {
+  useSettings,
+  setVibeAicScene,
+  VIBE_AIC_SCENES,
+  aicLevelForScene,
+} from '../../../settings.mjs';
 import { useStore } from '@nanostores/react';
 import {
   $selectedTrackId,
@@ -147,7 +152,13 @@ async function applyCodeToSelectedTrack(code, onError, { allowFix = false } = {}
 }
 
 export function VibeTab() {
-  const { fontFamily, vibePttKey: pttKey, vibeAutoApply: auto, vibeVoiceLang } = useSettings();
+  const {
+    fontFamily,
+    vibePttKey: pttKey,
+    vibeAutoApply: auto,
+    vibeVoiceLang,
+    vibeAicScene,
+  } = useSettings();
   const selectedTrackId = useStore($selectedTrackId);
   const selectedTrack = useStore($selectedTrack);
 
@@ -169,12 +180,13 @@ export function VibeTab() {
       pttKey={pttKey}
       auto={auto}
       voiceLang={vibeVoiceLang}
+      aicScene={vibeAicScene}
       fontFamily={fontFamily}
     />
   );
 }
 
-function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily }) {
+function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, aicScene, fontFamily }) {
   const sessionId = useMemo(() => readOrCreateSessionId(trackId), [trackId]);
 
   const [prompt, setPrompt] = useState('');
@@ -400,7 +412,13 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
     if (!wavBlob || wavBlob.size < 2048) return;
     setTranscribing(true);
     try {
-      const data = await postTranscribe({ sessionId, wavBlob, lang: voiceLang });
+      const data = await postTranscribe({
+        sessionId,
+        wavBlob,
+        lang: voiceLang,
+        aicLevel: aicLevelForScene(aicScene),
+        aicScene,
+      });
       const text = (data.text || '').trim();
       if (!text) return;
       setPrompt(text);
@@ -651,6 +669,23 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
                 </option>
               ))}
             </select>
+            <label
+              className="flex items-center gap-1 ml-2"
+              title="ai-coustics enhancement scene. Studio = light denoise for a close-talk mic; Open Air = aggressive denoise for windy / outdoor stages."
+            >
+              <span className="opacity-70">scene</span>
+              <select
+                value={aicScene}
+                onChange={(e) => setVibeAicScene(e.target.value)}
+                className="bg-background border border-muted rounded px-1 py-0.5 text-xs"
+              >
+                {VIBE_AIC_SCENES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           {loading ? (
             <button

@@ -19,7 +19,7 @@
  *
  * @typedef {Object} AudioEnhancer
  * @property {() => string} getModelId
- * @property {(wavBuffer: Buffer) => Promise<Buffer>} enhance
+ * @property {(wavBuffer: Buffer, opts?: { level?: number }) => Promise<Buffer>} enhance
  *
  * @typedef {Object} TranscriptionResult
  * @property {string} text
