@@ -140,7 +140,20 @@ export function makeTranscribeAudio({
       };
     }
 
-    const { text: rawRecommended, source: pickSource } = pickBetterTranscript(raw, enhanced);
+    let { text: rawRecommended, source: pickSource } = pickBetterTranscript(raw, enhanced);
+
+    // Final guard against silence-fed hallucinations. Whisper invents fillers
+    // ("Thanks for watching.", "you", "Music playing in the background.")
+    // whenever the decode source is nearly silent. The picked source's
+    // voicedRatio is the cleanest signal that "there was no real speech".
+    // < 0.10 means basically the whole window was unvoiced — drop the text
+    // and let the frontend show "didn't catch that".
+    const pickedMetrics = pickSource.startsWith('raw') ? raw.metrics : enhanced?.metrics;
+    const voicedRatio = pickedMetrics?.voicedRatio ?? 1;
+    if (rawRecommended && voicedRatio < 0.1) {
+      pickSource = `${pickSource}-vad-rejected`;
+      rawRecommended = '';
+    }
     take?.text('picked', `${pickSource}: ${rawRecommended}`);
 
     // Optional: tiny LLM cleanup pass to fix STT errors that the static

@@ -98,11 +98,53 @@ const POST_PROCESS_FIXES = [
   // Rhodes proper noun
   [/\broad piano\b/gi, 'Rhodes piano'],
   [/\broads piano\b/gi, 'Rhodes piano'],
+  // Demo vocabulary: drum-and-bass classics + common digit-only BPM patterns.
+  // The Amen break is iconic in jungle / DnB; medium.en routinely splits it
+  // ("amid break", "a man break", "amen brake").
+  [/\b(amen|amid|a man|a-man|amon)\s+(break|brake)\b/gi, 'Amen break'],
+  [/\bdrum\s*&\s*bass\b/gi, 'drum and bass'],
+  [/\bdnb\b/gi, 'drum and bass'],
   // bpm number → digits + lowercase unit
   [/(\d+)\s*BPM\b/g, '$1 bpm'],
 ];
 
+// Whisper's medium.en model carries a handful of training-data fillers that
+// it emits whenever it can't ground on real speech — typically when the
+// audio is silent / very short / low-SNR / over-suppressed by the enhancer.
+// These show up as confident-looking sentences that have nothing to do with
+// what was said. Rewriting them to '' lets the empty-text guard upstream
+// short-circuit the LLM call and surface "didn't catch that" instead of
+// generating a track from a YouTube outro.
+//
+// The list is anchored to the EXACT decoded text (after trim + lowercase)
+// because a substring match could eat real input ("you" / "thanks").
+const HALLUCINATION_PHRASES = new Set([
+  'thanks for watching.',
+  'thanks for watching',
+  'thanks for watching and see you next time.',
+  'thank you.',
+  'thank you',
+  'thank you for watching.',
+  'music playing in the background.',
+  'music playing in the background',
+  'music playing.',
+  'music plays.',
+  'sustain, charge, bass, arpeggio.',
+  'beck with us, thank you for your time.',
+  'back with us, thank you for your time.',
+  '1000 tracks.',
+  'you',
+  'you.',
+  '.',
+  'bye.',
+  'okay.',
+]);
+function isHallucination(text) {
+  return HALLUCINATION_PHRASES.has(String(text || '').trim().toLowerCase());
+}
+
 function postProcess(text) {
+  if (isHallucination(text)) return '';
   let out = text;
   for (const [re, replacement] of POST_PROCESS_FIXES) {
     out = out.replace(re, replacement);
