@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '@nanostores/react';
+import { ArrowPathIcon } from '@heroicons/react/16/solid';
+import cx from '@src/cx.mjs';
 import { TrackVizPicker } from './TrackVizPicker.jsx';
 import { getShape } from './painters.mjs';
 import { $vizPending } from './tracksStore.mjs';
+import { recommendVizForTrack } from './vizRecommend.mjs';
 
 // A per-track canvas. The actual painting is done by the editor (chosen
 // painter from painters.mjs); this component just owns the DOM element
@@ -72,6 +75,18 @@ export function TrackVisualizer({ trackId, onCanvas, viz, onVizChange }) {
             ⚡ Powered by Pioneer GLiNER2
           </span>
         )}
+        <button
+          type="button"
+          onClick={() => recommendVizForTrack(trackId)}
+          disabled={pending || !trackId}
+          title="Re-run Pioneer GLiNER2 viz suggestion for the current code"
+          className={cx(
+            'text-foreground/60 hover:text-foreground p-0.5 rounded',
+            'disabled:opacity-30 disabled:cursor-not-allowed',
+          )}
+        >
+          <ArrowPathIcon className={cx('w-3.5 h-3.5', pending && 'animate-spin')} />
+        </button>
         <TrackVizPicker value={viz} onChange={onVizChange} />
       </div>
       <canvas

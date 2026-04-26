@@ -6,9 +6,8 @@ import {
   $selectedTrackId,
   $selectedTrack,
   setTrackCode,
-  setTrackViz,
-  setVizPending,
 } from '../../tracks/tracksStore.mjs';
+import { recommendVizForTrack } from '../../tracks/vizRecommend.mjs';
 import { createVoiceRecorder } from './voice-recorder.mjs';
 import {
   displayKey,
@@ -22,7 +21,6 @@ import {
   fetchSessionMessages,
   postGenerate,
   postGenerateFix,
-  postRecommendViz,
   postTranscribe,
   deleteSession,
 } from './vibe/vibeApi.mjs';
@@ -144,21 +142,6 @@ async function applyCodeToSelectedTrack(code, onError, { allowFix = false } = {}
     }
   } catch (err) {
     onError?.(`runtime error: ${runtimeError} (auto-fix failed: ${err?.message || err})`);
-  }
-}
-
-// Background viz recommendation — never throws into the apply path.
-// On success, swaps the per-track viz; on failure (Pioneer key unset,
-// network hiccup, model returns junk), leaves the existing viz alone.
-async function recommendVizForTrack(trackId, code) {
-  setVizPending(trackId, true);
-  try {
-    const data = await postRecommendViz({ code });
-    if (data?.viz) setTrackViz(trackId, data.viz);
-  } catch {
-    /* leave existing viz alone */
-  } finally {
-    setVizPending(trackId, false);
   }
 }
 
