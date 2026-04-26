@@ -4,7 +4,13 @@ import { useSettings } from '../../../settings.mjs';
 import { useStore } from '@nanostores/react';
 import { $selectedTrackId, $selectedTrack, setTrackCode, setTrackViz } from '../../tracks/tracksStore.mjs';
 import { createVoiceRecorder } from './voice-recorder.mjs';
-import { displayKey, isTextInput } from './vibe/keyHelpers.mjs';
+import {
+  displayKey,
+  eventMatchesHotkey,
+  isModalHotkey,
+  isTextInput,
+  parseHotkey,
+} from './vibe/keyHelpers.mjs';
 import { readOrCreateSessionId, clearSessionId } from './vibe/sessionId.mjs';
 import {
   fetchSessionMessages,
@@ -391,29 +397,39 @@ function VibeForTrack({ trackId, trackName, pttKey, auto, voiceLang, fontFamily 
     }
   }
 
-  // Global push-to-talk handler.
+  // Truly global push-to-talk handler. We listen in the capture phase so
+  // we run before codemirror's keymap (which would otherwise interpret
+  // Ctrl+Space as autocomplete) and call stopImmediatePropagation to keep
+  // the event from reaching any other listener. When the hotkey is bare
+  // (no modifier — only the legacy 'Space' default), we still bail when
+  // focus is in a text input so users can type a space character.
   useEffect(() => {
+    const modal = isModalHotkey(pttKey);
+    // keyup may arrive without modifier flags (e.g. user releases Ctrl
+    // before Space) — match on `code` alone for the release.
+    const releaseCode = parseHotkey(pttKey).code;
     function onKeyDown(e) {
-      if (e.code !== pttKey) return;
-      if (isTextInput(e.target)) return;
-      if (e.repeat || pttKeyDownRef.current) return;
+      if (!eventMatchesHotkey(e, pttKey)) return;
+      if (!modal && isTextInput(e.target)) return;
       e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.repeat || pttKeyDownRef.current) return;
       pttKeyDownRef.current = true;
       setPttHint(true);
       startRecording({ ptt: true });
     }
     function onKeyUp(e) {
-      if (e.code !== pttKey) return;
+      if (e.code !== releaseCode) return;
       if (!pttKeyDownRef.current) return;
       pttKeyDownRef.current = false;
       setPttHint(false);
       if (recorderRef.current && pttActiveRef.current) stopRecording();
     }
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('keyup', onKeyUp, true);
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('keyup', onKeyUp, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pttKey]);

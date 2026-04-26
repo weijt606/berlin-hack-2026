@@ -120,13 +120,21 @@ function PttKeyCapture({ value, onChange }) {
         setCapturing(false);
         return;
       }
+      // Pressing only a modifier doesn't bind — wait for the user to add
+      // a non-modifier key (e.g. Ctrl+Space).
       if (NON_PTT_CODES.has(e.code)) return;
       e.preventDefault();
-      onChange(e.code);
+      const parts = [];
+      if (e.ctrlKey) parts.push('Ctrl');
+      if (e.metaKey) parts.push('Meta');
+      if (e.shiftKey) parts.push('Shift');
+      if (e.altKey) parts.push('Alt');
+      parts.push(e.code);
+      onChange(parts.join('+'));
       setCapturing(false);
     }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [capturing, onChange]);
   return (
     <button
@@ -138,7 +146,7 @@ function PttKeyCapture({ value, onChange }) {
           : 'border-muted hover:opacity-80',
       )}
     >
-      {capturing ? 'press a key… (Esc to cancel)' : displayKey(value)}
+      {capturing ? 'press the combo… (Esc to cancel)' : displayKey(value)}
     </button>
   );
 }
