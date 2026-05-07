@@ -9,6 +9,8 @@ dist-*
 # without dot extension that wouldn't be picked up by .env* patterns.
 /env
 .claude/
+.entire/
+**/checkpoints/**
 cabal-dev
 *.o
 *.hi
